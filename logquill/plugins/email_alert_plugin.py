@@ -4,8 +4,8 @@ import smtplib
 from email.message import EmailMessage
 from typing import Any
 
+from logquill.core.records import LogRecord
 from logquill.plugins.alerting_plugin import AlertingPlugin
-from logquill.records import LogRecord
 
 
 class EmailAlertPlugin(AlertingPlugin):

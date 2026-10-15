@@ -4,7 +4,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from logquill import toggle
+from logquill.runtime import toggle
 
 
 @pytest.fixture(autouse=True)

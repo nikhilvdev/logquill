@@ -133,6 +133,6 @@ def test_child_inherits_content_policy() -> None:
 def test_kwargs_are_forwarded_to_logger_init() -> None:
     logger, _ = _audit_logger(flush_at_exit=False)
 
-    from logquill import shutdown
+    from logquill.runtime import shutdown
 
     assert logger not in shutdown._loggers

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from logquill.levels import Level
-from logquill.records import LogRecord, create_record
+from logquill.core.levels import Level
+from logquill.core.records import LogRecord, create_record
 from logquill.transports.batching_transport import BatchingTransport
 
 

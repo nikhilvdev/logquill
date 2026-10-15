@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from logquill import Logger
-from logquill.cli import _run_serve, build_parser
+from logquill.cli.cli import _run_serve, build_parser
 from logquill.transports.file_transport import FileTransport
 
 
@@ -64,7 +64,7 @@ def test_serve_starts_a_real_server_and_prints_its_url(tmp_path: Path) -> None:
 def test_serve_via_main_reports_the_error_for_a_bad_source(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from logquill.cli import main
+    from logquill.cli.cli import main
 
     exit_code = main(["serve", "--db", str(tmp_path / "missing.sqlite")])
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Sequence
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.transports.cloud.elasticsearch_transport import ElasticsearchTransport
 
 

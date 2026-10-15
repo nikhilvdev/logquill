@@ -12,9 +12,7 @@ from typing import Any, Iterator
 import pytest
 
 from logquill import Logger, RunPlugin
-from logquill.transports.file_transport import FileTransport
-from logquill.transports.sql.sqlite_transport import SQLiteTransport
-from logquill.webui import (
+from logquill.cli.webui import (
     STATIC_DIR,
     JSONLSource,
     SQLiteSource,
@@ -22,6 +20,8 @@ from logquill.webui import (
     search_records,
     summarize_runs,
 )
+from logquill.transports.file_transport import FileTransport
+from logquill.transports.sql.sqlite_transport import SQLiteTransport
 
 
 def _write_a_run(path: Path, run_id: str = "run-1") -> None:

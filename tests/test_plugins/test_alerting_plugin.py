@@ -3,9 +3,9 @@ from __future__ import annotations
 import threading
 import time
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
+from logquill.core.records import LogRecord
 from logquill.plugins.alerting_plugin import AlertingPlugin
-from logquill.records import LogRecord
 
 _POLL_TIMEOUT = 2.0
 _POLL_INTERVAL = 0.01

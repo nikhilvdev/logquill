@@ -8,7 +8,7 @@ from types import ModuleType
 
 import pytest
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.transports.transport import CollectingTransport
 
 _EVENT_LOGGER_NAME = "autogen_core.events"

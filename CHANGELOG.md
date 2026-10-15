@@ -4,6 +4,53 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+- Internal reorganization: the top-level modules that had grown past a
+  single implementation each are now grouped into themed subpackages —
+  `core/` (`logger`, `levels`, `records`, `context`, `exceptions`,
+  `handler`, `opt`), `runtime/` (`worker`, `shutdown`, `toggle`,
+  `runtime_level`, `serverless`), `tracing/` (`span`, `retry`, `mcp`,
+  `semconv`), `cli/` (`cli`, `webui`, `trace_tree`, `static/`), and
+  `privacy/` (`privacy`, `audit`). Every name already exported from the
+  top-level `logquill` package (`from logquill import Logger`, etc.) is
+  unaffected; only a direct deep import of one of these modules (e.g.
+  `from logquill.mcp import inbound, propagate`) needs its path updated
+  to the new location (`from logquill.tracing.mcp import ...`). The CLI's
+  packaged entry point moved from `logquill.cli:main` to
+  `logquill.cli.cli:main`, transparent to anyone invoking the installed
+  `logquill` command.
+- Metrics bridge and graph transports:
+  - `MetricsPlugin` turns log patterns into metric emissions — the
+    logs-to-metrics side of the three-pillars observability model. Every
+    record at `error_at` (default `ERROR`) or above increments an error
+    counter tagged by `logger`; any record carrying `meta.duration_ms`
+    (every span-closing record) feeds a duration histogram. Runs in
+    `after_log`, so a slow or unreachable backend never delays the record
+    it's reporting on, and a raising backend is caught by the plugin
+    pipeline the same as any other plugin. `backend` is a small
+    `MetricsBackend` protocol (`increment`/`observe`), resolved lazily to
+    `OTelMetricsBackend()` by default so importing `logquill` never pulls
+    in OpenTelemetry on its own. `StatsDBackend` (stdlib `socket`,
+    DogStatsD-style tags) and `PrometheusPushgatewayBackend` (stdlib
+    `urllib`, accumulates in memory and only sends a batched `PUT` on
+    `.push()`/`.close()`, never per-metric) cover teams not yet on OTel.
+  - `BaseGraphTransport` writes a run's span tree directly into a graph
+    database instead of a flat log: every record becomes a `:LogRecord`
+    node, `meta.parent_span_id` becomes a `PARENT_OF` edge, and
+    `meta.run_id` (falling back to `meta.trace_id`) groups a run's nodes
+    under a `:Session` via `HAS_RECORD` — all through one shared,
+    backend-portable Cypher query, so reconstructing an agent run's exact
+    call tree is a traversal, not application code walking a JSONL file.
+    Three concrete backends ship on top of it: `Neo4jTransport`
+    (`pip install logquill[neo4j]`), `FalkorDBTransport`
+    (`pip install logquill[falkordb]`), and `NeptuneTransport` (via
+    `boto3`'s openCypher support, reusing the existing `aws` extra).
+    Switching backends means swapping the transport, not touching any
+    call site. `KuzuTransport` was scoped for this release but
+    deliberately not built: Kuzu's own repository was archived by its
+    maintainers on 2025-10-10 with no release schedule, and building
+    against an archived database contradicts the "verify it's still
+    maintained before committing to it" bar every other dependency here
+    is held to.
 - Runtime intelligence:
   - `FlightRecorderPlugin` generalizes `SamplingPlugin`'s tail-based
     elevation from "a record sampling happened to drop" to "a record below

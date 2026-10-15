@@ -29,7 +29,7 @@ import threading
 from pathlib import Path
 from typing import Callable
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 
 _logger = logging.getLogger("logquill")
 

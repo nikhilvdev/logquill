@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from logquill.records import LogRecord
+from logquill.core.records import LogRecord
 
 MiddlewareFunc = Callable[[LogRecord], "LogRecord | None"]
 

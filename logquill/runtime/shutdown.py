@@ -6,11 +6,11 @@ import threading
 import weakref
 from typing import TYPE_CHECKING
 
+from logquill.runtime.worker import AsyncWorker
 from logquill.transports.transport import Transport
-from logquill.worker import AsyncWorker
 
 if TYPE_CHECKING:
-    from logquill.logger import Logger
+    from logquill.core.logger import Logger
 
 _logger = logging.getLogger("logquill")
 

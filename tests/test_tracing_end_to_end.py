@@ -10,7 +10,7 @@ with zero manual instrumentation is covered separately in
 optional-dependency faking setup that lives there.
 """
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.plugins.run_plugin import RunPlugin
 from logquill.plugins.trace_context_plugin import (
     TraceContextPlugin,

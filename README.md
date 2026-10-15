@@ -28,7 +28,7 @@ for what's landed so far.
 - **Plugin pipeline** — `ContextPlugin`, `RedactPlugin` (by key), `PIIRedactPlugin` (by pattern), `SamplingPlugin` (with tail-based elevation), `TamperEvidentPlugin` (hash-chained logs), `TraceContextPlugin` (cross-service trace correlation), and `AlertingPlugin` (`SlackAlertPlugin`/`PagerDutyAlertPlugin`/`EmailAlertPlugin`, deduplicated) out of the box; a broken plugin can't crash logging; `.use()` also accepts a plain function, no subclassing required (see [Plugins](#plugins))
 - **Agentic & harness tracing** — `.child()` loggers, `RunPlugin`, `.thought()/.action()/.observation()/.decision()`, `with agent_log.span(...)`, and framework adapters — `LangChainAdapter` (`pip install logquill[langchain]`), `LangGraphAdapter` (`pip install logquill[langgraph]`, adds checkpoint interrupt/resume events on top), `CrewAIAdapter` (`pip install logquill[crewai]`), `LlamaIndexAdapter` (`pip install logquill[llamaindex]`), `AutoGenAdapter` (`pip install logquill[autogen]`), and `OpenAIAgentsAdapter` (`pip install logquill[openai-agents]`) — see [Agentic & harness tracing](#agentic--harness-tracing)
 - **LLM calls & OpenTelemetry** — `logger.llm_call(model=, tokens_in=, tokens_out=, cost_usd=, ...)` records a first-class `llm` block, `span(capture_state=...)` records what state changed, repeated tool calls get `meta.retry_count` automatically, and `OTLPTransport` (`pip install logquill[otel]`) exports it all as real OpenTelemetry spans named and attributed per the GenAI semantic conventions; `OTelLogsTransport` sends records as OTLP logs — see [LLM calls & OpenTelemetry](#llm-calls--opentelemetry)
-- **Auto-instrumentation & MCP** — `logquill.instrument.anthropic(logger)`/`.openai(logger)`/`.litellm(logger)` patch a provider SDK so every LLM call logs itself, no call-site changes; `OpenAIAgentsAdapter` covers the OpenAI Agents SDK; `logquill.mcp` propagates trace context over MCP requests and stamps `meta.mcp.*` — see [Auto-instrumentation and MCP](#auto-instrumentation-and-mcp)
+- **Auto-instrumentation & MCP** — `logquill.instrument.anthropic(logger)`/`.openai(logger)`/`.litellm(logger)` patch a provider SDK so every LLM call logs itself, no call-site changes; `OpenAIAgentsAdapter` covers the OpenAI Agents SDK; `logquill.tracing.mcp` propagates trace context over MCP requests and stamps `meta.mcp.*` — see [Auto-instrumentation and MCP](#auto-instrumentation-and-mcp)
 - **Non-blocking async dispatch** — `Logger(async_dispatch=True)` moves transport writes onto a background thread with a bounded queue and a configurable backpressure policy (`drop_oldest`/`drop_newest`/`block`); `flush()`/`flush_async()` and a `with_lambda`/`with_cloud_function`/`with_azure_function` decorator make serverless shutdown safe — see [Async dispatch & serverless safety](#async-dispatch--serverless-safety)
 - **Zero required runtime dependencies** — stdlib only; `aiohttp` (`logquill[http]`) is opt-in, for keep-alive HTTP delivery
 - **Typed throughout** — `mypy --strict` clean on the public API
@@ -38,6 +38,8 @@ for what's landed so far.
 - **CLI** — `logquill tail app.log --level=warn --json -f` for filtering/following a JSONL log file in local dev, no extra install — see [CLI](#cli)
 - **Local-first trace viewer** — `logquill trace <run_id> --file logs.jsonl` prints an annotated span tree (streamed, bounded memory at gigabyte scale); `logquill serve` runs a small offline web UI (stdlib only — run list, span tree/waterfall, search, level filter) reading JSONL or a `SQLiteTransport` database; `logquill dev` live-renders the current run as it happens — no account, nothing leaves your machine
 - **Runtime intelligence** — `FlightRecorderPlugin` ships a run's buffered DEBUG trail only if it errors; `RunSummaryPlugin` emits one record with a run's total tokens/cost/tool calls/retries/errors; `AdaptiveSamplingPlugin` always keeps errors and slow spans while capping ordinary traffic to a bytes-per-second budget; `install_signal_level_handler`/`LevelFileWatcher`/`LevelEnvWatcher` change a logger's level without a restart — see [Runtime level control](#runtime-level-control)
+- **Metrics bridge** — `MetricsPlugin` turns ERROR/FATAL records into a counter and any `meta.duration_ms` into a histogram, tagged by logger; ships with `OTelMetricsBackend` (default), `StatsDBackend`, and `PrometheusPushgatewayBackend` — see [Metrics bridge](#metrics-bridge)
+- **Graph transports** — `Neo4jTransport`, `FalkorDBTransport`, `NeptuneTransport` write every record as a node and `parent_span_id` as a `PARENT_OF` edge, so a run's span tree is a Cypher traversal away with zero manual graph-writing code; one shared `BaseGraphTransport` means switching backends only means swapping the transport — see [Graph transports](#graph-transports)
 
 ## Install
 
@@ -418,6 +420,76 @@ logger = Logger("app", transports=[transport])
 logger.error("payment webhook failed")
 ```
 
+### Graph transports
+
+A run's `run_id`/`span_id`/`parent_span_id` already describe a tree — these
+transports write that tree directly into a graph database instead of a flat
+log, so "reconstruct this agent run's call tree" is a Cypher traversal
+instead of application code that walks a JSONL file. `BaseGraphTransport`
+owns the one query every backend runs — `MERGE` a `:LogRecord` node per
+record, a `PARENT_OF` edge from `parent_span_id`, and a `HAS_RECORD` edge
+grouping every node under a `:Session` keyed by `run_id` (or `trace_id`) —
+so switching backends means swapping the transport, not rewriting anything:
+
+```python
+from logquill import Logger, Neo4jTransport, RunPlugin
+
+class FakeSession:
+    def __init__(self, calls):
+        self._calls = calls
+    def run(self, query, parameters):
+        self._calls.append((query, parameters))
+    def __enter__(self):
+        return self
+    def __exit__(self, *exc_info):
+        pass
+
+class FakeDriver:
+    def __init__(self):
+        self.calls = []
+    def session(self, **kwargs):
+        return FakeSession(self.calls)
+    def close(self):
+        pass
+
+driver = FakeDriver()
+transport = Neo4jTransport(driver=driver, max_records=10)
+logger = Logger("agent", transports=[transport], plugins=[RunPlugin()])
+
+with logger.span("run"):
+    logger.action("call_tool", tool="search")
+logger.close()
+assert len(driver.calls) == 1  # one batched write for the whole span
+```
+
+Passing a real `neo4j.GraphDatabase.driver(uri, auth=...)` instead of a fake
+works identically — `Neo4jTransport(uri="bolt://localhost:7687", auth=("neo4j", "password"))`
+builds one lazily via the optional `neo4j` driver. Once written, the span
+tree comes back with one traversal:
+
+```cypher
+MATCH (s:Session {key: "<run_id>"})-[:HAS_RECORD]->(n)
+OPTIONAL MATCH (n)-[:PARENT_OF*0..]->(child)
+RETURN n, child
+```
+
+Each driver is a lazy, injectable dependency, the same shape as the
+SQL/NoSQL transports above:
+
+| Transport | Driver | Extra |
+|---|---|---|
+| `Neo4jTransport` | `neo4j` | `pip install logquill[neo4j]` |
+| `FalkorDBTransport` | `falkordb` | `pip install logquill[falkordb]` |
+| `NeptuneTransport` | `boto3` (`neptunedata`, openCypher) | `pip install logquill[aws]` |
+
+`KuzuTransport` was scoped for this release but deliberately not built —
+[Kuzu's own repository](https://github.com/kuzudb/kuzu) was archived by its
+maintainers on 2025-10-10 ("Kuzu is working on something new!"), with no
+release schedule. Building against an archived database contradicts the
+"verify it's still maintained before committing to it" bar every other
+dependency in this project is held to, so it's cut rather than shipped
+against a dead upstream — revisit only if the project resumes.
+
 ### Encryption-at-rest for file logs
 
 `FileTransport(encrypt_key=...)` encrypts each line with
@@ -625,7 +697,7 @@ analyzer/anonymizer; Presidio stays a real, opt-in dependency, never a
 default one.
 
 `RedactPlugin` can also target a **field classification**
-(`logquill.privacy.FIELD_CLASSES`: `secret` \| `pii` \| `content`) instead of
+(`FIELD_CLASSES`: `secret` \| `pii` \| `content`) instead of
 listing key names one by one:
 
 ```python
@@ -692,7 +764,7 @@ logquill verify app.log --sign-key <hex key> --signature <hex signature>
 Prompt/completion text, tool call arguments/results, and a span's captured
 state (`meta.input_messages`, `output_messages`, `system_instructions`,
 `tool_arguments`, `tool_result`, `state_diff` — the `content`-classed fields
-in `logquill.privacy.FIELD_CLASSES`) are governed by a per-logger policy,
+in `FIELD_CLASSES`) are governed by a per-logger policy,
 **off by default** — applied before any plugin or transport ever sees the
 value, not something a plugin has to remember to attach:
 
@@ -785,6 +857,69 @@ logger = Logger(
 
 A URL Apprise doesn't recognize raises `ValueError` right away, at startup,
 instead of silently failing on the first real alert.
+
+### Metrics bridge
+
+`MetricsPlugin` is the logs-to-metrics side of the three-pillars
+observability model: every record at `error_at` (default `ERROR`) or above
+increments an error counter tagged by `logger`, and any record carrying
+`meta.duration_ms` (every span-closing record) feeds a duration histogram —
+so dashboards and alerting don't have to re-derive these from raw log lines.
+It runs in `after_log`, after every transport has already seen the record,
+so a slow or unreachable metrics backend can never delay the log call it's
+reporting on, and a raising backend is caught by the plugin pipeline the
+same as any other plugin:
+
+```python
+from logquill import Logger, MetricsPlugin, RunPlugin
+
+logger = Logger("agent", plugins=[RunPlugin(), MetricsPlugin()])
+
+with logger.span("call_llm", duration_ms=420):
+    pass
+logger.error("rate limited")
+# logquill.duration_ms histogram gets 420; logquill.errors counter +1, tagged logger="agent"
+```
+
+`backend` defaults to `OTelMetricsBackend()` (the OTel Metrics SDK, the same
+`pip install logquill[otel]` extra `OTLPTransport` already needs, resolved
+lazily so importing `logquill` never imports OpenTelemetry on its own). Pass
+`StatsDBackend()` or `PrometheusPushgatewayBackend(...)` instead for a team
+not yet on OTel:
+
+```python
+from logquill import Logger, MetricsPlugin, StatsDBackend
+
+logger = Logger("app", plugins=[MetricsPlugin(StatsDBackend(host="localhost", port=8125))])
+logger.error("boom")  # sends "logquill.errors:1|c|#logger:app" over UDP
+```
+
+`PrometheusPushgatewayBackend` only accumulates in-memory counters/histogram
+sums on the hot path — nothing reaches the network until `.push()` (or
+`.close()`, which calls it once) sends one batched `PUT` to the gateway:
+
+```python
+from logquill import Logger, MetricsPlugin, PrometheusPushgatewayBackend
+
+class FakeSender:
+    def __init__(self):
+        self.calls = []
+    def __call__(self, url, body):
+        self.calls.append((url, body))
+
+sender = FakeSender()
+backend = PrometheusPushgatewayBackend("http://localhost:9091", job_name="app", sender=sender)
+logger = Logger("app", plugins=[MetricsPlugin(backend)])
+
+logger.error("boom")
+backend.push()  # one PUT, batched
+assert sender.calls[0][0] == "http://localhost:9091/metrics/job/app"
+```
+
+Implement the small `MetricsBackend` protocol (`increment`/`observe`) for
+any system none of these three cover. `MetricsPlugin.close()` closes the
+backend if it has a `close()` method — not called automatically by
+`Logger.close()`, the same documented convention as `AlertingPlugin.close()`.
 
 ## Agentic & harness tracing
 
@@ -1184,7 +1319,7 @@ intervening `.uninstrument()` raises, so a call is never wrapped twice.
 instrumented; see each provider module's docstring
 (`logquill.instrument.anthropic`, `.openai`, `.litellm`).
 
-**MCP (Model Context Protocol).** `logquill.mcp` propagates trace context
+**MCP (Model Context Protocol).** `logquill.tracing.mcp` propagates trace context
 over an MCP request and stamps `meta.mcp.*` on records logged while handling
 one — with no dependency on the `mcp` package itself, since both sides just
 build or read a plain dict (exactly what an MCP client's `meta=` argument and
@@ -1192,7 +1327,7 @@ a server's inbound `_meta` are):
 
 ```python
 from logquill import Logger, TraceContextPlugin
-from logquill.mcp import inbound, propagate
+from logquill.tracing.mcp import inbound, propagate
 
 # client, before calling a tool:
 await session.call_tool("search", {"q": "..."}, meta=propagate(run_id=agent_run_id))

@@ -1,6 +1,6 @@
 import pytest
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.plugins.sampling_plugin import SamplingPlugin
 from logquill.transports.transport import CollectingTransport
 

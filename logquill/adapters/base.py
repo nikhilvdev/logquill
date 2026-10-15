@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 
 
 class LogQuillAdapter:

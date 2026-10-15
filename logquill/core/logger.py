@@ -4,20 +4,24 @@ import contextlib
 import logging
 from typing import Any, Callable
 
-from logquill import shutdown
-from logquill.context import current_context
-from logquill.exceptions import LocalRedactor, format_exc_info
-from logquill.levels import Level, parse_level
-from logquill.opt import OptLogger, caller_info, resolve_lazy
+from logquill.core.context import current_context
+from logquill.core.exceptions import LocalRedactor, format_exc_info
+from logquill.core.levels import Level, parse_level
+from logquill.core.opt import OptLogger, caller_info, resolve_lazy
+from logquill.core.records import LLMBlock, LogRecord, build_llm_block, create_record
 from logquill.plugins.context_plugin import ContextPlugin
 from logquill.plugins.plugin import FunctionPlugin, MiddlewareFunc, Plugin
-from logquill.privacy import ContentCapturePolicy, apply_content_policy, parse_content_policy
-from logquill.records import LLMBlock, LogRecord, build_llm_block, create_record
-from logquill.retry import RetryTracker
-from logquill.span import SpanContext, current_span_id
-from logquill.toggle import is_enabled
+from logquill.privacy.privacy import (
+    ContentCapturePolicy,
+    apply_content_policy,
+    parse_content_policy,
+)
+from logquill.runtime import shutdown
+from logquill.runtime.toggle import is_enabled
+from logquill.runtime.worker import AsyncWorker, BackpressurePolicy
+from logquill.tracing.retry import RetryTracker
+from logquill.tracing.span import SpanContext, current_span_id
 from logquill.transports.transport import Transport
-from logquill.worker import AsyncWorker, BackpressurePolicy
 
 _logger = logging.getLogger("logquill")
 

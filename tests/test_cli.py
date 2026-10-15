@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from logquill.cli import _follow, _read_existing, _run_tail, build_parser, main
-from logquill.levels import Level
+from logquill.cli.cli import _follow, _read_existing, _run_tail, build_parser, main
+from logquill.core.levels import Level
 
 
 def _write_lines(path: Path, records: list[dict]) -> None:

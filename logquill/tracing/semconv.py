@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Literal
 
-from logquill.records import LogRecord
+from logquill.core.records import LogRecord
 
 _logger = logging.getLogger("logquill")
 

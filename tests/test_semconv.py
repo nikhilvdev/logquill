@@ -7,8 +7,9 @@ from typing import Any
 
 import pytest
 
-from logquill import Level, semconv
-from logquill.records import create_record
+from logquill import Level
+from logquill.core.records import create_record
+from logquill.tracing import semconv
 
 
 def _record(message: str = "m", *, llm: dict[str, Any] | None = None, **meta: Any) -> Any:

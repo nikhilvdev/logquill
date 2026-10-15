@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from logquill.levels import Level, parse_level
+from logquill.core.levels import Level, parse_level
 
 
 def test_level_values() -> None:

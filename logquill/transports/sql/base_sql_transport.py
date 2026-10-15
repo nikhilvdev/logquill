@@ -4,8 +4,8 @@ import json
 from abc import abstractmethod
 from typing import Any, Sequence, TypedDict
 
+from logquill.core.records import LogRecord
 from logquill.formatters import Formatter
-from logquill.records import LogRecord
 from logquill.transports.batching_transport import BatchingTransport
 
 

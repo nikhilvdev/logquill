@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from typing import Protocol, Sequence, cast
 
+from logquill.core.records import LogRecord
 from logquill.formatters import Formatter
-from logquill.records import LogRecord
 from logquill.transports.queue.base_queue_transport import BaseQueueTransport
 
 _SQS_BATCH_LIMIT = 10

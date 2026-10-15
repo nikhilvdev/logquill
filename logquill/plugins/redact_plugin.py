@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from logquill.core.records import LogRecord
 from logquill.plugins.plugin import Plugin
-from logquill.privacy import FieldClass, keys_in_class
-from logquill.records import LogRecord
+from logquill.privacy.privacy import FieldClass, keys_in_class
 
 #: The `secret`-classed keys in `logquill.privacy.FIELD_CLASSES` — kept as its
 #: own name since it's also `RedactPlugin`'s default, and existing code may

@@ -5,7 +5,7 @@ from typing import Any
 from adversarial import meta_dicts
 from hypothesis import HealthCheck, given, settings
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.plugins.context_plugin import ContextPlugin
 from logquill.plugins.pii_redact_plugin import PIIRedactPlugin
 from logquill.plugins.redact_plugin import RedactPlugin

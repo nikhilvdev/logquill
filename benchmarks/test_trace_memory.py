@@ -12,7 +12,7 @@ import tracemalloc
 from pathlib import Path
 from typing import Any, Iterator
 
-from logquill.trace_tree import build_trace
+from logquill.cli.trace_tree import build_trace
 
 #: Comfortably over 1 GB — the scale this test is meant to prove, without
 #: depending on exactly hitting it.

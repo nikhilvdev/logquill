@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from logquill.levels import Level
-from logquill.logger import Logger
-from logquill.records import create_record
+from logquill.core.levels import Level
+from logquill.core.logger import Logger
+from logquill.core.records import create_record
 from logquill.transports.file_transport import FileTransport
 
 

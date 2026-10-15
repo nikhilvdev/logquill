@@ -3,11 +3,11 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING, Any
 
-from logquill.levels import Level
-from logquill.records import LogRecord, build_llm_block
+from logquill.core.levels import Level
+from logquill.core.records import LogRecord, build_llm_block
 
 if TYPE_CHECKING:
-    from logquill.logger import Logger
+    from logquill.core.logger import Logger
 
 
 def resolve_lazy(meta: dict[str, Any]) -> dict[str, Any]:

@@ -20,7 +20,7 @@ from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from typing import Any
 
-from logquill.context import bind_context
+from logquill.core.context import bind_context
 from logquill.plugins.trace_context_plugin import (
     generate_trace_id,
     reset_traceparent,

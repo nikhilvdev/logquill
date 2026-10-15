@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from logquill.worker import AsyncWorker
+from logquill.runtime.worker import AsyncWorker
 
 _POLL_TIMEOUT = 2.0
 _POLL_INTERVAL = 0.005
@@ -211,7 +211,7 @@ def test_the_first_drop_warns_even_when_the_monotonic_clock_is_still_near_zero(
 ) -> None:
     # the monotonic clock's zero point is arbitrary (boot time on many
     # platforms), so a process started shortly after boot must still warn
-    monkeypatch.setattr("logquill.worker.time.monotonic", lambda: 5.0)
+    monkeypatch.setattr("logquill.runtime.worker.time.monotonic", lambda: 5.0)
     gate = threading.Event()
     worker = AsyncWorker(max_queue_size=1, backpressure="drop_newest")
 

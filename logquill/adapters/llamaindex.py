@@ -18,7 +18,7 @@ except ImportError as exc:
     ) from exc
 
 from logquill.adapters.base import LogQuillAdapter
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 
 # Event classes carrying no useful correlation id of their own beyond the
 # span they fired in — every `XxxStartEvent`/`XxxEndEvent`/`XxxErrorEvent`

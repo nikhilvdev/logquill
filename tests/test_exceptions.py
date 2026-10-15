@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from logquill.exceptions import format_exc_info
-from logquill.logger import Logger
+from logquill.core.exceptions import format_exc_info
+from logquill.core.logger import Logger
 
 
 def test_format_exc_info_from_exception_instance() -> None:

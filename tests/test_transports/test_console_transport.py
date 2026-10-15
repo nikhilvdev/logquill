@@ -1,6 +1,6 @@
 import io
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.transports.console_transport import ConsoleTransport
 
 

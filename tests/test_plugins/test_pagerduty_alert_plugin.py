@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock, patch
 
-from logquill.levels import Level
+from logquill.core.levels import Level
+from logquill.core.records import create_record
 from logquill.plugins.pagerduty_alert_plugin import PagerDutyAlertPlugin
-from logquill.records import create_record
 
 
 def _record(level: Level = Level.ERROR, message: str = "boom") -> object:

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from logquill.config import load_config, logger_from_env, logger_from_file
-from logquill.levels import Level
+from logquill.core.levels import Level
 from logquill.plugins.context_plugin import ContextPlugin
 from logquill.transports.console_transport import ConsoleTransport
 from logquill.transports.file_transport import FileTransport
@@ -204,7 +204,7 @@ def test_an_unknown_formatter_name_lists_the_valid_ones() -> None:
 
 
 def test_flush_at_exit_can_be_set_from_config() -> None:
-    from logquill import shutdown
+    from logquill.runtime import shutdown
 
     opted_out = load_config({"flush_at_exit": False})
     default = load_config({})

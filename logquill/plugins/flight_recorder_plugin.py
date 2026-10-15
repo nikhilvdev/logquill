@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from collections import OrderedDict
 
-from logquill.levels import Level, parse_level
+from logquill.core.levels import Level, parse_level
+from logquill.core.records import LogRecord
 from logquill.plugins.plugin import Plugin
-from logquill.records import LogRecord
 from logquill.transports.transport import Transport
 
 

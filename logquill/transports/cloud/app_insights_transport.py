@@ -4,8 +4,8 @@ import json
 import urllib.request
 from typing import Callable, Sequence
 
+from logquill.core.records import LogRecord
 from logquill.formatters import Formatter
-from logquill.records import LogRecord
 from logquill.transports.batching_transport import BatchingTransport
 
 Sender = Callable[[str, Sequence[str]], None]

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any, ContextManager, Protocol, Sequence, cast
 
+from logquill.core.records import LogRecord
 from logquill.formatters import Formatter
-from logquill.records import LogRecord
 from logquill.transports.batching_transport import BatchingTransport
 
 

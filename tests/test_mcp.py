@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from logquill import Logger, RunPlugin, TraceContextPlugin
-from logquill.mcp import RUN_ID_KEY, TRACEPARENT_KEY, inbound, propagate
+from logquill.tracing.mcp import RUN_ID_KEY, TRACEPARENT_KEY, inbound, propagate
 from logquill.transports.transport import CollectingTransport
 
 

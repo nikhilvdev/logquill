@@ -1,7 +1,7 @@
 import json
 
+from logquill.core.logger import Logger
 from logquill.formatter import JSONFormatter
-from logquill.logger import Logger
 
 
 def test_json_formatter_round_trips_record() -> None:

@@ -4,8 +4,8 @@ import logging
 import urllib.request
 from typing import Callable, Literal, Sequence
 
+from logquill.core.records import LogRecord
 from logquill.formatters import Formatter
-from logquill.records import LogRecord
 from logquill.transports.transport import Transport
 
 Sender = Callable[[str, Sequence[str]], None]

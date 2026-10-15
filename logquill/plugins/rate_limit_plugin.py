@@ -4,8 +4,8 @@ import time
 from collections import OrderedDict
 from typing import Callable, Hashable
 
+from logquill.core.records import LogRecord
 from logquill.plugins.plugin import Plugin
-from logquill.records import LogRecord
 
 RateLimitKeyFunc = Callable[[LogRecord], Hashable]
 

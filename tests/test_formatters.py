@@ -9,8 +9,8 @@ from logquill import (
     TextFormatter,
     parse_logfmt,
 )
-from logquill.levels import Level
-from logquill.records import LogRecord, create_record
+from logquill.core.levels import Level
+from logquill.core.records import LogRecord, create_record
 
 
 def _record(message: str = "user signed up", **meta: object) -> LogRecord:

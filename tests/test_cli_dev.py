@@ -4,7 +4,7 @@ import io
 from pathlib import Path
 
 from logquill import Logger, RunPlugin
-from logquill.cli import _CLEAR_SCREEN, _run_dev, build_parser
+from logquill.cli.cli import _CLEAR_SCREEN, _run_dev, build_parser
 from logquill.transports.file_transport import FileTransport
 
 
@@ -60,7 +60,7 @@ def test_dev_redraws_when_new_records_for_the_tracked_run_arrive(tmp_path: Path)
         logger.action("second", tool="search")
 
     # patch time.sleep so the poll loop's single iteration does real work
-    import logquill.cli as cli_module
+    import logquill.cli.cli as cli_module
 
     original_sleep = cli_module.time.sleep
     cli_module.time.sleep = lambda _s: append_more()  # type: ignore[assignment]
@@ -83,7 +83,7 @@ def test_dev_follows_a_new_run_once_the_old_one_finishes(tmp_path: Path) -> None
     args = build_parser().parse_args(["dev", str(path)])
     out = io.StringIO()
 
-    import logquill.cli as cli_module
+    import logquill.cli.cli as cli_module
 
     second = _logger_for(path, "run-2")
 
@@ -109,7 +109,7 @@ def test_an_explicit_run_id_is_never_overridden_by_a_newer_run(tmp_path: Path) -
     args = build_parser().parse_args(["dev", str(path), "--run-id", "run-1"])
     out = io.StringIO()
 
-    import logquill.cli as cli_module
+    import logquill.cli.cli as cli_module
 
     second = _logger_for(path, "run-2")
 

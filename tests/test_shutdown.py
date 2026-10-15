@@ -5,7 +5,8 @@ import sys
 import textwrap
 from pathlib import Path
 
-from logquill import Logger, shutdown
+from logquill import Logger
+from logquill.runtime import shutdown
 from logquill.transports.transport import CollectingTransport
 
 _SCRIPT = """

@@ -4,7 +4,7 @@ import logging
 
 import pytest
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.transports.sql.postgres_transport import PostgresCursorLike, PostgresTransport
 
 

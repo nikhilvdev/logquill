@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from logquill.core.records import LogRecord
 from logquill.formatters import Formatter, JSONFormatter
-from logquill.records import LogRecord
 
 
 class Transport(ABC):

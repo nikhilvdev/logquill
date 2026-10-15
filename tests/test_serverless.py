@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from logquill.logger import Logger
-from logquill.serverless import with_azure_function, with_cloud_function, with_lambda
+from logquill.core.logger import Logger
+from logquill.runtime.serverless import with_azure_function, with_cloud_function, with_lambda
 from logquill.transports.transport import CollectingTransport
 
 

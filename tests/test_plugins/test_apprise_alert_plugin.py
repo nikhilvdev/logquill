@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 from logquill import AppriseAlertPlugin, Level, Logger
-from logquill.records import LogRecord, create_record
+from logquill.core.records import LogRecord, create_record
 
 
 class FakeApprise:

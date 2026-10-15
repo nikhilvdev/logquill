@@ -9,7 +9,7 @@ from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from logquill import JSONFormatter, LogfmtFormatter, TextFormatter, parse_logfmt
-from logquill.records import LogRecord
+from logquill.core.records import LogRecord
 
 _settings = settings(max_examples=150, suppress_health_check=[HealthCheck.too_slow])
 

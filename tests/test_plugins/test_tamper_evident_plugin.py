@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.plugins.tamper_evident_plugin import TamperEvidentPlugin
 from logquill.transports.transport import CollectingTransport
 

@@ -4,7 +4,7 @@ import functools
 import inspect
 from typing import Any, Callable, Sequence, TypeVar, cast
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 
 F = TypeVar("F", bound=Callable[..., Any])
 

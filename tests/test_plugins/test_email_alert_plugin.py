@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from logquill.levels import Level
+from logquill.core.levels import Level
+from logquill.core.records import create_record
 from logquill.plugins.email_alert_plugin import EmailAlertPlugin
-from logquill.records import create_record
 
 
 def _record(message: str = "boom") -> object:

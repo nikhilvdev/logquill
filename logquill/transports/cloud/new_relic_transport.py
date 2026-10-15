@@ -9,8 +9,8 @@ import urllib.request
 from email.utils import parsedate_to_datetime
 from typing import Callable, Literal, Sequence, TypedDict, cast
 
+from logquill.core.records import LogRecord
 from logquill.formatters import Formatter
-from logquill.records import LogRecord
 from logquill.transports.batching_transport import BatchingTransport
 
 NewRelicRegion = Literal["US", "EU"]

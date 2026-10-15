@@ -3,7 +3,7 @@ import types
 
 import pytest
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.plugins.trace_context_plugin import (
     TraceContextPlugin,
     parse_trace_header,
