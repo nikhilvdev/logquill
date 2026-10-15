@@ -5,7 +5,7 @@ import re
 from collections.abc import Mapping
 from typing import Any
 
-from logquill.records import LogRecord
+from logquill.core.records import LogRecord
 
 #: The core record fields, always emitted first. A `meta` key with one of
 #: these names is emitted as `meta.<key>` so it can't shadow the field the

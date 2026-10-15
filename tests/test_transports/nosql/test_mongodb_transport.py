@@ -5,7 +5,7 @@ from typing import Any, Sequence
 
 import pytest
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.transports.nosql.mongodb_transport import MongoDBTransport
 
 

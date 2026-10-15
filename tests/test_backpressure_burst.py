@@ -11,7 +11,7 @@ import time
 import pytest
 
 from logquill import Logger
-from logquill.records import LogRecord
+from logquill.core.records import LogRecord
 from logquill.transports.transport import CollectingTransport
 
 BURST = 30_000

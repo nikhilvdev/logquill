@@ -4,8 +4,8 @@ import json
 import urllib.request
 from typing import Any
 
+from logquill.core.records import LogRecord
 from logquill.plugins.alerting_plugin import AlertingPlugin
-from logquill.records import LogRecord
 
 
 class SlackAlertPlugin(AlertingPlugin):

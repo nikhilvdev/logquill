@@ -1,5 +1,5 @@
 from logquill.adapters.base import LogQuillAdapter
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 
 
 def test_holds_a_reference_to_the_given_logger() -> None:

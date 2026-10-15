@@ -4,7 +4,7 @@ import json
 from collections.abc import Mapping
 from typing import Any
 
-from logquill.records import LogRecord
+from logquill.core.records import LogRecord
 
 
 def format_text(record: Mapping[str, Any]) -> str:

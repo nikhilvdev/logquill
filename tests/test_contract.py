@@ -21,7 +21,7 @@ from logquill import (
     TraceContextPlugin,
     parse_record,
 )
-from logquill.records import LEGACY_SCHEMA_VERSION, SCHEMA_VERSION, create_record
+from logquill.core.records import LEGACY_SCHEMA_VERSION, SCHEMA_VERSION, create_record
 from logquill.transports.transport import CollectingTransport
 
 SCHEMA_DIR = Path(__file__).resolve().parent.parent / "schema"

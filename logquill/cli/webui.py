@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import parse_qs, urlsplit
 
-from logquill.trace_tree import build_trace
+from logquill.cli.trace_tree import build_trace
 
 _logger = logging.getLogger("logquill")
 

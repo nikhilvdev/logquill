@@ -4,7 +4,7 @@ import gzip
 import json
 from typing import Callable
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.transports.cloud.new_relic_transport import (
     NewRelicSenderResult,
     NewRelicTransport,
@@ -50,7 +50,7 @@ def test_region_url_gzip_body_and_headers() -> None:
 
 def test_stripping_event_type_keeps_the_schema_version_and_llm_block() -> None:
     from logquill import Level
-    from logquill.records import create_record
+    from logquill.core.records import create_record
 
     sender = FakeSender()
     transport = NewRelicTransport(license_key="lk-1", sender=sender, max_records=1)

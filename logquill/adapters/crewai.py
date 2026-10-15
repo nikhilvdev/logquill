@@ -29,8 +29,8 @@ except ImportError as exc:
     ) from exc
 
 from logquill.adapters.base import LogQuillAdapter
-from logquill.logger import Logger
-from logquill.span import SpanContext
+from logquill.core.logger import Logger
+from logquill.tracing.span import SpanContext
 
 
 def _span_ids(event: Any) -> dict[str, Any]:

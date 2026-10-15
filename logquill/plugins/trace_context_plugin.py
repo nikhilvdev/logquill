@@ -4,8 +4,8 @@ import re
 import secrets
 from contextvars import ContextVar, Token
 
+from logquill.core.records import LogRecord
 from logquill.plugins.plugin import Plugin
-from logquill.records import LogRecord
 
 _current_traceparent: ContextVar[str | None] = ContextVar("logquill_traceparent", default=None)
 

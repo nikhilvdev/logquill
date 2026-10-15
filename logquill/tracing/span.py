@@ -8,10 +8,10 @@ from contextvars import ContextVar, Token
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Callable
 
-from logquill.levels import Level
+from logquill.core.levels import Level
 
 if TYPE_CHECKING:
-    from logquill.logger import Logger
+    from logquill.core.logger import Logger
 
 _logger = logging.getLogger("logquill")
 

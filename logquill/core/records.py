@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import Any, TypedDict, cast
 
-from logquill.levels import Level
+from logquill.core.levels import Level
 
 _logger = logging.getLogger("logquill")
 

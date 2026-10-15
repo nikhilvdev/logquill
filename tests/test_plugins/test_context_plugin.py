@@ -1,4 +1,4 @@
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.plugins.context_plugin import ContextPlugin
 
 

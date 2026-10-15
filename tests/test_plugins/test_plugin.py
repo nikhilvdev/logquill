@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
+from logquill.core.records import LogRecord
 from logquill.plugins.plugin import Plugin
-from logquill.records import LogRecord
 from logquill.transports.transport import CollectingTransport
 
 

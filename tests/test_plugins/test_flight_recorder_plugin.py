@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.plugins.flight_recorder_plugin import FlightRecorderPlugin
 from logquill.transports.transport import CollectingTransport
 

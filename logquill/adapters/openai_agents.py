@@ -23,8 +23,8 @@ except ImportError as exc:
     ) from exc
 
 from logquill.adapters.base import LogQuillAdapter
-from logquill.logger import Logger
-from logquill.span import SpanContext, new_span_id
+from logquill.core.logger import Logger
+from logquill.tracing.span import SpanContext, new_span_id
 
 
 def _agent_name(agent: Any) -> str:

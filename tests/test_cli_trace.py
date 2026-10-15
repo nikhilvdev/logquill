@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from logquill import Logger, RunPlugin
-from logquill.cli import _run_trace, build_parser, main
+from logquill.cli.cli import _run_trace, build_parser, main
 from logquill.transports.file_transport import FileTransport
 
 

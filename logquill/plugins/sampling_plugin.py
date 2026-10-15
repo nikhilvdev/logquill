@@ -4,9 +4,9 @@ import random
 from collections import OrderedDict
 from typing import Callable
 
-from logquill.levels import Level, parse_level
+from logquill.core.levels import Level, parse_level
+from logquill.core.records import LogRecord
 from logquill.plugins.plugin import Plugin
-from logquill.records import LogRecord
 from logquill.transports.transport import Transport
 
 

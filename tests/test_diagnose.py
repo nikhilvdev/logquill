@@ -5,8 +5,8 @@ import logging
 import pytest
 
 from logquill import Logger, PIIRedactPlugin, Plugin, RedactPlugin
-from logquill import exceptions as exceptions_module
-from logquill.exceptions import format_exc_info
+from logquill.core import exceptions as exceptions_module
+from logquill.core.exceptions import format_exc_info
 from logquill.transports.transport import CollectingTransport
 
 # Obviously fake values, kept in constants rather than assigned as literals to

@@ -4,8 +4,8 @@ import threading
 import time
 from typing import Any
 
-from logquill.logger import Logger
-from logquill.records import LogRecord
+from logquill.core.logger import Logger
+from logquill.core.records import LogRecord
 from logquill.transports.transport import CollectingTransport
 
 _POLL_TIMEOUT = 2.0

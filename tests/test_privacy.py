@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from logquill import Logger
-from logquill.privacy import (
+from logquill.privacy.privacy import (
     CONTENT_FIELDS,
     FIELD_CLASSES,
     apply_content_policy,

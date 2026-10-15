@@ -5,8 +5,8 @@ import logging
 from abc import abstractmethod
 from typing import Generic, Sequence, TypeVar, cast
 
+from logquill.core.records import LogRecord
 from logquill.formatters import Formatter
-from logquill.records import LogRecord
 from logquill.transports.transport import Transport
 
 T = TypeVar("T")

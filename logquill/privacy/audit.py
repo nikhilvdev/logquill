@@ -14,15 +14,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from logquill.levels import Level
-from logquill.logger import Logger
+from logquill.core.levels import Level
+from logquill.core.logger import Logger
+from logquill.core.records import (
+    LogRecord,  # noqa: F401 — resolves MiddlewareFunc's forward reference
+)
 from logquill.plugins.context_plugin import ContextPlugin
 from logquill.plugins.pii_redact_plugin import PIIRedactPlugin
 from logquill.plugins.plugin import MiddlewareFunc, Plugin
 from logquill.plugins.redact_plugin import RedactPlugin
 from logquill.plugins.tamper_evident_plugin import TamperEvidentPlugin
-from logquill.privacy import ContentCapturePolicy
-from logquill.records import LogRecord  # noqa: F401 — resolves MiddlewareFunc's forward reference
+from logquill.privacy.privacy import ContentCapturePolicy
 from logquill.transports.transport import Transport
 
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 
-from logquill.context import bind_context, current_context
-from logquill.logger import Logger
+from logquill.core.context import bind_context, current_context
+from logquill.core.logger import Logger
 
 
 def test_bound_context_appears_in_meta_without_manual_passing() -> None:

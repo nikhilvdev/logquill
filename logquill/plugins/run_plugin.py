@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import uuid
 
+from logquill.core.records import LogRecord
 from logquill.plugins.plugin import Plugin
-from logquill.records import LogRecord
 
 
 class RunPlugin(Plugin):

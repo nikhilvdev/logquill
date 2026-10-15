@@ -4,9 +4,9 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any
 
-from logquill.levels import Level
+from logquill.core.levels import Level
+from logquill.core.records import LogRecord, create_record
 from logquill.plugins.plugin import Plugin
-from logquill.records import LogRecord, create_record
 from logquill.transports.transport import Transport
 
 

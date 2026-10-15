@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, Sequence
 
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.transports.sql.sqlite_transport import SQLiteConnectionLike, SQLiteTransport
 
 

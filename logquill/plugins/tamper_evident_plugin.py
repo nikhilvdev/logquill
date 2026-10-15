@@ -7,8 +7,8 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from logquill.core.records import LEGACY_SCHEMA_VERSION, LogRecord
 from logquill.plugins.plugin import Plugin
-from logquill.records import LEGACY_SCHEMA_VERSION, LogRecord
 
 GENESIS_HASH = "0" * 64
 

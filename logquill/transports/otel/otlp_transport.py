@@ -4,9 +4,9 @@ import logging
 import threading
 from typing import Any
 
-from logquill import semconv
+from logquill.core.records import LogRecord
 from logquill.formatters import Formatter
-from logquill.records import LogRecord
+from logquill.tracing import semconv
 from logquill.transports.otel import _ids
 from logquill.transports.transport import Transport
 

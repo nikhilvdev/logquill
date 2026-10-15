@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from logquill.records import LogRecord
+from logquill.core.records import LogRecord
 
 
 class JSONFormatter:

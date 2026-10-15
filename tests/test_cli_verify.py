@@ -4,7 +4,7 @@ import io
 from pathlib import Path
 
 from logquill import AuditLogger
-from logquill.cli import _run_verify, build_parser, main
+from logquill.cli.cli import _run_verify, build_parser, main
 from logquill.transports.file_transport import FileTransport
 
 

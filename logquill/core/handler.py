@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from logquill.levels import Level
+from logquill.core.levels import Level
 
 if TYPE_CHECKING:
-    from logquill.logger import Logger
+    from logquill.core.logger import Logger
 
 # Attributes every stdlib `logging.LogRecord` carries for its own bookkeeping
 # (formatting, source location, timing) — excluded from the `meta` a bridged

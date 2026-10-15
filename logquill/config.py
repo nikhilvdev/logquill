@@ -6,8 +6,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from logquill.core.logger import Logger
 from logquill.formatters import Formatter, JSONFormatter, LogfmtFormatter, TextFormatter
-from logquill.logger import Logger
 from logquill.plugins.context_plugin import ContextPlugin
 from logquill.plugins.pii_redact_plugin import PIIRedactPlugin
 from logquill.plugins.plugin import Plugin

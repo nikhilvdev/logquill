@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from logquill import Logger
-from logquill.retry import RetryTracker
+from logquill.tracing.retry import RetryTracker
 from logquill.transports.transport import CollectingTransport
 
 

@@ -4,8 +4,8 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from logquill.core.records import LogRecord
 from logquill.plugins.plugin import Plugin
-from logquill.records import LogRecord
 
 #: Syntactic (not semantic) patterns — matched on shape, so both false
 #: positives (a random 9-digit number) and false negatives (anything that

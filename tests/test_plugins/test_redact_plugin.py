@@ -1,4 +1,4 @@
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 from logquill.plugins.redact_plugin import RedactPlugin
 
 
@@ -32,7 +32,7 @@ def test_custom_keys_and_replacement() -> None:
 
 
 def test_classes_adds_every_key_tagged_with_that_class() -> None:
-    from logquill.privacy import keys_in_class
+    from logquill.privacy.privacy import keys_in_class
 
     plugin = RedactPlugin(keys=(), classes=["secret"])
 

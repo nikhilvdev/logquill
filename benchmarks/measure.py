@@ -20,7 +20,7 @@ import tracemalloc
 from typing import Callable
 
 from logquill import ContextPlugin, Logger, PIIRedactPlugin, Plugin, RedactPlugin
-from logquill.records import LogRecord
+from logquill.core.records import LogRecord
 from logquill.transports.transport import Transport
 
 #: The most a metric may be before the build fails. Each is a few times what

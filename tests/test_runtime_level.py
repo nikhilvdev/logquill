@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from logquill import Level, Logger
-from logquill.runtime_level import (
+from logquill.runtime.runtime_level import (
     LevelEnvWatcher,
     LevelFileWatcher,
     install_signal_level_handler,
@@ -85,7 +85,7 @@ def test_an_invalid_level_value_warns_and_leaves_the_level_unchanged(
 def test_without_sigusr1_on_this_platform_raises_unless_an_explicit_signum_is_given(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import logquill.runtime_level as module
+    import logquill.runtime.runtime_level as module
 
     class NoSigUsr1:
         def getsignal(self, *a: object) -> object:

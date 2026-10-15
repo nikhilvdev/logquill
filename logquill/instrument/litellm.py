@@ -17,8 +17,8 @@ import functools
 import time
 from typing import Any
 
+from logquill.core.logger import Logger
 from logquill.instrument._util import Instrumenter, Patch, apply, record_safely
-from logquill.logger import Logger
 
 
 def _provider(response: Any) -> str | None:

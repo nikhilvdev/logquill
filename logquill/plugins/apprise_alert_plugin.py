@@ -4,8 +4,8 @@ import threading
 from collections.abc import Sequence
 from typing import Any
 
+from logquill.core.records import LogRecord
 from logquill.plugins.alerting_plugin import AlertingPlugin
-from logquill.records import LogRecord
 
 # Apprise's own notification types, which each service maps onto its native
 # severity (a color, an emoji, a priority).

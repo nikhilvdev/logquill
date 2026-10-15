@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from logquill import Logger, RunPlugin
-from logquill.trace_tree import Rollup, TraceBuilder, build_trace, render_tree
+from logquill.cli.trace_tree import Rollup, TraceBuilder, build_trace, render_tree
 from logquill.transports.transport import CollectingTransport
 
 

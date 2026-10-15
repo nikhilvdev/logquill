@@ -12,7 +12,7 @@ except ImportError as exc:
     ) from exc
 
 from logquill.adapters.base import LogQuillAdapter
-from logquill.logger import Logger
+from logquill.core.logger import Logger
 
 _ERROR_EVENT_NAMES = {
     "MessageHandlerException": "message_handler_exception",

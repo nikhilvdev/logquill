@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 
-from logquill.handler import LogQuillHandler
-from logquill.logger import Logger
+from logquill.core.handler import LogQuillHandler
+from logquill.core.logger import Logger
 from logquill.transports.transport import CollectingTransport
 
 

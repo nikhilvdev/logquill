@@ -1,5 +1,5 @@
-from logquill.levels import Level
-from logquill.logger import Logger
+from logquill.core.levels import Level
+from logquill.core.logger import Logger
 
 
 def test_info_produces_well_formed_record() -> None:

@@ -11,11 +11,11 @@ import time
 from pathlib import Path
 from typing import IO, Any, Callable, Sequence
 
+from logquill.cli.trace_tree import build_trace, render_tree
+from logquill.cli.webui import JSONLSource, RecordSource, SQLiteSource, TraceViewerServer
+from logquill.core.levels import Level, parse_level
 from logquill.formatters import format_text
-from logquill.levels import Level, parse_level
 from logquill.plugins.tamper_evident_plugin import verify_chain_detailed, verify_signed_chain
-from logquill.trace_tree import build_trace, render_tree
-from logquill.webui import JSONLSource, RecordSource, SQLiteSource, TraceViewerServer
 
 _COLORS = {
     Level.TRACE: "\x1b[90m",
