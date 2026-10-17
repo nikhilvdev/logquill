@@ -31,3 +31,4 @@ Thumbs.db
 *.log
 *.log.[0-9]
 CLAUDE.md
+.vscode/

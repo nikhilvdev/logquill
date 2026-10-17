@@ -2,8 +2,35 @@
 
 All notable changes to this project are documented in this file.
 
-## Unreleased
+## 2.0.0 - 2026-10-18
 
+- Fixed: `ElasticsearchTransport` now actually writes [Elastic Common
+  Schema](https://www.elastic.co/guide/en/ecs/current/ecs-reference.html)
+  fields (`@timestamp`, `log.level`, `service.name`, and, when present,
+  `trace.id`/`span.id`/`error.message`/`error.stack_trace`) alongside
+  LogQuill's own fields, via a new internal `ecs_mapper` — these are what
+  make Kibana's default Discover view, dashboards, and alerting rules
+  work on this data with zero manual field mapping, and were documented
+  as part of this transport from early on but never actually implemented.
+  The document body is now always JSON, built directly from the ECS
+  mapping; the `formatter` constructor parameter (inherited from
+  `BatchingTransport`) no longer shapes it, since Elasticsearch's bulk API
+  requires one JSON object per line regardless of formatter.
+- Docs and 2.0.0 release prep: a starter Kibana dashboard
+  (`docs/kibana/logquill-dashboard.ndjson`) — an index pattern, a recent-logs
+  saved search, and two visualizations (records by level over time, records
+  by service) — importable via Kibana's Saved Objects UI, built on the ECS
+  fix above; `MIGRATING.md` extended to cover the license change, the
+  module reorganization below, and every feature added since the 1.x → 2.0
+  contract work, with pointers into the README rather than duplicating it;
+  every README code example re-verified against the current source, which
+  caught and fixed two real bugs: the `span(capture_state=...)` example
+  didn't account for `state_diff` being a `content`-classed field (off by
+  default since the privacy policy work), and the `diagnose=True` example
+  passed a secret as a literal at the call site, which Python's traceback
+  source-line echo reveals regardless of `redact_local` — rewritten to bind
+  it to a correctly-named variable first, which is also what the feature
+  actually protects against.
 - **Breaking: license change.** Starting with this release, `logquill` is
   source-available under [FSL-1.1-MIT](LICENSE) (the Functional Source
   License, MIT Future variant) instead of MIT. Free for internal use,
