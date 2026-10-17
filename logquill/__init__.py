@@ -78,7 +78,7 @@ from logquill.transports.sql.postgres_transport import PostgresTransport
 from logquill.transports.sql.sqlite_transport import SQLiteTransport
 from logquill.transports.transport import CollectingTransport, Transport
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 
 __all__ = [
     "AdaptiveSamplingPlugin",

@@ -437,6 +437,43 @@ pauses sends until it elapses — dropping (not requeuing) any batch
 flushed during that window, since New Relic blocks the rest of that
 minute on a rate-limit breach anyway.
 
+**`ElasticsearchTransport` is where Kibana support lives** — Kibana never
+ingests data itself, it only visualizes what's already in Elasticsearch.
+Every document carries [Elastic Common Schema](https://www.elastic.co/guide/en/ecs/current/ecs-reference.html)
+fields (`@timestamp`, `log.level`, `service.name`, and, when present,
+`trace.id`/`span.id`/`error.message`/`error.stack_trace`) alongside
+LogQuill's own fields — ECS is permissive about extra fields, so nothing
+is lost, but the *standard* fields being named correctly is what makes
+Kibana's default Discover view, dashboards, and alerting rules work with
+zero manual field mapping:
+
+```python
+import json
+from logquill import ElasticsearchTransport, Logger
+
+class FakeSender:
+    def __init__(self):
+        self.calls = []
+    def __call__(self, url, batch):
+        self.calls.append((url, batch))
+
+sender = FakeSender()
+transport = ElasticsearchTransport(
+    url="http://localhost:9200", index="app-logs", sender=sender, max_records=1
+)
+logger = Logger("app", transports=[transport])
+
+logger.error("payment failed")
+
+_, lines = sender.calls[0]
+document = json.loads(lines[1])  # lines[0] is the bulk API's index action
+assert document["message"] == "payment failed"  # LogQuill's own field
+assert document["log"] == {"level": "error"}    # added alongside it
+```
+
+A starter Kibana dashboard (importable via Kibana's Saved Objects UI) built
+on these fields ships under [`docs/kibana/`](docs/kibana/).
+
 `SyslogTransport` sends each record as one RFC 5424 message over UDP
 (default) or TCP — stdlib `socket` only, no dependency, and not a batching
 transport (syslog is one-message-per-call, unlike the HTTP-API transports
@@ -1220,13 +1257,16 @@ to receive it.
 **What changed during a step.** `span(name, capture_state=...)` calls your
 function on entering and leaving the block and records what differs as
 `meta.state_diff` — only the keys that changed, deep-copied so in-place
-mutation is seen, and omitted if nothing changed:
+mutation is seen, and omitted if nothing changed. `state_diff` is a
+`content`-classed field (see [Content capture policy](#content-capture-policy)),
+so it's redacted by default — opt in with `content_policy="full"` (or
+`"hash"`/`"truncate"`) on the `Logger`:
 
 ```python
 from logquill import CollectingTransport, Logger
 
 sink = CollectingTransport()
-logger = Logger("app.agent", transports=[sink])
+logger = Logger("app.agent", transports=[sink], content_policy="full")
 state = {"items": 1, "user": "ada"}
 
 with logger.span("add_item", capture_state=lambda: state):
@@ -1235,8 +1275,8 @@ with logger.span("add_item", capture_state=lambda: state):
 assert sink.records[0]["meta"]["state_diff"] == {"before": {"items": 1}, "after": {"items": 2}}
 ```
 
-`state_diff` lands in `meta`, so `PIIRedactPlugin` sees it; `RedactPlugin` only
-matches top-level keys, so don't capture secrets.
+Once captured, `state_diff` lands in `meta` like any other field — `PIIRedactPlugin`
+scans it, and `RedactPlugin` only matches top-level keys, so don't capture secrets.
 
 **Retries.** An `.action()` that names its tool (`tool="search"`) is tracked:
 if the same call — same tool, same enclosing span, same `tool_call_id` if you
@@ -1623,7 +1663,8 @@ def login(user, password):
 
 
 try:
-    login("ada", "hunter2")
+    password = "hunter2"  # e.g. from a submitted form
+    login("ada", password)
 except PermissionError:
     record = logger.error("login failed", diagnose=True)
 
@@ -1631,6 +1672,14 @@ assert "user = 'ada'" in record["meta"]["stack"]
 assert "hunter2" not in record["meta"]["stack"]
 assert "password = ***" in record["meta"]["stack"]
 ```
+
+Note what this doesn't catch: Python 3.11+ tracebacks echo the *source line*
+itself (`login("ada", password)`), not just captured locals — so a secret
+passed as a literal at the call site (`login("ada", "hunter2")`) would still
+appear verbatim in that echoed line, since there's no variable name there for
+`redact_local` to match against. Keep secrets in a named variable rather than
+inline at the call site, and `diagnose=True` output genuinely has nothing left
+to leak.
 
 `LogQuillHandler` bridges stdlib `logging` calls — including from
 third-party libraries you don't control — into a `Logger`, so they flow
