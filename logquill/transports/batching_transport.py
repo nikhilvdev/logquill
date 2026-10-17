@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from abc import abstractmethod
 from typing import Generic, Sequence, TypeVar, cast
 
@@ -24,6 +25,16 @@ class BatchingTransport(Transport, Generic[T]):
     hit, checked after every `write()`. `_send_batch` is never called with an
     empty batch, and a failing send is caught and logged rather than
     propagated — a slow or down sink can never crash the caller's process.
+
+    `write()`/`flush()` take a lock around the buffer swap: with
+    `Logger(async_dispatch=False)` (the default), transport writes run on
+    whatever thread called the logger, so one transport instance shared by a
+    `Logger` used from multiple application threads would otherwise race on
+    `_buffer`/`_buffer_bytes` — two threads could both pass the `max_records`
+    check before either flushes, or a `flush()` on one thread could swap the
+    buffer out from under an `append()` on another. The lock is held only
+    around the in-memory buffer mutation, never around `_send_batch` itself,
+    so a slow or blocked sink still can't stall a concurrent `write()`.
     """
 
     def __init__(
@@ -41,6 +52,7 @@ class BatchingTransport(Transport, Generic[T]):
         self.max_bytes = max_bytes
         self._buffer: list[T] = []
         self._buffer_bytes = 0
+        self._buffer_lock = threading.Lock()
 
     def _to_item(self, formatted: str, record: LogRecord) -> T:
         return cast(T, record)
@@ -52,9 +64,14 @@ class BatchingTransport(Transport, Generic[T]):
         """Buffers `record` (converted via `_to_item`) and triggers a
         `flush()` as soon as either `max_records` or `max_bytes` is reached."""
         item = self._to_item(formatted, record)
-        self._buffer.append(item)
-        self._buffer_bytes += self._size_of(item)
-        if len(self._buffer) >= self.max_records or self._buffer_bytes >= self.max_bytes:
+        size = self._size_of(item)
+        with self._buffer_lock:
+            self._buffer.append(item)
+            self._buffer_bytes += size
+            should_flush = (
+                len(self._buffer) >= self.max_records or self._buffer_bytes >= self.max_bytes
+            )
+        if should_flush:
             self.flush()
 
     def flush(self) -> None:
@@ -62,10 +79,11 @@ class BatchingTransport(Transport, Generic[T]):
         the buffer first so a failing send doesn't retry the same batch on
         the next flush; a send failure is caught and logged, never raised
         to the caller. No-op if nothing is buffered."""
-        if not self._buffer:
-            return
-        batch, self._buffer = self._buffer, []
-        self._buffer_bytes = 0
+        with self._buffer_lock:
+            if not self._buffer:
+                return
+            batch, self._buffer = self._buffer, []
+            self._buffer_bytes = 0
         try:
             self._send_batch(batch)
         except Exception:

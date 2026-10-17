@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Callable
+
 import pytest
 
 from logquill import Level, Logger
@@ -155,3 +157,53 @@ def test_negative_depth_is_rejected() -> None:
 
     with pytest.raises(ValueError, match="depth"):
         logger.opt(depth=-1)
+
+
+def test_opt_with_the_same_options_returns_the_same_cached_instance() -> None:
+    """The common idiom is `logger.opt(lazy=True).debug(...)` called inline
+    on every log call — this proves it doesn't allocate a fresh `OptLogger`
+    each time."""
+    logger, _ = _logger()
+
+    first = logger.opt(lazy=True, depth=1)
+    second = logger.opt(lazy=True, depth=1)
+
+    assert first is second
+
+
+def test_opt_with_different_options_returns_different_instances() -> None:
+    logger, _ = _logger()
+
+    assert logger.opt(lazy=True) is not logger.opt(lazy=False)
+    assert logger.opt(depth=0) is not logger.opt(depth=1)
+    assert logger.opt(depth=None) is not logger.opt(depth=0)
+
+
+def test_a_cached_opt_view_still_behaves_correctly_across_repeated_use() -> None:
+    logger, sink = _logger(level="INFO")
+    calls: list[int] = []
+
+    def expensive(value: int) -> Callable[[], int]:
+        def compute() -> int:
+            calls.append(value)
+            return value
+
+        return compute
+
+    view = logger.opt(lazy=True)
+    assert view.debug("filtered out", dump=expensive(1)) is None
+    assert calls == []
+
+    record = view.info("emitted", dump=expensive(2))
+    assert record is not None
+    assert calls == [2]
+    assert sink.records[0]["meta"]["dump"] == 2
+
+
+def test_the_opt_cache_is_bounded() -> None:
+    logger, _ = _logger()
+
+    for depth in range(64):
+        logger.opt(depth=depth)
+
+    assert len(logger._opt_cache) <= logger._OPT_CACHE_MAX

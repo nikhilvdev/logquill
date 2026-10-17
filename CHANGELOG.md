@@ -4,6 +4,53 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+- **Breaking: license change.** Starting with this release, `logquill` is
+  source-available under [FSL-1.1-MIT](LICENSE) (the Functional Source
+  License, MIT Future variant) instead of MIT. Free for internal use,
+  non-commercial education/research, and professional services you provide
+  to a licensee; a commercial product or service that competes with
+  logquill itself needs a separate commercial license from the author. Each
+  version converts to plain MIT two years after that version's own release.
+  **This is not retroactive** — 1.0.0 and every earlier release already on
+  PyPI remain MIT, unaffected. See the [License](README.md#license) section
+  of the README for the full explanation.
+- Performance and platform hardening:
+  - `JSONFormatter(backend="orjson")` (`pip install logquill[fast]`) swaps
+    the stdlib `json` module for the Rust-backed `orjson` library — same
+    compact output, less CPU per call under sustained logging volume.
+    `orjson` is imported lazily and only if you ask for it; zero required
+    dependencies is unaffected. `orjson` doesn't currently support
+    free-threaded Python at all (its own build script refuses it, not a
+    missing-wheel gap), so `backend="json"` is what a free-threaded
+    interpreter gets regardless of what's installed.
+  - Thread-safety audit and fix: `BatchingTransport` (the shared base for
+    every SQL/NoSQL/queue/cloud transport), `HTTPTransport`, and
+    `FileTransport` now lock around their internal buffer/file-handle
+    mutation. Previously, a `Logger(async_dispatch=False)` (the default)
+    shared across application threads could race on these — two threads
+    passing the batch-size check before either flushed, or a rotation
+    closing a file handle out from under a concurrent write — silently
+    losing or duplicating records. Confirmed as a real, reproducible loss
+    (not just theoretical) under free-threaded Python before the fix, and
+    confirmed fixed after, via a 16-thread burst test. `AsyncWorker` was
+    already correctly locked (a `threading.Condition`-guarded queue) and
+    needed no change.
+  - `Logger.opt(lazy=..., depth=...)` now caches the returned `OptLogger`
+    per `(lazy, depth)` combination instead of allocating a fresh one on
+    every call — the common idiom is calling it inline on every log call
+    (`logger.opt(lazy=True).debug(...)`), so this removes a wrapper-object
+    allocation from that path. Bounded at 32 cached combinations per
+    `Logger` so a caller computing `depth` dynamically can't grow it
+    without limit. A new benchmark metric (`peak_bytes_filtered_opt_call`)
+    guards the filtered-and-deferred path specifically.
+  - The full test suite and the memory-budget benchmark suite now run in
+    CI on free-threaded Python (`3.13t` and `3.14t`, PEP 703) alongside the
+    existing GIL-enabled matrix. `hypothesis`'s native extension doesn't
+    yet ship (or build) wheels for free-threaded Python below 3.14 — an
+    upstream PyO3 constraint — so `tests/conftest.py` turns a missing
+    `hypothesis` into a clean skip of the property-based suites rather
+    than a collection error, and the `3.13t` CI job installs a smaller
+    dependency set accordingly.
 - Internal reorganization: the top-level modules that had grown past a
   single implementation each are now grouped into themed subpackages —
   `core/` (`logger`, `levels`, `records`, `context`, `exceptions`,
