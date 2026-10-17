@@ -7,7 +7,7 @@ name = "logquill"
 version = "1.0.0"
 description = "A structured, leveled logging framework with pluggable transports and a plugin pipeline."
 readme = "README.md"
-license = "MIT"
+license = "FSL-1.1-MIT"
 requires-python = ">=3.10"
 authors = [{ name = "Nikhil Arora" }]
 keywords = [
@@ -23,7 +23,7 @@ keywords = [
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: Other/Proprietary License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -68,6 +68,7 @@ crewai = ["crewai>=1.0"]
 llamaindex = ["llama-index-core>=0.12"]
 autogen = ["autogen-core>=0.6"]
 yaml = ["PyYAML>=6.0"]
+fast = ["orjson>=3.10"]
 dev = [
     "ruff>=0.6",
     "mypy>=1.11",
@@ -152,11 +153,11 @@ files = ["logquill"]
 module = "logquill.transports.file_transport"
 warn_unused_ignores = false
 
-# `apprise` and `aiohttp` are optional dependencies that a bare type-check
-# environment (the pre-commit hook) doesn't install, so their imports have to
-# resolve the same way whether or not they're present.
+# `apprise`, `aiohttp`, and `orjson` are optional dependencies that a bare
+# type-check environment (the pre-commit hook) doesn't install, so their
+# imports have to resolve the same way whether or not they're present.
 [[tool.mypy.overrides]]
-module = ["apprise", "aiohttp"]
+module = ["apprise", "aiohttp", "orjson"]
 ignore_missing_imports = true
 
 # OpenTelemetry is optional too, and is imported lazily; treating it as untyped

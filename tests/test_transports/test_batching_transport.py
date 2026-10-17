@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from typing import Sequence
 
 from logquill.core.levels import Level
@@ -72,3 +73,30 @@ def test_buffer_is_cleared_before_send_avoiding_reentrant_double_send() -> None:
     assert len(transport.sent_batches) == 2
     assert transport.sent_batches[0][0]["message"] == "first"
     assert transport.sent_batches[1][0]["message"] == "second"
+
+
+def test_concurrent_writes_from_many_threads_lose_or_duplicate_nothing() -> None:
+    """`async_dispatch=False` runs transport writes on the caller's own
+    thread, so a transport shared by a `Logger` used from multiple
+    application threads sees concurrent `write()` calls directly — this is
+    the scenario `_buffer_lock` exists for."""
+    transport = CollectingBatchTransport(max_records=7, max_bytes=10_000_000)
+    writes_per_thread = 200
+    thread_count = 16
+
+    def hammer(thread_index: int) -> None:
+        for i in range(writes_per_thread):
+            transport.write("x", _record(f"t{thread_index}-{i}"))
+
+    threads = [threading.Thread(target=hammer, args=(i,)) for i in range(thread_count)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    transport.flush()
+
+    seen = [record["message"] for batch in transport.sent_batches for record in batch]
+    assert len(seen) == writes_per_thread * thread_count
+    assert len(set(seen)) == len(seen)  # no duplicates
+    assert transport._buffer == []
+    assert transport._buffer_bytes == 0

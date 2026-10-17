@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 from typing import Any, BinaryIO, TextIO, cast
 
@@ -39,6 +40,12 @@ class FileTransport(Transport):
     files are append-only ciphertext, one Fernet token per line — not
     human-readable, and not `FileTransport`'s job to decrypt back; do that
     with the same key via `Fernet.decrypt()` per line when reading.
+
+    `write()` locks around the write-and-maybe-rotate sequence: with
+    `async_dispatch=False` (the default), a `Logger` shared across
+    application threads would otherwise let `_rotate()` close and reopen
+    the file handle while another thread's `write()` is still using the old
+    one — not just interleaved lines, but a write to an already-closed file.
     """
 
     def __init__(
@@ -63,6 +70,7 @@ class FileTransport(Transport):
         self._fernet: Any = _load_fernet(encrypt_key) if encrypt_key is not None else None
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._file: TextIO | BinaryIO = self._open()
+        self._write_lock = threading.Lock()
 
     def _open(self) -> TextIO | BinaryIO:
         if self._fernet is not None:
@@ -73,15 +81,16 @@ class FileTransport(Transport):
         """Appends `formatted` as one line (encrypted first if `encrypt_key`
         was set), flushes to disk immediately, and rotates if `max_bytes`
         has been reached."""
-        if self._fernet is not None:
-            cast(BinaryIO, self._file).write(
-                self._fernet.encrypt(formatted.encode("utf-8")) + b"\n"
-            )
-        else:
-            cast(TextIO, self._file).write(formatted + "\n")
-        self._file.flush()
-        if 0 < self.max_bytes <= self._file.tell():
-            self._rotate()
+        with self._write_lock:
+            if self._fernet is not None:
+                cast(BinaryIO, self._file).write(
+                    self._fernet.encrypt(formatted.encode("utf-8")) + b"\n"
+                )
+            else:
+                cast(TextIO, self._file).write(formatted + "\n")
+            self._file.flush()
+            if 0 < self.max_bytes <= self._file.tell():
+                self._rotate()
 
     def _rotate(self) -> None:
         self._file.close()
@@ -101,4 +110,5 @@ class FileTransport(Transport):
 
     def close(self) -> None:
         """Closes the underlying file handle."""
-        self._file.close()
+        with self._write_lock:
+            self._file.close()

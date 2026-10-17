@@ -95,6 +95,7 @@ class Logger:
             else None
         )
         self._retries = RetryTracker()
+        self._opt_cache: dict[tuple[bool, int | None], OptLogger] = {}
         if flush_at_exit:
             shutdown.register(self)
 
@@ -187,13 +188,33 @@ class Logger:
             transport.close()
             shutdown.mark_closed(transport)
 
+    #: Caps `_opt_cache` (see `opt()`) so a caller that computes `depth`
+    #: dynamically per call — an unusual pattern, but not one worth trusting
+    #: not to happen — can't grow it without bound; past this, `opt()` just
+    #: stops caching and returns a fresh, uncached `OptLogger` each time.
+    _OPT_CACHE_MAX = 32
+
     def opt(self, *, lazy: bool = False, depth: int | None = None) -> OptLogger:
         """A view of this logger with per-call options — `lazy=True` to
         defer expensive `meta` values until the record is really emitted,
         `depth=N` to report the caller `N` frames up the stack. See
         `OptLogger`.
+
+        The common idiom is calling this inline on every log call
+        (`logger.opt(lazy=True).debug(...)`), so the returned `OptLogger` —
+        itself immutable once built — is cached per `(lazy, depth)`
+        combination instead of allocated fresh every time; a benign race
+        between two threads caching the same combination at once just
+        produces one short-lived extra instance, never a wrong one.
         """
-        return OptLogger(self, lazy=lazy, depth=depth)
+        key = (lazy, depth)
+        cached = self._opt_cache.get(key)
+        if cached is not None:
+            return cached
+        view = OptLogger(self, lazy=lazy, depth=depth)
+        if len(self._opt_cache) < self._OPT_CACHE_MAX:
+            self._opt_cache[key] = view
+        return view
 
     def _track_retries(self, level: Level, meta: dict[str, Any]) -> None:
         """Stamp `meta.retry_count` on a tool `.action()` that reopens a call

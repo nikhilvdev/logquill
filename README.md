@@ -13,6 +13,14 @@ Sibling to [`logquill` on npm](https://www.npmjs.com/package/logquill)
 (`logquill-js`) — same log record shape, same level names, one mental model
 across a Python + Node stack.
 
+**License note:** starting with 2.0.0, new releases are source-available
+under the [Functional Source License](#license) (FSL-1.1-MIT), not MIT.
+Free for nearly everyone — internal use, non-commercial work, building a
+product or service that isn't a logging framework — paid only if you're
+building a competing logging/observability offering. Versions 1.0.0 and
+earlier stay MIT forever; this doesn't change anything about those. See
+[License](#license) below for what that actually means.
+
 Status: pre-release, under active development. The core `Logger`, level
 filtering, transports, the plugin pipeline, and agentic/harness tracing are
 implemented; non-blocking async dispatch is not yet — see `CHANGELOG.md`
@@ -40,6 +48,7 @@ for what's landed so far.
 - **Runtime intelligence** — `FlightRecorderPlugin` ships a run's buffered DEBUG trail only if it errors; `RunSummaryPlugin` emits one record with a run's total tokens/cost/tool calls/retries/errors; `AdaptiveSamplingPlugin` always keeps errors and slow spans while capping ordinary traffic to a bytes-per-second budget; `install_signal_level_handler`/`LevelFileWatcher`/`LevelEnvWatcher` change a logger's level without a restart — see [Runtime level control](#runtime-level-control)
 - **Metrics bridge** — `MetricsPlugin` turns ERROR/FATAL records into a counter and any `meta.duration_ms` into a histogram, tagged by logger; ships with `OTelMetricsBackend` (default), `StatsDBackend`, and `PrometheusPushgatewayBackend` — see [Metrics bridge](#metrics-bridge)
 - **Graph transports** — `Neo4jTransport`, `FalkorDBTransport`, `NeptuneTransport` write every record as a node and `parent_span_id` as a `PARENT_OF` edge, so a run's span tree is a Cypher traversal away with zero manual graph-writing code; one shared `BaseGraphTransport` means switching backends only means swapping the transport — see [Graph transports](#graph-transports)
+- **A faster JSON backend, and free-threaded Python support** — `JSONFormatter(backend="orjson")` (`pip install logquill[fast]`) for less CPU per call under sustained volume; the worker and every batching transport lock around their shared buffers so a `Logger` used from multiple application threads is safe under both the GIL and free-threaded (PEP 703) builds — tested on 3.13t and 3.14t in CI — see [Thread safety](#thread-safety)
 
 ## Install
 
@@ -259,6 +268,28 @@ assert fields["note"] == "from the web form"
 In a config file, name the formatter as a string in the transport's
 `options`: `{"type": "console", "options": {"formatter": "text"}}` (`"json"`,
 `"text"` or `"logfmt"`). To write your own, implement `format(record) -> str`.
+
+#### A faster JSON backend
+
+`JSONFormatter(backend="orjson")` (`pip install logquill[fast]`) swaps the
+stdlib `json` module for the Rust-backed `orjson` library — same compact
+output, meaningfully less CPU per call under sustained logging volume.
+Zero required dependencies is unaffected: the default stays `backend="json"`,
+and `orjson` is only imported if you ask for it, raising an actionable
+`ImportError` right away if it isn't installed, not on the first `format()`
+call:
+
+```python
+from logquill import ConsoleTransport, JSONFormatter, Logger
+
+transport = ConsoleTransport(formatter=JSONFormatter(backend="orjson"))
+logger = Logger("app.api", transports=[transport])
+logger.info("user signed up", user_id=42)
+```
+
+`orjson` doesn't currently support free-threaded Python builds (3.13t/3.14t)
+— that's an `orjson` limitation, not a LogQuill one, so `backend="json"`
+(the default) is what those interpreters use regardless.
 
 ### SQL, NoSQL, message queue, and cloud-native transports
 
@@ -1463,6 +1494,43 @@ nothing catches the signal. A `SIGTERM` handler or `preStop` hook that calls
 `logger.close(timeout=...)` closes that gap the same way `with_lambda` closes
 it for a serverless freeze.
 
+### Thread safety
+
+A single `Logger` (and the transports/plugins it was built with) is safe to
+call from multiple application threads at once, with `async_dispatch=True`
+or without it:
+
+- With `async_dispatch=False` (the default), every `.info()`/`.error()`/...
+  call dispatches to transports on the caller's own thread — so if several
+  threads share one `Logger`, they can genuinely run a transport's `write()`
+  concurrently. `BatchingTransport` (the shared base for the SQL/NoSQL/
+  queue/cloud transports), `HTTPTransport`, and `FileTransport` each lock
+  around their internal buffer/file-handle mutation for exactly this reason.
+- With `async_dispatch=True`, every transport write and `after_log` hook
+  already runs serialized on the single `AsyncWorker` background thread
+  (itself built on a `threading.Condition`-guarded queue), so this is moot
+  for those two things specifically — but `before_log` plugin hooks still
+  run on the calling thread either way (they can filter/transform the
+  record, so a later hook needs to see the result in order), which matters
+  for the next point regardless of `async_dispatch`.
+- A plugin with its own internal counter — `RunPlugin`'s step counter,
+  `SamplingPlugin`/`AdaptiveSamplingPlugin`'s rate state,
+  `TamperEvidentPlugin`'s hash chain — mutates that state in `before_log`,
+  always on the calling thread. Sharing one plugin instance (via one
+  `Logger`, or via `.child()`) across multiple threads that log
+  concurrently isn't guarded by a lock today; `TamperEvidentPlugin`
+  specifically depends on its hash chain being appended to in the same
+  order records are meant to chain in, so a multi-threaded audit logger is
+  the case to be most careful with. Give each thread (or each request) its
+  own `.child()` logger if you need per-thread isolation, which is also the
+  simpler mental model regardless of this caveat.
+
+Verified under both the GIL and free-threaded (PEP 703, `python3.13t`/
+`python3.14t`) builds in CI: the full test suite and the memory-budget
+benchmarks (see [Development](#development)) run on both, plus a dedicated
+burst test hammering one `BatchingTransport` from 16 threads at once and
+checking every record arrived exactly once.
+
 ## Context propagation, exception capture & the stdlib bridge
 
 `bind_context()` binds request-scoped values for a `with` block — every
@@ -1851,8 +1919,53 @@ pre-commit install
 ruff check .
 mypy logquill
 pytest
+pytest benchmarks  # memory budgets for the logging hot path
 ```
+
+CI also runs the full suite and the benchmarks on free-threaded Python
+(`3.13t`/`3.14t`) — see [Thread safety](#thread-safety). `hypothesis` and
+`orjson` (the `fast` extra) don't currently build for `3.13t`, an upstream
+PyO3/orjson limitation, not a LogQuill one, so that job installs a smaller
+dependency set there; `tests/conftest.py` turns a missing `hypothesis` into
+a clean skip of the property-based suites rather than a collection error.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the PR workflow, the
 [Code of Conduct](CODE_OF_CONDUCT.md) for community standards, and
 [SECURITY.md](.github/SECURITY.md) for how to report a vulnerability.
+
+## License
+
+**Versions 1.0.0 and earlier are MIT**, full stop — already published, and
+relicensing later code doesn't and can't change the terms of what's already
+out there. If you depend on one of those versions, nothing here affects you.
+
+**Version 2.0.0 and later are [FSL-1.1-MIT](LICENSE)** (the [Functional
+Source License](https://fsl.software), MIT Future variant). In plain terms:
+
+- You can use, modify, self-host, and redistribute logquill for **almost
+  anything** — your own app or service, internal tooling, a client project,
+  non-commercial education or research, or as part of professional services
+  you provide to someone else — with no payment or extra permission needed.
+- The one thing you can't do without a separate commercial license is use
+  logquill to build a **competing product or service**: one that substitutes
+  for logquill itself, substitutes for another product/service built on
+  logquill, or offers substantially the same functionality. That's aimed at
+  "take this, repackage it, sell it as your own logging/observability
+  product" — not at ordinary use of a logging library inside whatever you're
+  actually building.
+- **Each version converts to plain MIT two years after that version's own
+  release date.** So 2.0.0 becomes MIT two years after 2.0.0 ships,
+  independent of whatever the latest version is by then — the restriction
+  only ever applies to recent releases, never indefinitely.
+- Redistributing logquill (modified or not) requires keeping the copyright
+  notice and a copy of (or link to) these terms — that's the "credit"
+  obligation the license itself carries.
+
+Need a commercial license (or just have questions about whether your use
+case needs one)? Open an issue, or reach out to the author directly.
+
+This is a source-available license, not an OSI-approved open-source one —
+drafted from the official FSL template and not customized beyond filling in
+the licensor/year, but also not reviewed by a lawyer on either side of a
+specific deal. If a commercial license matters to your business, have your
+own counsel look at the exact terms before you rely on them.

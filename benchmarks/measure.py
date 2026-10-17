@@ -33,6 +33,13 @@ BUDGETS: dict[str, float] = {
     "retained_blocks_per_call": 0.05,
     # transient bytes at the peak of one call: level-filtered (never builds a record)
     "peak_bytes_filtered_call": 1_000,
+    # the `logger.opt(lazy=True).debug(...)` idiom, filtered out — close to
+    # `peak_bytes_filtered_call` since `Logger.opt` caches the `OptLogger`
+    # per (lazy, depth) instead of allocating one fresh every call; mainly
+    # guards against something heavier creeping onto this path (e.g. a lazy
+    # value getting resolved before the level check), not the ~100-byte
+    # difference the cache itself makes
+    "peak_bytes_filtered_opt_call": 1_200,
     # ... a call through no plugins, and through a realistic plugin stack
     "peak_bytes_plain_call": 12_000,
     "peak_bytes_plugin_call": 14_000,
@@ -151,6 +158,9 @@ def measure_all() -> dict[str, float]:
     return {
         "retained_blocks_per_call": retained_blocks_per_call(plain),
         "peak_bytes_filtered_call": peak_bytes_per_call(lambda: filtered.info("x", **_META)),
+        "peak_bytes_filtered_opt_call": peak_bytes_per_call(
+            lambda: filtered.opt(lazy=True).info("x", **_META)
+        ),
         "peak_bytes_plain_call": peak_bytes_per_call(lambda: plain.info("x", **_META)),
         "peak_bytes_plugin_call": peak_bytes_per_call(lambda: with_plugins.info("x", **_META)),
         "peak_bytes_stalled_burst": peak_bytes_stalled_burst(),
