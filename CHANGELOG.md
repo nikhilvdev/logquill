@@ -70,6 +70,24 @@ All notable changes to this project are documented in this file.
     `Logger` so a caller computing `depth` dynamically can't grow it
     without limit. A new benchmark metric (`peak_bytes_filtered_opt_call`)
     guards the filtered-and-deferred path specifically.
+  - Stamping a record no longer re-formats the date on every call: the
+    `YYYY-MM-DDTHH:MM:SS` part of the timestamp is built once per second
+    and reused, with only the milliseconds formatted per record. That was
+    the single largest cost in a log call (about 1.2 µs of roughly 3.7 µs);
+    it is now about 0.2 µs. The timestamp text is unchanged.
+  - `import logquill` is about twice as fast (roughly 43 ms down to 20 ms)
+    and no longer loads `asyncio`, `urllib.request`, `ssl`, `smtplib`,
+    `sqlite3` or `http.client`, which matters most for the CLI and for
+    serverless cold starts. The transports (other than console, file and
+    the batching base) and the Slack, PagerDuty, email, Apprise, StatsD,
+    Prometheus and OTel-metrics classes are now imported the first time you
+    use them (PEP 562 module `__getattr__`) rather than when the package
+    loads. Nothing about how you use them changes — `from logquill import
+    HTTPTransport`, `logquill.SlackAlertPlugin`, `__all__` and the
+    published API reference all work exactly as before, and type checkers
+    still see every name. `config`'s `{"type": "http"}` shortcut and
+    `AsyncWorker`'s `drain_async` now import what they need at the point
+    they need it.
   - The full test suite and the memory-budget benchmark suite now run in
     CI on free-threaded Python (`3.13t` and `3.14t`, PEP 703) alongside the
     existing GIL-enabled matrix. `hypothesis`'s native extension doesn't

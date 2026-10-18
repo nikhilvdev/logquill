@@ -18,7 +18,6 @@ from logquill.plugins.tamper_evident_plugin import TamperEvidentPlugin
 from logquill.plugins.trace_context_plugin import TraceContextPlugin
 from logquill.transports.console_transport import ConsoleTransport
 from logquill.transports.file_transport import FileTransport
-from logquill.transports.http_transport import HTTPTransport
 from logquill.transports.transport import Transport
 
 #: Shortcuts for the zero-required-dependency transports/plugins, so common
@@ -28,10 +27,15 @@ from logquill.transports.transport import Transport
 #: `load_config`). This is deliberately a small, curated list, not an
 #: attempt to cover the whole catalog: the ones here are safe to construct
 #: from plain config with no optional dependency surprising the caller.
-_TRANSPORT_TYPES: dict[str, type[Transport]] = {
+#:
+#: A value is the class itself, or a `"module.path:ClassName"` string for one
+#: that is only imported when a config actually names it — `HTTPTransport`
+#: pulls in `urllib.request` and `ssl`, which cost several milliseconds on
+#: every `import logquill` for configs that never use it.
+_TRANSPORT_TYPES: dict[str, type[Transport] | str] = {
     "console": ConsoleTransport,
     "file": FileTransport,
-    "http": HTTPTransport,
+    "http": "logquill.transports.http_transport:HTTPTransport",
 }
 
 _PLUGIN_TYPES: dict[str, type[Plugin]] = {
@@ -54,7 +58,7 @@ _FORMATTER_TYPES: dict[str, type[Formatter]] = {
 }
 
 
-def _resolve_class(entry: dict[str, Any], registry: dict[str, type]) -> type:
+def _resolve_class(entry: dict[str, Any], registry: dict[str, Any]) -> type:
     if "class" in entry:
         dotted = entry["class"]
         module_name, separator, class_name = dotted.rpartition(".")
@@ -72,7 +76,11 @@ def _resolve_class(entry: dict[str, Any], registry: dict[str, type]) -> type:
             ) from None
     if "type" in entry:
         try:
-            return registry[entry["type"]]
+            found = registry[entry["type"]]
+            if isinstance(found, str):
+                module_name, _, class_name = found.partition(":")
+                found = getattr(importlib.import_module(module_name), class_name)
+            return found  # type: ignore[no-any-return]
         except KeyError:
             known = ", ".join(sorted(registry))
             raise ValueError(
@@ -82,7 +90,7 @@ def _resolve_class(entry: dict[str, Any], registry: dict[str, type]) -> type:
     raise ValueError(f"Each transport/plugin entry needs a 'type' or 'class' key, got {entry!r}")
 
 
-def _build(entries: list[dict[str, Any]] | None, registry: dict[str, type]) -> list[Any]:
+def _build(entries: list[dict[str, Any]] | None, registry: dict[str, Any]) -> list[Any]:
     built = []
     for entry in entries or []:
         cls = _resolve_class(entry, registry)

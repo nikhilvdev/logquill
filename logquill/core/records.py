@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import Any, TypedDict, cast
@@ -54,10 +55,30 @@ class LogRecord(_RequiredRecordFields, total=False):
     llm: LLMBlock
 
 
+# (whole second, its "YYYY-MM-DDTHH:MM:SS" text). Formatting the date is the
+# costliest part of stamping a record, and it only changes once a second, so it
+# is done once per second and the milliseconds are appended per call. One tuple
+# swapped in a single assignment, so a racing thread sees a matched pair
+# (including on free-threaded Python) and the worst case is formatting twice.
+_second_cache: tuple[int, str] = (-1, "")
+
+
 def utc_timestamp() -> str:
     """ISO8601 UTC timestamp with millisecond precision, matching JS `Date.toISOString()`."""
-    now = datetime.now(timezone.utc)
-    return f"{now.strftime('%Y-%m-%dT%H:%M:%S')}.{now.microsecond // 1000:03d}Z"
+    global _second_cache
+    now = time.time()
+    second = int(now)
+    # round to whole microseconds first, exactly as `datetime` does, so the
+    # milliseconds match `datetime.now()` rather than truncating the raw float
+    microsecond = round((now - second) * 1_000_000)
+    if microsecond >= 1_000_000:
+        second += 1
+        microsecond = 0
+    cached_second, prefix = _second_cache
+    if second != cached_second:
+        prefix = datetime.fromtimestamp(second, timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+        _second_cache = (second, prefix)
+    return f"{prefix}.{microsecond // 1000:03d}Z"
 
 
 def create_record(

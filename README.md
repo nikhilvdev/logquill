@@ -21,10 +21,8 @@ building a competing logging/observability offering. Versions 1.0.0 and
 earlier stay MIT forever; this doesn't change anything about those. See
 [License](#license) below for what that actually means.
 
-Status: pre-release, under active development. The core `Logger`, level
-filtering, transports, the plugin pipeline, and agentic/harness tracing are
-implemented; non-blocking async dispatch is not yet — see `CHANGELOG.md`
-for what's landed so far.
+Status: stable (2.0.0). See `CHANGELOG.md` for what changed in each release
+and [MIGRATING.md](MIGRATING.md) for upgrading from 1.x.
 
 ## Features
 
@@ -343,7 +341,7 @@ builds one lazily via the optional `pymongo` peer dependency.
 
 **SQL** — `BaseSQLTransport` (a fixed `logs` table: `timestamp`/`level`/
 `logger`/`message`/`meta`, plus `run_id`/`span_id`/`parent_span_id`/
-`trace_id` for upcoming cross-service trace-correlation support).
+`trace_id`, so a run or a cross-service trace can be queried directly).
 `ensure_schema=True` is a dev/test convenience only — production
 schema/migrations are your responsibility, same as every batching
 transport below.

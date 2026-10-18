@@ -32,3 +32,7 @@ Thumbs.db
 *.log.[0-9]
 CLAUDE.md
 .vscode/
+graphify-out/
+.claude/
+.codex/
+Agents.md

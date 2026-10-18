@@ -2,17 +2,16 @@
 
 ## Supported Versions
 
-`logquill` is pre-1.0 and moving quickly. Security fixes target the latest
-released `0.x` version only — please upgrade before reporting an issue to
-confirm it's still present.
+Security fixes target the latest `2.x` release only — please upgrade before
+reporting an issue to confirm it's still present.
 
 | Version | Supported |
 | ------- | --------- |
-| Latest release on PyPI | ✅ |
-| Anything older | ❌ |
+| 2.x (latest release on PyPI) | ✅ |
+| 1.x and older | ❌ |
 
-Once a 1.0 release ships, this table will be updated to reflect which
-major versions receive backported fixes.
+If a future major version needs older lines to receive backported fixes,
+this table will be updated to say which ones.
 
 ## Reporting a Vulnerability
 

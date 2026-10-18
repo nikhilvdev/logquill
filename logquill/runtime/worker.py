@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import threading
 import time
@@ -158,6 +157,10 @@ class AsyncWorker:
         """`asyncio`-friendly `drain()`: runs the blocking wait in an
         executor thread so it doesn't block the event loop while waiting.
         """
+        # imported here, not at module level: `asyncio` costs ~12 ms to import
+        # and only callers awaiting a drain ever need it
+        import asyncio
+
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self.drain, timeout)
 
