@@ -30,7 +30,7 @@ body:
     id: version
     attributes:
       label: logquill version
-      placeholder: e.g. 0.1.2
+      placeholder: e.g. 2.0.0
     validations:
       required: true
 
