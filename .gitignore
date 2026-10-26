@@ -6,7 +6,13 @@
 *.key
 **/secrets/
 
-# ── Python ───────────────────────────────────────────────────────────
+# ── Rust and other build output ──────────────────────────────────────
+target/
+**/*.rs.bk
+*.profraw
+node_modules/
+
+# ── Python (the Python binding's tooling) ────────────────────────────
 .venv/
 **/__pycache__/
 *.pyc

@@ -1,0 +1,18 @@
+[package]
+name = "logquill-cli"
+description = "The logquill command: tail, trace, dev, serve and verify."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "logquill"
+path = "src/main.rs"
+
+[dependencies]
+logquill-core = { path = "../logquill-core" }
+
+[lints]
+workspace = true

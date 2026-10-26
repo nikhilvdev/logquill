@@ -1,0 +1,18 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "3.0.0-dev.0"
+edition = "2021"
+rust-version = "1.80"
+# The licence for the shared core is an open decision (docs/rust-core-plan.md, section 8);
+# until it is settled the crates point at the repository's LICENSE file.
+license-file = "LICENSE"
+publish = false # nothing is published until the release stage
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }

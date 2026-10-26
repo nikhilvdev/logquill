@@ -3,92 +3,30 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, develop]
+
+# Least privilege: nothing here writes to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - run: pip install -e ".[dev,http,apprise,otel]"
-
-      - run: ruff check .
-
-      - run: mypy logquill
-
-      - run: pytest --cov
-
-  # Memory budgets for the logging hot path (see benchmarks/measure.py). Kept
-  # out of the matrix above and away from coverage: line tracing inflates
-  # allocation counts, and the budgets only need one interpreter to gate on.
-  benchmarks:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-
-      - run: pip install -e ".[dev]"
-
-      - run: pytest benchmarks
-
-  # Free-threaded (PEP 703, no-GIL) builds — the audit this phase requires
-  # for the worker/transport locking that backs `async_dispatch=False`
-  # (multiple application threads sharing one `Logger` and its transports).
-  # 3.13t and 3.14t get different dependency installs, not the same `dev`
-  # extras as the matrix above, because the free-threaded packaging
-  # ecosystem is still catching up as of this writing:
-  #   - `orjson` (the `fast` extra) refuses to build for *any* free-threaded
-  #     interpreter — its own build script rejects it outright, not just a
-  #     missing-wheel gap. Skipped on both versions here.
-  #   - `hypothesis`'s native extension, `jsonschema`'s `rpds-py`, and
-  #     `twine`'s dependency chain are all PyO3-based and PyO3 itself
-  #     refuses to target a free-threaded build below 3.14 — so on 3.13t
-  #     only a pure-Python subset (`pytest`/`pytest-asyncio`/`pytest-cov`)
-  #     installs at all. `tests/conftest.py` turns a missing `hypothesis`
-  #     into a clean `collect_ignore_glob` for the property-based suites
-  #     rather than a collection error. 3.14t has real `hypothesis` wheels
-  #     and runs the full suite, `fast` aside.
-  #   - `ruff`/`mypy` aren't re-run here — they don't depend on the
-  #     interpreter's threading model, and the matrix job above already
-  #     covers them on 3.13/3.14.
-  free-threaded:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.13t", "3.14t"]
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - run: python -c "import sys; assert not sys._is_gil_enabled(), 'GIL unexpectedly enabled'"
-
-      - name: Install dependencies
-        run: |
-          if [ "${{ matrix.python-version }}" = "3.13t" ]; then
-            pip install -e ".[http,apprise,otel]" "pytest>=8.0" "pytest-asyncio>=0.24" "pytest-cov>=5.0"
-          else
-            pip install -e ".[dev,http,apprise,otel]"
-          fi
-
-      - run: pytest
-
-      - run: pytest benchmarks
+          persist-credentials: false
+      # rust-toolchain.toml selects the toolchain and components; cargo installs them on first use.
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
