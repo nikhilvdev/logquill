@@ -1,0 +1,28 @@
+{
+  "key": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+  "timestamp": 499137121,
+  "iv_hex": "000102030405060708090a0b0c0d0e0f",
+  "cases": [
+    {
+      "plaintext": "hello",
+      "token": "gAAAAAAdwDphAAECAwQFBgcICQoLDA0OD4_9EBVfNSDZ7XtRxaHNdkXv_GqzM1l-eODWVW5MRXOLClDJfqEhYIOUz7QjVSc1zg=="
+    },
+    {
+      "plaintext": "",
+      "token": "gAAAAAAdwDphAAECAwQFBgcICQoLDA0OD7eteCFsVWnW2hqrh_bbxWHD8fdAcS_0arYmG8TXk1OSAlEce42J_H6JbjMZu0ieUw=="
+    },
+    {
+      "plaintext": "aaaaaaaaaaaaaaaa",
+      "token": "gAAAAAAdwDphAAECAwQFBgcICQoLDA0OD34-nCZD9wLYFTBT0W4UyBN2oSzTdADJ35HjQaDEj0Q4TcEt5LGN_1k80SVIQO7QoYVIwoUvsitJqEKcII4NYdg="
+    },
+    {
+      "plaintext": "na\u00efve \u2603 \ud834\udd1e line",
+      "token": "gAAAAAAdwDphAAECAwQFBgcICQoLDA0OD7wodiuwqAPeE8rmg7aLMKt7x-oiYQFESWO2RD0IY0Ppf7mSR6XiN3SMJR4nZmqh9iIgKHubZq1J2S9-vGi6eg0="
+    },
+    {
+      "plaintext": "{\"level\":\"INFO\",\"message\":\"x\"}",
+      "token": "gAAAAAAdwDphAAECAwQFBgcICQoLDA0OD1Gg4ewRsrNMevnvzqM-zM9mE3c8KKujQ1Mg8NDIDLzymiih3hS3a-2MN-iXnuT7aXwGrW7XUUQaw0LM6jtxMHA="
+    }
+  ],
+  "wrong_key_token": "gAAAAABq357sogd99cth1uNMCMIJR6Q5bZyO_ffbjjFqShCompT-wzB8GCvhfojGKf5ngC6GxwCTUytQR3bAk86ch0gWcU06Sg=="
+}

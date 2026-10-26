@@ -683,6 +683,8 @@ impl RunStamp {
 pub struct Alert {
     pub message: String,
     pub occurrences: u64,
+    /// The first record of the window, which a sender formats the alert from.
+    pub record: Value,
 }
 
 /// Options for [`AlertDedupe`].
@@ -707,6 +709,7 @@ impl Default for AlertOptions {
 }
 
 struct Window {
+    record: Value,
     message: String,
     count: u64,
     due: f64,
@@ -743,6 +746,7 @@ impl AlertDedupe {
                     alerts.push(Alert {
                         message: window.message,
                         occurrences: window.count,
+                        record: window.record,
                     });
                 }
             }
@@ -778,6 +782,7 @@ impl AlertDedupe {
             self.windows.insert(
                 key,
                 Window {
+                    record: record.clone(),
                     message: message.clone(),
                     count: 1,
                     due: now + self.options.window_seconds,
@@ -787,8 +792,14 @@ impl AlertDedupe {
         alerts.push(Alert {
             message,
             occurrences: 1,
+            record: record.clone(),
         });
         alerts
+    }
+
+    /// The clock reading at which the earliest open window ends, if any is open.
+    pub fn next_due(&self) -> Option<f64> {
+        self.windows.values().map(|w| w.due).min_by(f64::total_cmp)
     }
 
     /// Forgets every open window without sending its summary.
