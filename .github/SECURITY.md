@@ -2,16 +2,16 @@
 
 ## Supported Versions
 
-Security fixes target the latest `2.x` release only — please upgrade before
-reporting an issue to confirm it's still present.
+Security fixes target the latest release of each supported line — please upgrade
+before reporting an issue to confirm it's still present.
 
 | Version | Supported |
 | ------- | --------- |
-| 2.x (latest release on PyPI) | ✅ |
+| 3.x (in development, not yet released) | ✅ once released |
+| 2.x (latest Python release on PyPI) | ✅ |
 | 1.x and older | ❌ |
 
-If a future major version needs older lines to receive backported fixes,
-this table will be updated to say which ones.
+When 3.0.0 is released this table will say how long 2.x keeps receiving fixes.
 
 ## Reporting a Vulnerability
 
