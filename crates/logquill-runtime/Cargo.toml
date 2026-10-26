@@ -1,0 +1,15 @@
+[package]
+name = "logquill-runtime"
+description = "LogQuill runtime: the bounded queue and worker, and the native transports."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[dependencies]
+logquill-core = { path = "../logquill-core" }
+serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
+
+[lints]
+workspace = true

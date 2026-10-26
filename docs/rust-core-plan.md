@@ -379,7 +379,7 @@ stage tags 3.0.0. The first two stages are broken down into ordered work package
 - Exit: every corpus passes in Rust; a raising redactor drops the record; the chain
   is verifiable under 8 concurrent writers.
 
-**Stage 3 — Runtime**
+**Stage 3 — Runtime** — started, see `docs/stages/stage-3.md`
 - Worker, queue, batching, console / file (rotation, compression, encryption) / HTTP
   family / syslog / SQLite / OTLP, senders, metrics backends, watchers.
 - Exit: the burst-and-stall test (tens of thousands of records, stalled sink) keeps
