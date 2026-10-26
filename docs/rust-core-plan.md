@@ -373,7 +373,7 @@ stage tags 3.0.0. The first two stages are broken down into ordered work package
   by Python 2.0.0 verify in Rust and the reverse; `cargo-fuzz` on `parse_record` and
   the canonicaliser; `proptest` mirrors the old property suites.
 
-**Stage 2 — Core: processing and pipeline**
+**Stage 2 — Core: processing and pipeline** — done, see `docs/stages/stage-2.md`
 - Redaction, PII, formatters, parsers, trace headers, semconv, ids, ECS, SQL and
   graph row mapping, all state machines, trace-tree builder, the `Logger` pipeline.
 - Exit: every corpus passes in Rust; a raising redactor drops the record; the chain

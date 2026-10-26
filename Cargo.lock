@@ -564,6 +564,7 @@ dependencies = [
  "hmac",
  "jsonschema",
  "proptest",
+ "regex",
  "serde_json",
  "sha2",
 ]
