@@ -1,0 +1,1273 @@
+{
+  "group": "adaptive-sampling",
+  "description": "Sampling that keeps errors and slow spans, adjusts its rate to demand, and caps bytes per second.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "js_gaps": [
+    "no adaptive sampling in the JavaScript package"
+  ],
+  "cases": [
+    {
+      "name": "below the rate keeps, at or above drops",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            },
+            "rng": 0.49,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            },
+            "rng": 0.5,
+            "clock": 0.2
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.5,
+          "window_demand_bytes": 117,
+          "window_emitted_bytes": 117
+        }
+      }
+    },
+    {
+      "name": "errors are always kept",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "e",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "FATAL",
+              "logger": "app",
+              "message": "f",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 0.1
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.5,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "keep_at changes what is always kept",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "WARN",
+              "logger": "app",
+              "message": "w",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "i",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 0.1
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000,
+          "keep_at": "WARN"
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.5,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "slow spans are always kept",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "slow",
+              "meta": {
+                "kind": "span",
+                "duration_ms": 1000
+              }
+            },
+            "rng": 0.99,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "fast",
+              "meta": {
+                "kind": "span",
+                "duration_ms": 999.9
+              }
+            },
+            "rng": 0.99,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "not a span",
+              "meta": {
+                "duration_ms": 5000
+              }
+            },
+            "rng": 0.99,
+            "clock": 0.1
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.5,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "a boolean duration is not slow",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "s",
+              "meta": {
+                "kind": "span",
+                "duration_ms": true
+              }
+            },
+            "rng": 0.99,
+            "clock": 0.1
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.5,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "a custom slow threshold",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "s",
+              "meta": {
+                "kind": "span",
+                "duration_ms": 50
+              }
+            },
+            "rng": 0.99,
+            "clock": 0.1
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000,
+          "slow_ms": 50
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.5,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "a quiet window raises the rate by a fifth",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            },
+            "rng": 0.9,
+            "clock": 0.5
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            },
+            "rng": 0.9,
+            "clock": 1.0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "c",
+              "meta": {}
+            },
+            "rng": 0.55,
+            "clock": 1.1
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.6,
+          "window_demand_bytes": 117,
+          "window_emitted_bytes": 117
+        }
+      }
+    },
+    {
+      "name": "repeated quiet windows reach the ceiling",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 0.0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 1.0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 2.0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 3.0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 4.0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 5.0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 6.0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 7.0
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.9,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "a busy window halves the rate",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.2
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.3
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "after",
+              "meta": {}
+            },
+            "rng": 0.4,
+            "clock": 1.0
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 1000
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.25,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "repeated busy windows reach the floor",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 1.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 2.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 3.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 4.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 5.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 6.1
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 500
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.1,
+          "window_demand_bytes": 516,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "the byte budget drops records over it",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.2
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.3
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "tiny",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.4
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 600
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.5,
+          "window_demand_bytes": 1068,
+          "window_emitted_bytes": 436
+        }
+      }
+    },
+    {
+      "name": "a record over the whole budget never ships",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.1
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 500
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.5,
+          "window_demand_bytes": 2116,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "demand between the thresholds leaves the rate alone",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.2
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "x",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 1.0
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 500
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.5,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "a zero byte budget never raises or lowers the rate",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 5.0
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 0
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.6,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "non-ASCII text counts as UTF-8 bytes",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "x",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 1.0
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 1000
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.6,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      },
+      "differs": {
+        "python": {
+          "steps": [
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": false,
+              "written": []
+            }
+          ],
+          "state": {
+            "rate": 0.5,
+            "window_demand_bytes": 0,
+            "window_emitted_bytes": 0
+          }
+        }
+      },
+      "rule": "09 \u2014 D24 tail and flight-recorder sets are bounded; D36 messages show JSON values and wire names; D44 a full alert table never drops an alert; D5 run ids are 32 hex digits"
+    },
+    {
+      "name": "errors do not count toward demand",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "meta": {}
+            },
+            "rng": 0.0,
+            "clock": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "x",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 1.0
+          }
+        ],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.6,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "the window starts when the plugin is built",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            },
+            "rng": 0.99,
+            "clock": 10.5
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            },
+            "rng": 0.55,
+            "clock": 10.6
+          }
+        ],
+        "start": 10.0,
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "rate": 0.5,
+          "window_demand_bytes": 0,
+          "window_emitted_bytes": 0
+        }
+      }
+    },
+    {
+      "name": "a base rate above one is refused",
+      "input": {
+        "steps": [],
+        "options": {
+          "base_rate": 1.5,
+          "min_rate": 0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000
+        }
+      },
+      "expected": {
+        "error": "base_rate must be between 0 and 1, got 1.5"
+      }
+    },
+    {
+      "name": "a negative minimum is refused",
+      "input": {
+        "steps": [],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": -0.1,
+          "max_rate": 0.9,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000
+        }
+      },
+      "expected": {
+        "error": "min_rate must be between 0 and 1, got -0.1"
+      }
+    },
+    {
+      "name": "a minimum above the maximum is refused",
+      "input": {
+        "steps": [],
+        "options": {
+          "base_rate": 0.5,
+          "min_rate": 0.8,
+          "max_rate": 0.4,
+          "window_seconds": 1.0,
+          "max_bytes_per_second": 100000
+        }
+      },
+      "expected": {
+        "error": "min_rate (0.8) must be <= max_rate (0.4)"
+      }
+    }
+  ]
+}

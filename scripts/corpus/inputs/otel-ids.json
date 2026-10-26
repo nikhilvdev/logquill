@@ -1,0 +1,287 @@
+{
+  "group": "otel-ids",
+  "description": "OpenTelemetry span and trace ids derived from LogQuill ids, including hostile inputs.",
+  "cases": [
+    {
+      "name": "span id: a 16-hex id is kept",
+      "input": {
+        "op": "span_id",
+        "value": "00f067aa0ba902b7"
+      }
+    },
+    {
+      "name": "span id: an upper-case 16-hex id is hashed",
+      "input": {
+        "op": "span_id",
+        "value": "00F067AA0BA902B7"
+      }
+    },
+    {
+      "name": "span id: fifteen hex characters are hashed",
+      "input": {
+        "op": "span_id",
+        "value": "00f067aa0ba902b"
+      }
+    },
+    {
+      "name": "span id: seventeen hex characters are hashed",
+      "input": {
+        "op": "span_id",
+        "value": "00f067aa0ba902b70"
+      }
+    },
+    {
+      "name": "span id: sixteen zeros are hashed",
+      "input": {
+        "op": "span_id",
+        "value": "0000000000000000"
+      }
+    },
+    {
+      "name": "span id: a 16-hex id with a trailing newline is hashed",
+      "input": {
+        "op": "span_id",
+        "value": "00f067aa0ba902b7\n"
+      }
+    },
+    {
+      "name": "span id: sixteen non-hex characters",
+      "input": {
+        "op": "span_id",
+        "value": "gggggggggggggggg"
+      }
+    },
+    {
+      "name": "span id: a UUID",
+      "input": {
+        "op": "span_id",
+        "value": "550e8400-e29b-41d4-a716-446655440000"
+      }
+    },
+    {
+      "name": "span id: an empty string",
+      "input": {
+        "op": "span_id",
+        "value": ""
+      }
+    },
+    {
+      "name": "span id: a short id",
+      "input": {
+        "op": "span_id",
+        "value": "abc"
+      }
+    },
+    {
+      "name": "span id: non-ASCII text",
+      "input": {
+        "op": "span_id",
+        "value": "café"
+      }
+    },
+    {
+      "name": "span id: an astral character",
+      "input": {
+        "op": "span_id",
+        "value": "𝄞"
+      }
+    },
+    {
+      "name": "span id: a long id",
+      "input": {
+        "op": "span_id",
+        "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "name": "span id: Arabic-Indic digits",
+      "input": {
+        "op": "span_id",
+        "value": "٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠"
+      }
+    },
+    {
+      "name": "trace id: a 32-hex trace_id is kept",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+        }
+      }
+    },
+    {
+      "name": "trace id: an upper-case trace_id falls back to run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "4BF92F3577B34DA6A3CE929D0E0E4736",
+          "run_id": "r"
+        }
+      }
+    },
+    {
+      "name": "trace id: an upper-case trace_id alone",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "4BF92F3577B34DA6A3CE929D0E0E4736"
+        }
+      }
+    },
+    {
+      "name": "trace id: an all-zero trace_id falls back to run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "00000000000000000000000000000000",
+          "run_id": "r"
+        }
+      }
+    },
+    {
+      "name": "trace id: an all-zero trace_id alone",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "00000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "trace id: a short trace_id falls back to run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "abc",
+          "run_id": "r"
+        }
+      }
+    },
+    {
+      "name": "trace id: a trace_id with a trailing newline",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736\n",
+          "run_id": "r"
+        }
+      }
+    },
+    {
+      "name": "trace id: a numeric trace_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": 5,
+          "run_id": "r"
+        }
+      }
+    },
+    {
+      "name": "trace id: a run_id alone",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "run_id": "run-1"
+        }
+      }
+    },
+    {
+      "name": "trace id: an empty run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "run_id": ""
+        }
+      }
+    },
+    {
+      "name": "trace id: a numeric run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "run_id": 7
+        }
+      }
+    },
+    {
+      "name": "trace id: a null run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "run_id": null
+        }
+      }
+    },
+    {
+      "name": "trace id: a non-ASCII run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "run_id": "café"
+        }
+      }
+    },
+    {
+      "name": "trace id: neither",
+      "input": {
+        "op": "trace_id",
+        "meta": {}
+      }
+    },
+    {
+      "name": "trace id: other keys only",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "span_id": "00f067aa0ba902b7"
+        }
+      }
+    },
+    {
+      "name": "trace id: trace_id wins over run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+          "run_id": "r"
+        }
+      }
+    },
+    {
+      "name": "trace id from parent: a span id",
+      "input": {
+        "op": "trace_id_from_parent",
+        "value": "00f067aa0ba902b7"
+      }
+    },
+    {
+      "name": "trace id from parent: an empty string",
+      "input": {
+        "op": "trace_id_from_parent",
+        "value": ""
+      }
+    },
+    {
+      "name": "trace id from parent: non-ASCII text",
+      "input": {
+        "op": "trace_id_from_parent",
+        "value": "café"
+      }
+    },
+    {
+      "name": "trace id from parent: a long id",
+      "input": {
+        "op": "trace_id_from_parent",
+        "value": "pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp"
+      }
+    },
+    {
+      "name": "trace id from parent: a UUID",
+      "input": {
+        "op": "trace_id_from_parent",
+        "value": "550e8400-e29b-41d4-a716-446655440000"
+      }
+    }
+  ]
+}

@@ -106,7 +106,7 @@ Header parsing (a header that matches none is "no header"; the value is trimmed 
 - X-Ray (search, not anchored) `Root=1-(?P<time>[0-9a-f]{8})-(?P<rand>[0-9a-f]{24})` → time + rand
 - GCP `^(?P<trace_id>[0-9a-f]{32})/\d+(;o=\d)?$` → the trace id
 
-Known gap: an all-zero trace id or version `ff` is accepted by the W3C pattern.
+Known gap in both old releases: an all-zero trace id or version `ff` was accepted by the W3C pattern; D40 rejects them.
 `set_traceparent(value)` returns a token/restore function.
 
 ## RedactPlugin

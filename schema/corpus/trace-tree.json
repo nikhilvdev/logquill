@@ -1,0 +1,2381 @@
+{
+  "group": "trace-tree",
+  "description": "Rebuilding one run's span tree from records and rendering it, with token, cost and duration roll-ups.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "js_gaps": [
+    "no trace tree in the JavaScript package"
+  ],
+  "cases": [
+    {
+      "name": "an empty file",
+      "input": {
+        "run_id": "r1",
+        "records": []
+      },
+      "expected": {
+        "record_count": 0,
+        "roots": [],
+        "text": ""
+      }
+    },
+    {
+      "name": "a run that is not in the file",
+      "input": {
+        "run_id": "zzz",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "a",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 0,
+        "roots": [],
+        "text": ""
+      }
+    },
+    {
+      "name": "one event",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "hello",
+            "meta": {
+              "run_id": "r1"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 1,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "hello",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] hello"
+      }
+    },
+    {
+      "name": "two root events",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "one",
+            "meta": {
+              "run_id": "r1"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "two",
+            "meta": {
+              "run_id": "r1"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 2,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "one",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "two",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u251c\u2500 [INFO] one\n\u2514\u2500 [INFO] two"
+      }
+    },
+    {
+      "name": "a span with children written before it closes",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "child a",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "s1"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "child b",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "s1"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "outer",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1",
+              "kind": "span",
+              "duration_ms": 12.5
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 3,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "outer",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": [
+              {
+                "level": "INFO",
+                "message": "child a",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "child b",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              }
+            ]
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] outer  (12.5ms)\n   \u251c\u2500 [INFO] child a\n   \u2514\u2500 [INFO] child b"
+      }
+    },
+    {
+      "name": "nested spans",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "s2"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "inner",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s2",
+              "parent_span_id": "s1",
+              "kind": "span",
+              "duration_ms": 3
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "outer",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1",
+              "kind": "span",
+              "duration_ms": 10
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 3,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "outer",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": [
+              {
+                "level": "INFO",
+                "message": "inner",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": [
+                  {
+                    "level": "INFO",
+                    "message": "leaf",
+                    "rollup": {
+                      "tokens_in": 0,
+                      "tokens_out": 0,
+                      "cost_usd": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] outer  (10.0ms)\n   \u2514\u2500 [INFO] inner  (3.0ms)\n      \u2514\u2500 [INFO] leaf"
+      }
+    },
+    {
+      "name": "a deep chain",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "e",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "s4"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "s4",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s4",
+              "parent_span_id": "s3",
+              "kind": "span"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "s3",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s3",
+              "parent_span_id": "s2",
+              "kind": "span"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "s2",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s2",
+              "parent_span_id": "s1",
+              "kind": "span"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "s1",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1",
+              "kind": "span"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 5,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "s1",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": [
+              {
+                "level": "INFO",
+                "message": "s2",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": [
+                  {
+                    "level": "INFO",
+                    "message": "s3",
+                    "rollup": {
+                      "tokens_in": 0,
+                      "tokens_out": 0,
+                      "cost_usd": 0.0
+                    },
+                    "children": [
+                      {
+                        "level": "INFO",
+                        "message": "s4",
+                        "rollup": {
+                          "tokens_in": 0,
+                          "tokens_out": 0,
+                          "cost_usd": 0.0
+                        },
+                        "children": [
+                          {
+                            "level": "INFO",
+                            "message": "e",
+                            "rollup": {
+                              "tokens_in": 0,
+                              "tokens_out": 0,
+                              "cost_usd": 0.0
+                            },
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] s1\n   \u2514\u2500 [INFO] s2\n      \u2514\u2500 [INFO] s3\n         \u2514\u2500 [INFO] s4\n            \u2514\u2500 [INFO] e"
+      }
+    },
+    {
+      "name": "siblings under one parent",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "a",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "b",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "c",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "parent",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "p",
+              "kind": "span"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 4,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "parent",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": [
+              {
+                "level": "INFO",
+                "message": "a",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "b",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "c",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              }
+            ]
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] parent\n   \u251c\u2500 [INFO] a\n   \u251c\u2500 [INFO] b\n   \u2514\u2500 [INFO] c"
+      }
+    },
+    {
+      "name": "an orphan whose parent never closed",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "root",
+            "meta": {
+              "run_id": "r1"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "orphan",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "missing"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 2,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "root",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "orphan",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u251c\u2500 [INFO] root\n\u2514\u2500 [INFO] orphan"
+      }
+    },
+    {
+      "name": "two orphan groups in the order first seen",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "o1",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "m1"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "o2",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "m2"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "o3",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "m1"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 3,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "o1",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "o3",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "o2",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u251c\u2500 [INFO] o1\n\u251c\u2500 [INFO] o3\n\u2514\u2500 [INFO] o2"
+      }
+    },
+    {
+      "name": "an orphan beside real roots",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "orphan",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "x"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "real root",
+            "meta": {
+              "run_id": "r1"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "another root",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s9",
+              "kind": "span"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 3,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "real root",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "another root",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "orphan",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u251c\u2500 [INFO] real root\n\u251c\u2500 [INFO] another root\n\u2514\u2500 [INFO] orphan"
+      }
+    },
+    {
+      "name": "a span that is its own parent",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "self",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1",
+              "parent_span_id": "s1",
+              "kind": "span"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 1,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "self",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] self"
+      },
+      "differs": {
+        "python": {
+          "record_count": 1,
+          "roots": [],
+          "text": ""
+        }
+      },
+      "rule": "06 \u2014 a record that would become its own ancestor is a root, never dropped; a missing message or level prints as an empty message or `?`"
+    },
+    {
+      "name": "a self-parent span with a child",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "child",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "s1"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "self",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1",
+              "parent_span_id": "s1",
+              "kind": "span"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 2,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "self",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": [
+              {
+                "level": "INFO",
+                "message": "child",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              }
+            ]
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] self\n   \u2514\u2500 [INFO] child"
+      },
+      "differs": {
+        "python": {
+          "record_count": 2,
+          "roots": [],
+          "text": ""
+        }
+      },
+      "rule": "06 \u2014 a record that would become its own ancestor is a root, never dropped; a missing message or level prints as an empty message or `?`"
+    },
+    {
+      "name": "a parent cycle",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "a",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "a",
+              "parent_span_id": "b",
+              "kind": "span"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "b",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "b",
+              "parent_span_id": "a",
+              "kind": "span"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 2,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "b",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": [
+              {
+                "level": "INFO",
+                "message": "a",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              }
+            ]
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] b\n   \u2514\u2500 [INFO] a"
+      },
+      "differs": {
+        "python": {
+          "record_count": 2,
+          "roots": [],
+          "text": ""
+        }
+      },
+      "rule": "06 \u2014 a record that would become its own ancestor is a root, never dropped; a missing message or level prints as an empty message or `?`"
+    },
+    {
+      "name": "a repeated span id",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "first",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1",
+              "kind": "span"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "second",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1",
+              "kind": "span"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 2,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "first",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "second",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u251c\u2500 [INFO] first\n\u2514\u2500 [INFO] second"
+      }
+    },
+    {
+      "name": "records of other runs are skipped",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "mine",
+            "meta": {
+              "run_id": "r1"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "theirs",
+            "meta": {
+              "run_id": "r2"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "also mine",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1",
+              "kind": "span"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 2,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "mine",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "also mine",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u251c\u2500 [INFO] mine\n\u2514\u2500 [INFO] also mine"
+      }
+    },
+    {
+      "name": "the other run",
+      "input": {
+        "run_id": "r2",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "mine",
+            "meta": {
+              "run_id": "r1"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "theirs",
+            "meta": {
+              "run_id": "r2"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "also theirs",
+            "meta": {
+              "run_id": "r2",
+              "span_id": "s1",
+              "kind": "span"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 2,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "theirs",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "also theirs",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u251c\u2500 [INFO] theirs\n\u2514\u2500 [INFO] also theirs"
+      }
+    },
+    {
+      "name": "a parent id that belongs to another run",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "x",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "s7"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "other",
+            "meta": {
+              "run_id": "r2",
+              "span_id": "s7",
+              "kind": "span"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 1,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "x",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] x"
+      }
+    },
+    {
+      "name": "tokens and cost roll up",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "call 1",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "s1"
+            },
+            "llm": {
+              "model": "m",
+              "tokens_in": 10,
+              "tokens_out": 5,
+              "cost_usd": 0.0025
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "call 2",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "s1"
+            },
+            "llm": {
+              "tokens_in": 1,
+              "tokens_out": 2,
+              "cost_usd": 0.0005
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "outer",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1",
+              "kind": "span",
+              "duration_ms": 1234.5678
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 3,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "outer",
+            "rollup": {
+              "tokens_in": 11,
+              "tokens_out": 7,
+              "cost_usd": 0.003
+            },
+            "children": [
+              {
+                "level": "INFO",
+                "message": "call 1",
+                "rollup": {
+                  "tokens_in": 10,
+                  "tokens_out": 5,
+                  "cost_usd": 0.0025
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "call 2",
+                "rollup": {
+                  "tokens_in": 1,
+                  "tokens_out": 2,
+                  "cost_usd": 0.0005
+                },
+                "children": []
+              }
+            ]
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] outer  (1,234.6ms, 11\u21927 tok, $0.0030)\n   \u251c\u2500 [INFO] call 1  (10\u21925 tok, $0.0025)\n   \u2514\u2500 [INFO] call 2  (1\u21922 tok, $0.0005)"
+      }
+    },
+    {
+      "name": "tokens that are not integers count as zero",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "c",
+            "meta": {
+              "run_id": "r1"
+            },
+            "llm": {
+              "tokens_in": 1.5,
+              "tokens_out": true,
+              "cost_usd": true
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 1,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "c",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] c"
+      }
+    },
+    {
+      "name": "a cost that is an integer",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "c",
+            "meta": {
+              "run_id": "r1"
+            },
+            "llm": {
+              "cost_usd": 2
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 1,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "c",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 2.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] c  ($2.0000)"
+      }
+    },
+    {
+      "name": "an empty llm block",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "c",
+            "meta": {
+              "run_id": "r1"
+            },
+            "llm": {}
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 1,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "c",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] c"
+      }
+    },
+    {
+      "name": "durations round the way Python rounds",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "a",
+            "meta": {
+              "run_id": "r1",
+              "duration_ms": 0.05
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "b",
+            "meta": {
+              "run_id": "r1",
+              "duration_ms": 0.15
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "c",
+            "meta": {
+              "run_id": "r1",
+              "duration_ms": 0.25
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "d",
+            "meta": {
+              "run_id": "r1",
+              "duration_ms": 0.35
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "e",
+            "meta": {
+              "run_id": "r1",
+              "duration_ms": 1000000.0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "f",
+            "meta": {
+              "run_id": "r1",
+              "duration_ms": 999999.95
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "g",
+            "meta": {
+              "run_id": "r1",
+              "duration_ms": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "h",
+            "meta": {
+              "run_id": "r1",
+              "duration_ms": 12
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 8,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "a",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "b",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "c",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "d",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "e",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "f",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "g",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "h",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u251c\u2500 [INFO] a  (0.1ms)\n\u251c\u2500 [INFO] b  (0.1ms)\n\u251c\u2500 [INFO] c  (0.2ms)\n\u251c\u2500 [INFO] d  (0.3ms)\n\u251c\u2500 [INFO] e  (1,000,000.0ms)\n\u251c\u2500 [INFO] f  (999,999.9ms)\n\u251c\u2500 [INFO] g  (0.0ms)\n\u2514\u2500 [INFO] h  (12.0ms)"
+      }
+    },
+    {
+      "name": "costs round to four places",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "a",
+            "meta": {
+              "run_id": "r1"
+            },
+            "llm": {
+              "cost_usd": 5e-05
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "b",
+            "meta": {
+              "run_id": "r1"
+            },
+            "llm": {
+              "cost_usd": 0.00015
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "c",
+            "meta": {
+              "run_id": "r1"
+            },
+            "llm": {
+              "cost_usd": 1234.56785
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "d",
+            "meta": {
+              "run_id": "r1"
+            },
+            "llm": {
+              "cost_usd": 0.0
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 4,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "a",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 5e-05
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "b",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.00015
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "c",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 1234.56785
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "d",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u251c\u2500 [INFO] a  ($0.0001)\n\u251c\u2500 [INFO] b  ($0.0001)\n\u251c\u2500 [INFO] c  ($1,234.5678)\n\u2514\u2500 [INFO] d"
+      }
+    },
+    {
+      "name": "durations that are not numbers",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "a",
+            "meta": {
+              "run_id": "r1",
+              "duration_ms": "5"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "b",
+            "meta": {
+              "run_id": "r1",
+              "duration_ms": true
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "c",
+            "meta": {
+              "run_id": "r1",
+              "duration_ms": null
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 3,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "a",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "b",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": "INFO",
+            "message": "c",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u251c\u2500 [INFO] a\n\u251c\u2500 [INFO] b\n\u2514\u2500 [INFO] c"
+      }
+    },
+    {
+      "name": "levels and messages that are missing or odd",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "meta": {
+              "run_id": "r1"
+            }
+          },
+          {
+            "level": 5,
+            "message": null,
+            "meta": {
+              "run_id": "r1"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 2,
+        "roots": [
+          {
+            "level": null,
+            "message": null,
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          },
+          {
+            "level": 5,
+            "message": null,
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u251c\u2500 [?] \n\u2514\u2500 [5] "
+      },
+      "differs": {
+        "python": {
+          "record_count": 2,
+          "roots": [
+            {
+              "level": null,
+              "message": null,
+              "rollup": {
+                "tokens_in": 0,
+                "tokens_out": 0,
+                "cost_usd": 0.0
+              },
+              "children": []
+            },
+            {
+              "level": 5,
+              "message": null,
+              "rollup": {
+                "tokens_in": 0,
+                "tokens_out": 0,
+                "cost_usd": 0.0
+              },
+              "children": []
+            }
+          ],
+          "text": "\u251c\u2500 [?] \n\u2514\u2500 [5] None"
+        }
+      },
+      "rule": "06 \u2014 a record that would become its own ancestor is a root, never dropped; a missing message or level prints as an empty message or `?`"
+    },
+    {
+      "name": "records without usable meta",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "message": "no meta"
+          },
+          {
+            "message": "bad meta",
+            "meta": "x"
+          },
+          {
+            "message": "list meta",
+            "meta": [
+              1
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 0,
+        "roots": [],
+        "text": ""
+      }
+    },
+    {
+      "name": "a run id that is not a string",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "n",
+            "meta": {
+              "run_id": 5
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "s",
+            "meta": {
+              "run_id": "r1"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 1,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "s",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] s"
+      }
+    },
+    {
+      "name": "an empty span id is an event",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "e",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "",
+              "parent_span_id": ""
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 1,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "e",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] e"
+      }
+    },
+    {
+      "name": "a non-string span id is an event",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "e",
+            "meta": {
+              "run_id": "r1",
+              "span_id": 5,
+              "parent_span_id": 7
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 1,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "e",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] e"
+      }
+    },
+    {
+      "name": "a non-span record that has a span id",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "child",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "s1"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "observation with an id",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1",
+              "kind": "observation"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 2,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "observation with an id",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": [
+              {
+                "level": "INFO",
+                "message": "child",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              }
+            ]
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] observation with an id\n   \u2514\u2500 [INFO] child"
+      }
+    },
+    {
+      "name": "non-ASCII text",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "caf\u00e9 \u65e5\u672c",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "s1",
+              "kind": "span"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "\ud834\udd1e",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "s1"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 2,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "caf\u00e9 \u65e5\u672c",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": [
+              {
+                "level": "INFO",
+                "message": "\ud834\udd1e",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              }
+            ]
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] caf\u00e9 \u65e5\u672c\n   \u2514\u2500 [INFO] \ud834\udd1e"
+      }
+    },
+    {
+      "name": "a long message",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "meta": {
+              "run_id": "r1"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 1,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": []
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "name": "a wide tree",
+      "input": {
+        "run_id": "r1",
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 0",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 1",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 2",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 3",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 4",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 5",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 6",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 7",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 8",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 9",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 10",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "leaf 11",
+            "meta": {
+              "run_id": "r1",
+              "parent_span_id": "p"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "agent",
+            "message": "p",
+            "meta": {
+              "run_id": "r1",
+              "span_id": "p",
+              "kind": "span"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "record_count": 13,
+        "roots": [
+          {
+            "level": "INFO",
+            "message": "p",
+            "rollup": {
+              "tokens_in": 0,
+              "tokens_out": 0,
+              "cost_usd": 0.0
+            },
+            "children": [
+              {
+                "level": "INFO",
+                "message": "leaf 0",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "leaf 1",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "leaf 2",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "leaf 3",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "leaf 4",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "leaf 5",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "leaf 6",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "leaf 7",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "leaf 8",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "leaf 9",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "leaf 10",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              },
+              {
+                "level": "INFO",
+                "message": "leaf 11",
+                "rollup": {
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0
+                },
+                "children": []
+              }
+            ]
+          }
+        ],
+        "text": "\u2514\u2500 [INFO] p\n   \u251c\u2500 [INFO] leaf 0\n   \u251c\u2500 [INFO] leaf 1\n   \u251c\u2500 [INFO] leaf 2\n   \u251c\u2500 [INFO] leaf 3\n   \u251c\u2500 [INFO] leaf 4\n   \u251c\u2500 [INFO] leaf 5\n   \u251c\u2500 [INFO] leaf 6\n   \u251c\u2500 [INFO] leaf 7\n   \u251c\u2500 [INFO] leaf 8\n   \u251c\u2500 [INFO] leaf 9\n   \u251c\u2500 [INFO] leaf 10\n   \u2514\u2500 [INFO] leaf 11"
+      }
+    }
+  ]
+}

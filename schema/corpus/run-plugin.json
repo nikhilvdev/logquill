@@ -1,0 +1,256 @@
+{
+  "group": "run-plugin",
+  "description": "Stamping meta.run_id and a per-run step counter on every record.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "steps count up and the run id is added",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "c",
+              "meta": {}
+            }
+          }
+        ],
+        "options": {
+          "run_id": "run-1"
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "meta": {
+              "run_id": "run-1",
+              "step": 0
+            },
+            "written": []
+          },
+          {
+            "kept": true,
+            "meta": {
+              "run_id": "run-1",
+              "step": 1
+            },
+            "written": []
+          },
+          {
+            "kept": true,
+            "meta": {
+              "run_id": "run-1",
+              "step": 2
+            },
+            "written": []
+          }
+        ],
+        "state": {
+          "step": 3
+        }
+      }
+    },
+    {
+      "name": "an existing run id is kept",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {
+                "run_id": "mine"
+              }
+            }
+          }
+        ],
+        "options": {
+          "run_id": "run-1"
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "meta": {
+              "run_id": "mine",
+              "step": 0
+            },
+            "written": []
+          }
+        ],
+        "state": {
+          "step": 1
+        }
+      }
+    },
+    {
+      "name": "an existing step is overwritten",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {
+                "step": 99
+              }
+            }
+          }
+        ],
+        "options": {
+          "run_id": "run-1"
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "meta": {
+              "step": 0,
+              "run_id": "run-1"
+            },
+            "written": []
+          }
+        ],
+        "state": {
+          "step": 1
+        }
+      }
+    },
+    {
+      "name": "a generated run id",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "meta": {
+              "run_id": "<generated>",
+              "step": 0
+            },
+            "written": []
+          },
+          {
+            "kept": true,
+            "meta": {
+              "run_id": "<generated>",
+              "step": 1
+            },
+            "written": []
+          }
+        ],
+        "state": {
+          "step": 2
+        }
+      }
+    },
+    {
+      "name": "an empty run id is replaced by a generated one",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            }
+          }
+        ],
+        "options": {
+          "run_id": ""
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "meta": {
+              "run_id": "<generated>",
+              "step": 0
+            },
+            "written": []
+          }
+        ],
+        "state": {
+          "step": 1
+        }
+      },
+      "differs": {
+        "js": {
+          "steps": [
+            {
+              "kept": true,
+              "meta": {
+                "run_id": "",
+                "step": 0
+              },
+              "written": []
+            }
+          ]
+        }
+      },
+      "rule": "09 \u2014 D24 tail and flight-recorder sets are bounded; D36 messages show JSON values and wire names; D44 a full alert table never drops an alert; D5 run ids are 32 hex digits"
+    }
+  ]
+}

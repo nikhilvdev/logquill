@@ -1,0 +1,463 @@
+{
+  "group": "trace-headers",
+  "description": "Reading a trace id out of a W3C traceparent, an AWS X-Ray header or a GCP Cloud Trace header.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "a W3C traceparent",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+      },
+      "expected": {
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "a W3C traceparent, flags 00",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00"
+      },
+      "expected": {
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "a W3C traceparent with another version",
+      "input": {
+        "header": "01-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+      },
+      "expected": {
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "a W3C traceparent with surrounding spaces",
+      "input": {
+        "header": "  00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01  "
+      },
+      "expected": {
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "a W3C traceparent with a trailing newline",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\n"
+      },
+      "expected": {
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "a W3C traceparent with a tab and carriage return",
+      "input": {
+        "header": "\t00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\r"
+      },
+      "expected": {
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "a W3C traceparent in upper case",
+      "input": {
+        "header": "00-4BF92F3577B34DA6A3CE929D0E0E4736-00F067AA0BA902B7-01"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a W3C traceparent with a short trace id",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e47-00f067aa0ba902b7-01"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a W3C traceparent with a long trace id",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e473600-00f067aa0ba902b7-01"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a W3C traceparent with a short parent id",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902-01"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a W3C traceparent with a four-part tail",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01-extra"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a W3C traceparent with non-hex characters",
+      "input": {
+        "header": "00-gggggggggggggggggggggggggggggggg-00f067aa0ba902b7-01"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a W3C traceparent with an all-zero trace id",
+      "input": {
+        "header": "00-00000000000000000000000000000000-00f067aa0ba902b7-01"
+      },
+      "expected": {
+        "trace_id": null
+      },
+      "differs": {
+        "python": {
+          "trace_id": "00000000000000000000000000000000"
+        },
+        "js": {
+          "trace_id": "00000000000000000000000000000000"
+        }
+      },
+      "rule": "D40 \u2014 ASCII-only matching and trimming; an all-zero id or version ff is not a trace"
+    },
+    {
+      "name": "a W3C traceparent with an all-zero parent id",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000000000-01"
+      },
+      "expected": {
+        "trace_id": null
+      },
+      "differs": {
+        "python": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+        },
+        "js": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+        }
+      },
+      "rule": "D40 \u2014 ASCII-only matching and trimming; an all-zero id or version ff is not a trace"
+    },
+    {
+      "name": "a W3C traceparent with version ff",
+      "input": {
+        "header": "ff-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+      },
+      "expected": {
+        "trace_id": null
+      },
+      "differs": {
+        "python": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+        },
+        "js": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+        }
+      },
+      "rule": "D40 \u2014 ASCII-only matching and trimming; an all-zero id or version ff is not a trace"
+    },
+    {
+      "name": "a W3C traceparent with a no-break space around it",
+      "input": {
+        "header": "\u00a000-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\u00a0"
+      },
+      "expected": {
+        "trace_id": null
+      },
+      "differs": {
+        "python": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+        },
+        "js": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+        }
+      },
+      "rule": "D40 \u2014 ASCII-only matching and trimming; an all-zero id or version ff is not a trace"
+    },
+    {
+      "name": "a W3C traceparent with a next-line character around it",
+      "input": {
+        "header": "\u0085 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+      },
+      "expected": {
+        "trace_id": null
+      },
+      "differs": {
+        "python": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+        }
+      },
+      "rule": "D40 \u2014 ASCII-only matching and trimming; an all-zero id or version ff is not a trace"
+    },
+    {
+      "name": "an X-Ray header",
+      "input": {
+        "header": "Root=1-5759e988-bd862e3fe1be46a994272793"
+      },
+      "expected": {
+        "trace_id": "5759e988bd862e3fe1be46a994272793"
+      }
+    },
+    {
+      "name": "an X-Ray header with parent and sampled",
+      "input": {
+        "header": "Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1"
+      },
+      "expected": {
+        "trace_id": "5759e988bd862e3fe1be46a994272793"
+      }
+    },
+    {
+      "name": "an X-Ray header with Self first",
+      "input": {
+        "header": "Self=1-67891233-abcdef012345678912345678;Root=1-5759e988-bd862e3fe1be46a994272793"
+      },
+      "expected": {
+        "trace_id": "5759e988bd862e3fe1be46a994272793"
+      }
+    },
+    {
+      "name": "an X-Ray header with two roots",
+      "input": {
+        "header": "Root=1-5759e988-bd862e3fe1be46a994272793;Root=1-11111111-222222222222222222222222"
+      },
+      "expected": {
+        "trace_id": "5759e988bd862e3fe1be46a994272793"
+      }
+    },
+    {
+      "name": "an X-Ray header with upper-case hex",
+      "input": {
+        "header": "Root=1-5759E988-BD862E3FE1BE46A994272793"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "an X-Ray header with a short random part",
+      "input": {
+        "header": "Root=1-5759e988-bd862e3fe1be46a9942727"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "an X-Ray header with a long random part",
+      "input": {
+        "header": "Root=1-5759e988-bd862e3fe1be46a994272793ab"
+      },
+      "expected": {
+        "trace_id": "5759e988bd862e3fe1be46a994272793"
+      }
+    },
+    {
+      "name": "an X-Ray header with an all-zero id",
+      "input": {
+        "header": "Root=1-00000000-000000000000000000000000"
+      },
+      "expected": {
+        "trace_id": null
+      },
+      "differs": {
+        "python": {
+          "trace_id": "00000000000000000000000000000000"
+        },
+        "js": {
+          "trace_id": "00000000000000000000000000000000"
+        }
+      },
+      "rule": "D40 \u2014 ASCII-only matching and trimming; an all-zero id or version ff is not a trace"
+    },
+    {
+      "name": "an X-Ray header with the wrong version",
+      "input": {
+        "header": "Root=2-5759e988-bd862e3fe1be46a994272793"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "an X-Ray header embedded in other text",
+      "input": {
+        "header": "x Root=1-5759e988-bd862e3fe1be46a994272793 y"
+      },
+      "expected": {
+        "trace_id": "5759e988bd862e3fe1be46a994272793"
+      }
+    },
+    {
+      "name": "a GCP header",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/1234567890"
+      },
+      "expected": {
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "a GCP header with the trace flag",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/1234567890;o=1"
+      },
+      "expected": {
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "a GCP header with o=0",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/1;o=0"
+      },
+      "expected": {
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "a GCP header with a two-digit option",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/1;o=10"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a GCP header without a span id",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a GCP header without a slash",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a GCP header with a non-numeric span id",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/abc"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a GCP header with an Arabic-Indic span id",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/\u0661\u0662\u0663"
+      },
+      "expected": {
+        "trace_id": null
+      },
+      "differs": {
+        "python": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+        }
+      },
+      "rule": "D40 \u2014 ASCII-only matching and trimming; an all-zero id or version ff is not a trace"
+    },
+    {
+      "name": "a GCP header with a trailing newline",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/1\n"
+      },
+      "expected": {
+        "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "a GCP header with upper-case hex",
+      "input": {
+        "header": "4BF92F3577B34DA6A3CE929D0E0E4736/1"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a GCP header with an all-zero trace id",
+      "input": {
+        "header": "00000000000000000000000000000000/1"
+      },
+      "expected": {
+        "trace_id": null
+      },
+      "differs": {
+        "python": {
+          "trace_id": "00000000000000000000000000000000"
+        },
+        "js": {
+          "trace_id": "00000000000000000000000000000000"
+        }
+      },
+      "rule": "D40 \u2014 ASCII-only matching and trimming; an all-zero id or version ff is not a trace"
+    },
+    {
+      "name": "an empty header",
+      "input": {
+        "header": ""
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "only whitespace",
+      "input": {
+        "header": "   \t "
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a header of the wrong kind",
+      "input": {
+        "header": "Bearer abc.def.ghi"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a long header",
+      "input": {
+        "header": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    },
+    {
+      "name": "a header with non-ASCII text",
+      "input": {
+        "header": "00-\u00e9-\u00e9-01"
+      },
+      "expected": {
+        "trace_id": null
+      }
+    }
+  ]
+}

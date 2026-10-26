@@ -1,0 +1,3126 @@
+{
+  "group": "semconv",
+  "description": "The OpenTelemetry GenAI span and log attributes a record maps to, convention selection and timestamps.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "latest: a full llm record",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "provider": "openai",
+            "response_model": "gpt-4o-2024"
+          },
+          "llm": {
+            "model": "gpt-4o",
+            "tokens_in": 10,
+            "tokens_out": 20,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        },
+        "convention": "latest"
+      },
+      "expected": {
+        "span": {
+          "name": "chat gpt-4o",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "openai",
+            "gen_ai.request.model": "gpt-4o",
+            "gen_ai.response.model": "gpt-4o-2024",
+            "gen_ai.usage.input_tokens": 10,
+            "gen_ai.usage.output_tokens": 20,
+            "gen_ai.response.finish_reasons": [
+              "stop"
+            ],
+            "logquill.cost_usd": 0.5
+          },
+          "duration_ms": 12.5,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "latest: an agent span",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "agent_name": "planner",
+            "agent_id": "a-1",
+            "provider": "anthropic"
+          }
+        },
+        "convention": "latest"
+      },
+      "expected": {
+        "span": {
+          "name": "invoke_agent planner",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.agent.name": "planner",
+            "gen_ai.operation.name": "invoke_agent",
+            "gen_ai.provider.name": "anthropic",
+            "gen_ai.agent.id": "a-1"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "latest: a tool action",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "search",
+            "tool_call_id": "c1",
+            "duration_ms": 5
+          }
+        },
+        "convention": "latest"
+      },
+      "expected": {
+        "span": {
+          "name": "execute_tool search",
+          "kind": "internal",
+          "attributes": {
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": "search",
+            "gen_ai.tool.call.id": "c1"
+          },
+          "duration_ms": 5.0,
+          "is_error": false,
+          "events": []
+        }
+      },
+      "differs": {
+        "js": {
+          "span": {
+            "name": "execute_tool search",
+            "kind": "internal",
+            "attributes": {
+              "gen_ai.operation.name": "execute_tool",
+              "gen_ai.tool.name": "search",
+              "gen_ai.tool.call.id": "c1"
+            },
+            "duration_ms": 5,
+            "is_error": false,
+            "events": []
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "latest: log attributes of an llm record",
+      "input": {
+        "op": "log_attributes",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "gpt-4o",
+            "tokens_in": 10,
+            "tokens_out": 20,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        },
+        "convention": "latest"
+      },
+      "expected": {
+        "attributes": {
+          "gen_ai.operation.name": "chat",
+          "gen_ai.request.model": "gpt-4o",
+          "gen_ai.usage.input_tokens": 10,
+          "gen_ai.usage.output_tokens": 20,
+          "gen_ai.response.finish_reasons": [
+            "stop"
+          ],
+          "logquill.cost_usd": 0.5
+        }
+      }
+    },
+    {
+      "name": "legacy: a full llm record",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "provider": "openai",
+            "response_model": "gpt-4o-2024"
+          },
+          "llm": {
+            "model": "gpt-4o",
+            "tokens_in": 10,
+            "tokens_out": 20,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        },
+        "convention": "legacy"
+      },
+      "expected": {
+        "span": {
+          "name": "chat gpt-4o",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.system": "openai",
+            "gen_ai.request.model": "gpt-4o",
+            "gen_ai.response.model": "gpt-4o-2024",
+            "gen_ai.usage.prompt_tokens": 10,
+            "gen_ai.usage.completion_tokens": 20,
+            "gen_ai.response.finish_reasons": [
+              "stop"
+            ],
+            "logquill.cost_usd": 0.5
+          },
+          "duration_ms": 12.5,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "legacy: an agent span",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "agent_name": "planner",
+            "agent_id": "a-1",
+            "provider": "anthropic"
+          }
+        },
+        "convention": "legacy"
+      },
+      "expected": {
+        "span": {
+          "name": "invoke_agent planner",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.agent.name": "planner",
+            "gen_ai.operation.name": "invoke_agent",
+            "gen_ai.system": "anthropic",
+            "gen_ai.agent.id": "a-1"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "legacy: a tool action",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "search",
+            "tool_call_id": "c1",
+            "duration_ms": 5
+          }
+        },
+        "convention": "legacy"
+      },
+      "expected": {
+        "span": {
+          "name": "execute_tool search",
+          "kind": "internal",
+          "attributes": {
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": "search",
+            "gen_ai.tool.call.id": "c1"
+          },
+          "duration_ms": 5.0,
+          "is_error": false,
+          "events": []
+        }
+      },
+      "differs": {
+        "js": {
+          "span": {
+            "name": "execute_tool search",
+            "kind": "internal",
+            "attributes": {
+              "gen_ai.operation.name": "execute_tool",
+              "gen_ai.tool.name": "search",
+              "gen_ai.tool.call.id": "c1"
+            },
+            "duration_ms": 5,
+            "is_error": false,
+            "events": []
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "legacy: log attributes of an llm record",
+      "input": {
+        "op": "log_attributes",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "gpt-4o",
+            "tokens_in": 10,
+            "tokens_out": 20,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        },
+        "convention": "legacy"
+      },
+      "expected": {
+        "attributes": {
+          "gen_ai.operation.name": "chat",
+          "gen_ai.request.model": "gpt-4o",
+          "gen_ai.usage.prompt_tokens": 10,
+          "gen_ai.usage.completion_tokens": 20,
+          "gen_ai.response.finish_reasons": [
+            "stop"
+          ],
+          "logquill.cost_usd": 0.5
+        }
+      }
+    },
+    {
+      "name": "an llm record with the minimum",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an llm record with no model",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "tokens_in": 1
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.usage.input_tokens": 1
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an empty llm block",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {}
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a text completion",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "operation": "text_completion"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "text_completion m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "text_completion",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "another operation name is a chat",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "operation": "embedding"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "the default provider",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        },
+        "default_provider": "acme"
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "acme",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an empty provider falls back",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "provider": ""
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a non-string provider falls back",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "provider": 5
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "tokens that are floats",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": 5.0,
+            "tokens_out": 2.5
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      },
+      "differs": {
+        "js": {
+          "span": {
+            "name": "chat m",
+            "kind": "client",
+            "attributes": {
+              "gen_ai.operation.name": "chat",
+              "gen_ai.provider.name": "unknown",
+              "gen_ai.request.model": "m",
+              "gen_ai.usage.input_tokens": 5
+            },
+            "duration_ms": null,
+            "is_error": false,
+            "events": []
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "tokens that are booleans",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": true,
+            "tokens_out": false
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      },
+      "differs": {
+        "python": {
+          "span": {
+            "name": "chat m",
+            "kind": "client",
+            "attributes": {
+              "gen_ai.operation.name": "chat",
+              "gen_ai.provider.name": "unknown",
+              "gen_ai.request.model": "m",
+              "gen_ai.usage.input_tokens": true,
+              "gen_ai.usage.output_tokens": false
+            },
+            "duration_ms": null,
+            "is_error": false,
+            "events": []
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "negative tokens are kept as given",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": -1
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m",
+            "gen_ai.usage.input_tokens": -1
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a cost that is an integer",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "cost_usd": 3
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m",
+            "logquill.cost_usd": 3.0
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      },
+      "differs": {
+        "js": {
+          "span": {
+            "name": "chat m",
+            "kind": "client",
+            "attributes": {
+              "gen_ai.operation.name": "chat",
+              "gen_ai.provider.name": "unknown",
+              "gen_ai.request.model": "m",
+              "logquill.cost_usd": 3
+            },
+            "duration_ms": null,
+            "is_error": false,
+            "events": []
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "a cost that is a boolean",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "cost_usd": true
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      },
+      "differs": {
+        "python": {
+          "span": {
+            "name": "chat m",
+            "kind": "client",
+            "attributes": {
+              "gen_ai.operation.name": "chat",
+              "gen_ai.provider.name": "unknown",
+              "gen_ai.request.model": "m",
+              "logquill.cost_usd": 1.0
+            },
+            "duration_ms": null,
+            "is_error": false,
+            "events": []
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "a cost of zero",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "cost_usd": 0
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m",
+            "logquill.cost_usd": 0.0
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      },
+      "differs": {
+        "js": {
+          "span": {
+            "name": "chat m",
+            "kind": "client",
+            "attributes": {
+              "gen_ai.operation.name": "chat",
+              "gen_ai.provider.name": "unknown",
+              "gen_ai.request.model": "m",
+              "logquill.cost_usd": 0
+            },
+            "duration_ms": null,
+            "is_error": false,
+            "events": []
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "an empty finish reason",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "finish_reason": ""
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "latency that is a boolean",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "latency_ms": true
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "latency that is an integer",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "latency_ms": 7
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": 7.0,
+          "is_error": false,
+          "events": []
+        }
+      },
+      "differs": {
+        "js": {
+          "span": {
+            "name": "chat m",
+            "kind": "client",
+            "attributes": {
+              "gen_ai.operation.name": "chat",
+              "gen_ai.provider.name": "unknown",
+              "gen_ai.request.model": "m"
+            },
+            "duration_ms": 7,
+            "is_error": false,
+            "events": []
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "latency that is a string",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "latency_ms": "7"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "content capture off hides messages",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "input_messages": [
+              {
+                "role": "user",
+                "content": "hi"
+              }
+            ],
+            "output_messages": [
+              {
+                "role": "assistant",
+                "content": "yo"
+              }
+            ]
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "content capture on shows messages",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "input_messages": [
+              {
+                "role": "user",
+                "content": "h\\u00e9"
+              }
+            ],
+            "output_messages": "plain"
+          },
+          "llm": {
+            "model": "m"
+          }
+        },
+        "capture_content": true
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m",
+            "gen_ai.input.messages": "[{\"role\":\"user\",\"content\":\"h\\\\u00e9\"}]",
+            "gen_ai.output.messages": "\"plain\""
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "content capture on with null messages",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "input_messages": null
+          },
+          "llm": {
+            "model": "m"
+          }
+        },
+        "capture_content": true
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an error string",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": "TimeoutError: slow"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m",
+            "error.type": "TimeoutError"
+          },
+          "duration_ms": null,
+          "is_error": true,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an error without a colon",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": "ValueError"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m",
+            "error.type": "ValueError"
+          },
+          "duration_ms": null,
+          "is_error": true,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an error whose head has a space",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": "bad thing: why"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m",
+            "error.type": "_OTHER"
+          },
+          "duration_ms": null,
+          "is_error": true,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an error with an empty head",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": ": why"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m",
+            "error.type": "_OTHER"
+          },
+          "duration_ms": null,
+          "is_error": true,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an error with padding around the head",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": "  KeyError  : x"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m",
+            "error.type": "KeyError"
+          },
+          "duration_ms": null,
+          "is_error": true,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an empty error",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": ""
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a non-string error",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": 5
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an ERROR level without error text",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": true,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a FATAL level",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "FATAL",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": true,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "the common attributes",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "thread_id": "t1",
+            "agent_name": "ag",
+            "run_id": "r1",
+            "node_name": "n1",
+            "retry_count": 2
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m",
+            "gen_ai.conversation.id": "t1",
+            "gen_ai.agent.name": "ag",
+            "logquill.run_id": "r1",
+            "logquill.node_name": "n1",
+            "logquill.retry_count": 2
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "empty common attributes are skipped",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "thread_id": "",
+            "agent_name": "",
+            "run_id": "",
+            "node_name": ""
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a retry count that is a boolean",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "retry_count": true
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a retry count that is a float",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "retry_count": 1.0
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      },
+      "differs": {
+        "js": {
+          "span": {
+            "name": "chat m",
+            "kind": "client",
+            "attributes": {
+              "gen_ai.operation.name": "chat",
+              "gen_ai.provider.name": "unknown",
+              "gen_ai.request.model": "m",
+              "logquill.retry_count": 1
+            },
+            "duration_ms": null,
+            "is_error": false,
+            "events": []
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "a retry count of zero",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "retry_count": 0
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m",
+            "logquill.retry_count": 0
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a state diff object",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "state_diff": {
+              "b": 1,
+              "a": [
+                1.0,
+                "\\u00e9"
+              ]
+            }
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": [
+            [
+              "logquill.state_diff",
+              {
+                "logquill.state": "{\"b\":1,\"a\":[1.0,\"\\\\u00e9\"]}"
+              }
+            ]
+          ]
+        }
+      },
+      "differs": {
+        "js": {
+          "span": {
+            "name": "chat m",
+            "kind": "client",
+            "attributes": {
+              "gen_ai.operation.name": "chat",
+              "gen_ai.provider.name": "unknown",
+              "gen_ai.request.model": "m"
+            },
+            "duration_ms": null,
+            "is_error": false,
+            "events": [
+              [
+                "logquill.state_diff",
+                {
+                  "logquill.state": "{\"b\":1,\"a\":[1,\"\\\\u00e9\"]}"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "a state diff that is not an object",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "state_diff": [
+              1
+            ]
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      },
+      "differs": {
+        "js": {
+          "span": {
+            "name": "chat m",
+            "kind": "client",
+            "attributes": {
+              "gen_ai.operation.name": "chat",
+              "gen_ai.provider.name": "unknown",
+              "gen_ai.request.model": "m"
+            },
+            "duration_ms": null,
+            "is_error": false,
+            "events": [
+              [
+                "logquill.state_diff",
+                {
+                  "logquill.state": "[1]"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "non-ASCII model",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "mod\\u00e9l"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat mod\\u00e9l",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "mod\\u00e9l"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a tool with no call id",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "calc"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "execute_tool calc",
+          "kind": "internal",
+          "attributes": {
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": "calc"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a tool with an empty call id",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "calc",
+            "tool_call_id": ""
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "execute_tool calc",
+          "kind": "internal",
+          "attributes": {
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": "calc"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a tool with an error",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "calc",
+            "error": "ZeroDivisionError: x"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "execute_tool calc",
+          "kind": "internal",
+          "attributes": {
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": "calc",
+            "error.type": "ZeroDivisionError"
+          },
+          "duration_ms": null,
+          "is_error": true,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a tool at ERROR level only",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "calc"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "execute_tool calc",
+          "kind": "internal",
+          "attributes": {
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": "calc"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a tool with a boolean duration",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "calc",
+            "duration_ms": true
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "execute_tool calc",
+          "kind": "internal",
+          "attributes": {
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": "calc"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an action without a tool is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action"
+          }
+        }
+      },
+      "expected": {
+        "span": null
+      }
+    },
+    {
+      "name": "an action with an empty tool is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": ""
+          }
+        }
+      },
+      "expected": {
+        "span": null
+      }
+    },
+    {
+      "name": "a thought is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "thought",
+            "tool": "x"
+          }
+        }
+      },
+      "expected": {
+        "span": null
+      }
+    },
+    {
+      "name": "a plain span",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "load data",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "duration_ms": 12
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "load data",
+          "kind": "internal",
+          "attributes": {},
+          "duration_ms": 12.0,
+          "is_error": false,
+          "events": []
+        }
+      },
+      "differs": {
+        "js": {
+          "span": {
+            "name": "load data",
+            "kind": "internal",
+            "attributes": {},
+            "duration_ms": 12,
+            "is_error": false,
+            "events": []
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "a span with a non-string span id is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": 5
+          }
+        }
+      },
+      "expected": {
+        "span": null
+      }
+    },
+    {
+      "name": "a span with no span id is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span"
+          }
+        }
+      },
+      "expected": {
+        "span": null
+      }
+    },
+    {
+      "name": "a span run as an agent by operation",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "planner.run",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "operation": "invoke_agent"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "invoke_agent planner.run",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "invoke_agent",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.agent.name": "planner.run"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an agent span with an empty agent name",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "step",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "agent_name": ""
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "step",
+          "kind": "internal",
+          "attributes": {},
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an agent span with a provider",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "agent_name": "a",
+            "provider": "openai"
+          }
+        },
+        "default_provider": "acme"
+      },
+      "expected": {
+        "span": {
+          "name": "invoke_agent a",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.agent.name": "a",
+            "gen_ai.operation.name": "invoke_agent",
+            "gen_ai.provider.name": "openai"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a span at ERROR level",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app",
+          "message": "failed",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "failed",
+          "kind": "internal",
+          "attributes": {},
+          "duration_ms": null,
+          "is_error": true,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a span with an error string but INFO level",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "error": "X: y"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "m",
+          "kind": "internal",
+          "attributes": {
+            "error.type": "X"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a span with a state diff",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "state_diff": {
+              "k": "v"
+            }
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "m",
+          "kind": "internal",
+          "attributes": {},
+          "duration_ms": null,
+          "is_error": false,
+          "events": [
+            [
+              "logquill.state_diff",
+              {
+                "logquill.state": "{\"k\":\"v\"}"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "name": "a span with a float duration",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "duration_ms": 0.25
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "m",
+          "kind": "internal",
+          "attributes": {},
+          "duration_ms": 0.25,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an ordinary record is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "user": "u"
+          }
+        }
+      },
+      "expected": {
+        "span": null
+      }
+    },
+    {
+      "name": "an llm record that is also a span",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "duration_ms": 9
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "an llm record that is also a tool",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "t"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "a tool record that is also a span",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "t",
+            "span_id": "s1"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "execute_tool t",
+          "kind": "internal",
+          "attributes": {
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": "t"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "meta that is not an object",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": {
+          "name": "chat m",
+          "kind": "client",
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.provider.name": "unknown",
+            "gen_ai.request.model": "m"
+          },
+          "duration_ms": null,
+          "is_error": false,
+          "events": []
+        }
+      }
+    },
+    {
+      "name": "classify: an llm record",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "span": false,
+        "llm": true,
+        "tool": false
+      }
+    },
+    {
+      "name": "classify: a span",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s"
+          }
+        }
+      },
+      "expected": {
+        "span": true,
+        "llm": false,
+        "tool": false
+      }
+    },
+    {
+      "name": "classify: a tool",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "t"
+          }
+        }
+      },
+      "expected": {
+        "span": false,
+        "llm": false,
+        "tool": true
+      }
+    },
+    {
+      "name": "classify: a plain record",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "span": false,
+        "llm": false,
+        "tool": false
+      }
+    },
+    {
+      "name": "classify: an llm that is not an object",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": "x"
+        }
+      },
+      "expected": {
+        "span": false,
+        "llm": false,
+        "tool": false
+      }
+    },
+    {
+      "name": "classify: a null llm",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "span": false,
+        "llm": false,
+        "tool": false
+      }
+    },
+    {
+      "name": "log attributes: a plain record",
+      "input": {
+        "op": "log_attributes",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {}
+        },
+        "convention": "latest"
+      },
+      "expected": {
+        "attributes": {}
+      }
+    },
+    {
+      "name": "log attributes: bool tokens",
+      "input": {
+        "op": "log_attributes",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": true,
+            "cost_usd": true
+          }
+        },
+        "convention": "latest"
+      },
+      "expected": {
+        "attributes": {
+          "gen_ai.operation.name": "chat",
+          "gen_ai.request.model": "m"
+        }
+      },
+      "differs": {
+        "python": {
+          "attributes": {
+            "gen_ai.operation.name": "chat",
+            "gen_ai.request.model": "m",
+            "gen_ai.usage.input_tokens": true,
+            "logquill.cost_usd": 1.0
+          }
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "resolve: the default is the latest names",
+      "input": {
+        "op": "resolve"
+      },
+      "expected": {
+        "version": "1.44.0",
+        "names": {
+          "operation": "gen_ai.operation.name",
+          "provider": "gen_ai.provider.name",
+          "request_model": "gen_ai.request.model",
+          "response_model": "gen_ai.response.model",
+          "input_tokens": "gen_ai.usage.input_tokens",
+          "output_tokens": "gen_ai.usage.output_tokens",
+          "finish_reasons": "gen_ai.response.finish_reasons",
+          "agent_name": "gen_ai.agent.name",
+          "agent_id": "gen_ai.agent.id",
+          "conversation_id": "gen_ai.conversation.id",
+          "tool_name": "gen_ai.tool.name",
+          "tool_call_id": "gen_ai.tool.call.id",
+          "input_messages": "gen_ai.input.messages",
+          "output_messages": "gen_ai.output.messages"
+        }
+      }
+    },
+    {
+      "name": "resolve: explicit latest",
+      "input": {
+        "op": "resolve",
+        "explicit": "latest"
+      },
+      "expected": {
+        "version": "1.44.0",
+        "names": {
+          "operation": "gen_ai.operation.name",
+          "provider": "gen_ai.provider.name",
+          "request_model": "gen_ai.request.model",
+          "response_model": "gen_ai.response.model",
+          "input_tokens": "gen_ai.usage.input_tokens",
+          "output_tokens": "gen_ai.usage.output_tokens",
+          "finish_reasons": "gen_ai.response.finish_reasons",
+          "agent_name": "gen_ai.agent.name",
+          "agent_id": "gen_ai.agent.id",
+          "conversation_id": "gen_ai.conversation.id",
+          "tool_name": "gen_ai.tool.name",
+          "tool_call_id": "gen_ai.tool.call.id",
+          "input_messages": "gen_ai.input.messages",
+          "output_messages": "gen_ai.output.messages"
+        }
+      }
+    },
+    {
+      "name": "resolve: explicit legacy",
+      "input": {
+        "op": "resolve",
+        "explicit": "legacy"
+      },
+      "expected": {
+        "version": "legacy",
+        "names": {
+          "operation": "gen_ai.operation.name",
+          "provider": "gen_ai.system",
+          "request_model": "gen_ai.request.model",
+          "response_model": "gen_ai.response.model",
+          "input_tokens": "gen_ai.usage.prompt_tokens",
+          "output_tokens": "gen_ai.usage.completion_tokens",
+          "finish_reasons": "gen_ai.response.finish_reasons",
+          "agent_name": "gen_ai.agent.name",
+          "agent_id": "gen_ai.agent.id",
+          "conversation_id": "gen_ai.conversation.id",
+          "tool_name": "gen_ai.tool.name",
+          "tool_call_id": "gen_ai.tool.call.id",
+          "input_messages": "gen_ai.input.messages",
+          "output_messages": "gen_ai.output.messages"
+        }
+      }
+    },
+    {
+      "name": "resolve: an unknown explicit value",
+      "input": {
+        "op": "resolve",
+        "explicit": "v2"
+      },
+      "expected": {
+        "error": "semconv must be one of latest, legacy, got \"v2\""
+      },
+      "differs": {
+        "python": {
+          "error": "ValueError: semconv must be one of latest, legacy, got 'v2'"
+        },
+        "js": {
+          "error": "Error: semconvVersion must be one of latest, legacy, got \"v2\""
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "resolve: an empty explicit value",
+      "input": {
+        "op": "resolve",
+        "explicit": ""
+      },
+      "expected": {
+        "error": "semconv must be one of latest, legacy, got \"\""
+      },
+      "differs": {
+        "python": {
+          "error": "ValueError: semconv must be one of latest, legacy, got ''"
+        },
+        "js": {
+          "error": "Error: semconvVersion must be one of latest, legacy, got \"\""
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "resolve: the opt-in token selects latest",
+      "input": {
+        "op": "resolve",
+        "env": {
+          "OTEL_SEMCONV_STABILITY_OPT_IN": "gen_ai_latest_experimental"
+        }
+      },
+      "expected": {
+        "version": "1.44.0",
+        "names": {
+          "operation": "gen_ai.operation.name",
+          "provider": "gen_ai.provider.name",
+          "request_model": "gen_ai.request.model",
+          "response_model": "gen_ai.response.model",
+          "input_tokens": "gen_ai.usage.input_tokens",
+          "output_tokens": "gen_ai.usage.output_tokens",
+          "finish_reasons": "gen_ai.response.finish_reasons",
+          "agent_name": "gen_ai.agent.name",
+          "agent_id": "gen_ai.agent.id",
+          "conversation_id": "gen_ai.conversation.id",
+          "tool_name": "gen_ai.tool.name",
+          "tool_call_id": "gen_ai.tool.call.id",
+          "input_messages": "gen_ai.input.messages",
+          "output_messages": "gen_ai.output.messages"
+        }
+      }
+    },
+    {
+      "name": "resolve: the opt-in token among others",
+      "input": {
+        "op": "resolve",
+        "env": {
+          "OTEL_SEMCONV_STABILITY_OPT_IN": " http , gen_ai_latest_experimental "
+        }
+      },
+      "expected": {
+        "version": "1.44.0",
+        "names": {
+          "operation": "gen_ai.operation.name",
+          "provider": "gen_ai.provider.name",
+          "request_model": "gen_ai.request.model",
+          "response_model": "gen_ai.response.model",
+          "input_tokens": "gen_ai.usage.input_tokens",
+          "output_tokens": "gen_ai.usage.output_tokens",
+          "finish_reasons": "gen_ai.response.finish_reasons",
+          "agent_name": "gen_ai.agent.name",
+          "agent_id": "gen_ai.agent.id",
+          "conversation_id": "gen_ai.conversation.id",
+          "tool_name": "gen_ai.tool.name",
+          "tool_call_id": "gen_ai.tool.call.id",
+          "input_messages": "gen_ai.input.messages",
+          "output_messages": "gen_ai.output.messages"
+        }
+      }
+    },
+    {
+      "name": "resolve: an unrelated opt-in",
+      "input": {
+        "op": "resolve",
+        "env": {
+          "OTEL_SEMCONV_STABILITY_OPT_IN": "http"
+        }
+      },
+      "expected": {
+        "version": "1.44.0",
+        "names": {
+          "operation": "gen_ai.operation.name",
+          "provider": "gen_ai.provider.name",
+          "request_model": "gen_ai.request.model",
+          "response_model": "gen_ai.response.model",
+          "input_tokens": "gen_ai.usage.input_tokens",
+          "output_tokens": "gen_ai.usage.output_tokens",
+          "finish_reasons": "gen_ai.response.finish_reasons",
+          "agent_name": "gen_ai.agent.name",
+          "agent_id": "gen_ai.agent.id",
+          "conversation_id": "gen_ai.conversation.id",
+          "tool_name": "gen_ai.tool.name",
+          "tool_call_id": "gen_ai.tool.call.id",
+          "input_messages": "gen_ai.input.messages",
+          "output_messages": "gen_ai.output.messages"
+        }
+      }
+    },
+    {
+      "name": "resolve: a dup opt-in is ignored",
+      "input": {
+        "op": "resolve",
+        "env": {
+          "OTEL_SEMCONV_STABILITY_OPT_IN": "gen_ai_latest_experimental/dup"
+        }
+      },
+      "expected": {
+        "version": "1.44.0",
+        "names": {
+          "operation": "gen_ai.operation.name",
+          "provider": "gen_ai.provider.name",
+          "request_model": "gen_ai.request.model",
+          "response_model": "gen_ai.response.model",
+          "input_tokens": "gen_ai.usage.input_tokens",
+          "output_tokens": "gen_ai.usage.output_tokens",
+          "finish_reasons": "gen_ai.response.finish_reasons",
+          "agent_name": "gen_ai.agent.name",
+          "agent_id": "gen_ai.agent.id",
+          "conversation_id": "gen_ai.conversation.id",
+          "tool_name": "gen_ai.tool.name",
+          "tool_call_id": "gen_ai.tool.call.id",
+          "input_messages": "gen_ai.input.messages",
+          "output_messages": "gen_ai.output.messages"
+        }
+      }
+    },
+    {
+      "name": "resolve: explicit beats the environment",
+      "input": {
+        "op": "resolve",
+        "explicit": "legacy",
+        "env": {
+          "OTEL_SEMCONV_STABILITY_OPT_IN": "gen_ai_latest_experimental"
+        }
+      },
+      "expected": {
+        "version": "legacy",
+        "names": {
+          "operation": "gen_ai.operation.name",
+          "provider": "gen_ai.system",
+          "request_model": "gen_ai.request.model",
+          "response_model": "gen_ai.response.model",
+          "input_tokens": "gen_ai.usage.prompt_tokens",
+          "output_tokens": "gen_ai.usage.completion_tokens",
+          "finish_reasons": "gen_ai.response.finish_reasons",
+          "agent_name": "gen_ai.agent.name",
+          "agent_id": "gen_ai.agent.id",
+          "conversation_id": "gen_ai.conversation.id",
+          "tool_name": "gen_ai.tool.name",
+          "tool_call_id": "gen_ai.tool.call.id",
+          "input_messages": "gen_ai.input.messages",
+          "output_messages": "gen_ai.output.messages"
+        }
+      }
+    },
+    {
+      "name": "content capture env: unset",
+      "input": {
+        "op": "capture",
+        "env": {}
+      },
+      "expected": {
+        "enabled": false
+      }
+    },
+    {
+      "name": "content capture env: true",
+      "input": {
+        "op": "capture",
+        "env": {
+          "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"
+        }
+      },
+      "expected": {
+        "enabled": true
+      }
+    },
+    {
+      "name": "content capture env: True with spaces",
+      "input": {
+        "op": "capture",
+        "env": {
+          "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": " True "
+        }
+      },
+      "expected": {
+        "enabled": true
+      }
+    },
+    {
+      "name": "content capture env: false",
+      "input": {
+        "op": "capture",
+        "env": {
+          "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "false"
+        }
+      },
+      "expected": {
+        "enabled": false
+      }
+    },
+    {
+      "name": "content capture env: 1",
+      "input": {
+        "op": "capture",
+        "env": {
+          "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "1"
+        }
+      },
+      "expected": {
+        "enabled": false
+      }
+    },
+    {
+      "name": "content capture env: empty",
+      "input": {
+        "op": "capture",
+        "env": {
+          "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": ""
+        }
+      },
+      "expected": {
+        "enabled": false
+      }
+    },
+    {
+      "name": "epoch: '2026-01-01T00:00:00.000Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T00:00:00.000Z"
+      },
+      "expected": {
+        "ns": 1767225600000000000
+      }
+    },
+    {
+      "name": "epoch: '2026-01-01T00:00:00.123Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T00:00:00.123Z"
+      },
+      "expected": {
+        "ns": 1767225600123000000
+      },
+      "differs": {
+        "python": {
+          "ns": 1767225600122999808
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "epoch: '2026-12-31T23:59:59.999Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-12-31T23:59:59.999Z"
+      },
+      "expected": {
+        "ns": 1798761599999000000
+      },
+      "differs": {
+        "python": {
+          "ns": 1798761599999000064
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "epoch: '1970-01-01T00:00:00.000Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "1970-01-01T00:00:00.000Z"
+      },
+      "expected": {
+        "ns": 0
+      }
+    },
+    {
+      "name": "epoch: '2024-02-29T12:00:00.001Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2024-02-29T12:00:00.001Z"
+      },
+      "expected": {
+        "ns": 1709208000001000000
+      },
+      "differs": {
+        "python": {
+          "ns": 1709208000000999936
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "epoch: '2026-01-01T00:00:00Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T00:00:00Z"
+      },
+      "expected": {
+        "ns": 1767225600000000000
+      }
+    },
+    {
+      "name": "epoch: '2026-01-01T00:00:00.123456Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T00:00:00.123456Z"
+      },
+      "expected": {
+        "ns": 1767225600123456000
+      },
+      "differs": {
+        "js": {
+          "ns": 1767225600123000000
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "epoch: '2026-01-01T00:00:00.5Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T00:00:00.5Z"
+      },
+      "expected": {
+        "ns": 1767225600500000000
+      }
+    },
+    {
+      "name": "epoch: '2026-01-01T02:00:00.000+02:00'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T02:00:00.000+02:00"
+      },
+      "expected": {
+        "ns": null
+      },
+      "differs": {
+        "python": {
+          "ns": 1767225600000000000
+        },
+        "js": {
+          "ns": 1767225600000000000
+        }
+      },
+      "rule": "03 \u2014 attributes only for integer counts (not booleans or floats) and numeric costs (not booleans); one JSON spelling for event text (D32); timestamps parsed exactly, not through a float; one error text (D36/D37)"
+    },
+    {
+      "name": "epoch: 'not a time'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "not a time"
+      },
+      "expected": {
+        "ns": null
+      }
+    },
+    {
+      "name": "epoch: ''",
+      "input": {
+        "op": "epoch",
+        "timestamp": ""
+      },
+      "expected": {
+        "ns": null
+      }
+    },
+    {
+      "name": "epoch: '2026-13-01T00:00:00.000Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-13-01T00:00:00.000Z"
+      },
+      "expected": {
+        "ns": null
+      }
+    }
+  ]
+}

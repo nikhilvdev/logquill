@@ -1,0 +1,644 @@
+{
+  "group": "rate-limit",
+  "description": "Dropping records past a per-key quota inside a rolling window.",
+  "cases": [
+    {
+      "name": "a window allows its quota then drops",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 2
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 3
+          }
+        ],
+        "options": {
+          "max_records": 2,
+          "per_seconds": 10
+        }
+      }
+    },
+    {
+      "name": "the window ends exactly per_seconds after its first record",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 5
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 9.999
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 10
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 10.5
+          }
+        ],
+        "options": {
+          "max_records": 2,
+          "per_seconds": 10
+        }
+      }
+    },
+    {
+      "name": "keys are separate by logger and level",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "x",
+              "message": "a",
+              "meta": {}
+            },
+            "clock": 0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "y",
+              "message": "b",
+              "meta": {}
+            },
+            "clock": 0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "WARN",
+              "logger": "x",
+              "message": "c",
+              "meta": {}
+            },
+            "clock": 0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "x",
+              "message": "d",
+              "meta": {}
+            },
+            "clock": 1
+          }
+        ],
+        "options": {
+          "max_records": 1,
+          "per_seconds": 10
+        }
+      }
+    },
+    {
+      "name": "a window is per key, not global",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "x",
+              "message": "a",
+              "meta": {}
+            },
+            "clock": 0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "y",
+              "message": "b",
+              "meta": {}
+            },
+            "clock": 6
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "x",
+              "message": "c",
+              "meta": {}
+            },
+            "clock": 10
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "y",
+              "message": "d",
+              "meta": {}
+            },
+            "clock": 10
+          }
+        ],
+        "options": {
+          "max_records": 1,
+          "per_seconds": 10
+        }
+      }
+    },
+    {
+      "name": "dropping does not extend the window",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 4
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 8
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 12
+          }
+        ],
+        "options": {
+          "max_records": 1,
+          "per_seconds": 10
+        }
+      }
+    },
+    {
+      "name": "rate limit by message",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "x",
+              "message": "same",
+              "meta": {}
+            },
+            "clock": 0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "y",
+              "message": "same",
+              "meta": {}
+            },
+            "clock": 1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "x",
+              "message": "other",
+              "meta": {}
+            },
+            "clock": 1
+          }
+        ],
+        "options": {
+          "max_records": 1,
+          "per_seconds": 10,
+          "key": "message"
+        }
+      }
+    },
+    {
+      "name": "rate limit by logger",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "x",
+              "message": "a",
+              "meta": {}
+            },
+            "clock": 0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "x",
+              "message": "b",
+              "meta": {}
+            },
+            "clock": 1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "y",
+              "message": "c",
+              "meta": {}
+            },
+            "clock": 1
+          }
+        ],
+        "options": {
+          "max_records": 1,
+          "per_seconds": 10,
+          "key": "logger"
+        }
+      }
+    },
+    {
+      "name": "the least recently seen key is evicted",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "a",
+              "message": "a",
+              "meta": {}
+            },
+            "clock": 0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "b",
+              "message": "b",
+              "meta": {}
+            },
+            "clock": 1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "a",
+              "message": "a2",
+              "meta": {}
+            },
+            "clock": 2
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "c",
+              "message": "c",
+              "meta": {}
+            },
+            "clock": 3
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "b",
+              "message": "b2",
+              "meta": {}
+            },
+            "clock": 4
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "a",
+              "message": "a3",
+              "meta": {}
+            },
+            "clock": 5
+          }
+        ],
+        "options": {
+          "max_records": 1,
+          "per_seconds": 100,
+          "max_keys": 2
+        }
+      }
+    },
+    {
+      "name": "a fractional window",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 0.2
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 0.4
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 0.5
+          }
+        ],
+        "options": {
+          "max_records": 2,
+          "per_seconds": 0.5
+        }
+      }
+    },
+    {
+      "name": "a clock that does not move",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 7
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 7
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 7
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 7
+          }
+        ],
+        "options": {
+          "max_records": 3,
+          "per_seconds": 1
+        }
+      }
+    },
+    {
+      "name": "a clock that goes backwards stays in the window",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 10
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 5
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "m",
+              "meta": {}
+            },
+            "clock": 4
+          }
+        ],
+        "options": {
+          "max_records": 2,
+          "per_seconds": 10
+        }
+      }
+    },
+    {
+      "name": "zero records is refused",
+      "input": {
+        "steps": [],
+        "options": {
+          "max_records": 0,
+          "per_seconds": 1
+        }
+      }
+    },
+    {
+      "name": "a zero window is refused",
+      "input": {
+        "steps": [],
+        "options": {
+          "max_records": 1,
+          "per_seconds": 0
+        }
+      }
+    },
+    {
+      "name": "a negative window is refused",
+      "input": {
+        "steps": [],
+        "options": {
+          "max_records": 1,
+          "per_seconds": -1
+        }
+      }
+    }
+  ]
+}

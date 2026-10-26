@@ -1,0 +1,1250 @@
+{
+  "group": "content-policy",
+  "description": "The content-capture policy applied to a content field: off, hash, truncate and full, across hostile values.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "off: a short string",
+      "input": {
+        "policy": "off",
+        "json": "\"hello\""
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: an object with floats",
+      "input": {
+        "policy": "off",
+        "json": "{\"b\":1,\"a\":[1.0,\"\u00e9\"]}"
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: a message list",
+      "input": {
+        "policy": "off",
+        "json": "[{\"role\":\"user\",\"content\":\"hi\"}]"
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: a number",
+      "input": {
+        "policy": "off",
+        "json": "12.0"
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: null",
+      "input": {
+        "policy": "off",
+        "json": "null"
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: a boolean",
+      "input": {
+        "policy": "off",
+        "json": "true"
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: an empty list",
+      "input": {
+        "policy": "off",
+        "json": "[]"
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: a string of 190 characters",
+      "input": {
+        "policy": "off",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: text of exactly 200 characters",
+      "input": {
+        "policy": "off",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: text of 201 characters",
+      "input": {
+        "policy": "off",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: a long string",
+      "input": {
+        "policy": "off",
+        "json": "\"word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \""
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: non-ASCII that grows when escaped",
+      "input": {
+        "policy": "off",
+        "json": "\"\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\""
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: astral characters that double when escaped",
+      "input": {
+        "policy": "off",
+        "json": "\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\""
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off: a large nested object",
+      "input": {
+        "policy": "off",
+        "json": "{\"k0\": [0, 0.0, \"xxxxxxxxxx\"], \"k1\": [1, 1.5, \"xxxxxxxxxx\"], \"k2\": [2, 3.0, \"xxxxxxxxxx\"], \"k3\": [3, 4.5, \"xxxxxxxxxx\"], \"k4\": [4, 6.0, \"xxxxxxxxxx\"], \"k5\": [5, 7.5, \"xxxxxxxxxx\"], \"k6\": [6, 9.0, \"xxxxxxxxxx\"], \"k7\": [7, 10.5, \"xxxxxxxxxx\"], \"k8\": [8, 12.0, \"xxxxxxxxxx\"], \"k9\": [9, 13.5, \"xxxxxxxxxx\"], \"k10\": [10, 15.0, \"xxxxxxxxxx\"], \"k11\": [11, 16.5, \"xxxxxxxxxx\"], \"k12\": [12, 18.0, \"xxxxxxxxxx\"], \"k13\": [13, 19.5, \"xxxxxxxxxx\"], \"k14\": [14, 21.0, \"xxxxxxxxxx\"], \"k15\": [15, 22.5, \"xxxxxxxxxx\"], \"k16\": [16, 24.0, \"xxxxxxxxxx\"], \"k17\": [17, 25.5, \"xxxxxxxxxx\"], \"k18\": [18, 27.0, \"xxxxxxxxxx\"], \"k19\": [19, 28.5, \"xxxxxxxxxx\"], \"k20\": [20, 30.0, \"xxxxxxxxxx\"], \"k21\": [21, 31.5, \"xxxxxxxxxx\"], \"k22\": [22, 33.0, \"xxxxxxxxxx\"], \"k23\": [23, 34.5, \"xxxxxxxxxx\"], \"k24\": [24, 36.0, \"xxxxxxxxxx\"], \"k25\": [25, 37.5, \"xxxxxxxxxx\"], \"k26\": [26, 39.0, \"xxxxxxxxxx\"], \"k27\": [27, 40.5, \"xxxxxxxxxx\"], \"k28\": [28, 42.0, \"xxxxxxxxxx\"], \"k29\": [29, 43.5, \"xxxxxxxxxx\"]}"
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "hash: a short string",
+      "input": {
+        "policy": "hash",
+        "json": "\"hello\""
+      },
+      "expected": {
+        "value": "sha256:5aa762ae383fbb727af3c7a36d4940a5b8c40a989452d2304fc958ff3f354e7a"
+      }
+    },
+    {
+      "name": "hash: an object with floats",
+      "input": {
+        "policy": "hash",
+        "json": "{\"b\":1,\"a\":[1.0,\"\u00e9\"]}"
+      },
+      "expected": {
+        "value": "sha256:b2de542333142de55c7bcf58feb480b1483d5fdc2b7f3b55ed3b98ca96bf9911"
+      },
+      "differs": {
+        "js": {
+          "value": "sha256:dae7009e2bf6baa7dfc42be3f6d9ee614f811d5db853d9c76dc5bc990f652d53"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 in the canonical text"
+    },
+    {
+      "name": "hash: a message list",
+      "input": {
+        "policy": "hash",
+        "json": "[{\"role\":\"user\",\"content\":\"hi\"}]"
+      },
+      "expected": {
+        "value": "sha256:5aced9397fc4a6ba78e47d642ce4949bc9ba17f05868fe28454432d93889f6e6"
+      }
+    },
+    {
+      "name": "hash: a number",
+      "input": {
+        "policy": "hash",
+        "json": "12.0"
+      },
+      "expected": {
+        "value": "sha256:77c52f3feed5acdd119b1f8449d5ccc2d39be94bd0314d5b7302f36e20b6cea9"
+      },
+      "differs": {
+        "js": {
+          "value": "sha256:6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 in the canonical text"
+    },
+    {
+      "name": "hash: null",
+      "input": {
+        "policy": "hash",
+        "json": "null"
+      },
+      "expected": {
+        "value": "sha256:74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+      }
+    },
+    {
+      "name": "hash: a boolean",
+      "input": {
+        "policy": "hash",
+        "json": "true"
+      },
+      "expected": {
+        "value": "sha256:b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      }
+    },
+    {
+      "name": "hash: an empty list",
+      "input": {
+        "policy": "hash",
+        "json": "[]"
+      },
+      "expected": {
+        "value": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    {
+      "name": "hash: a string of 190 characters",
+      "input": {
+        "policy": "hash",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "sha256:b9ff71f64a5d472e0e2bd993a906d52d7b13ae2d33bf6c5f548e755da6ce84b2"
+      }
+    },
+    {
+      "name": "hash: text of exactly 200 characters",
+      "input": {
+        "policy": "hash",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "sha256:ed5b14ffbce3b6b0e9ff6336e593aba4a2a2e516b4554e932f6716416b1fe134"
+      }
+    },
+    {
+      "name": "hash: text of 201 characters",
+      "input": {
+        "policy": "hash",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "sha256:91e3a3934997e4a0a0768f2e30c8d4bfec4510f3416fb3d6ccc90f8bbaf712ee"
+      }
+    },
+    {
+      "name": "hash: a long string",
+      "input": {
+        "policy": "hash",
+        "json": "\"word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \""
+      },
+      "expected": {
+        "value": "sha256:0880c256866896a08734527aa260a8a130f86ff31c2cfb61480f892100b04302"
+      }
+    },
+    {
+      "name": "hash: non-ASCII that grows when escaped",
+      "input": {
+        "policy": "hash",
+        "json": "\"\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\""
+      },
+      "expected": {
+        "value": "sha256:b869d06acb77217a4375693ff459f198fbf0c48ba57f40ef055a3f9bfaa3eaf7"
+      }
+    },
+    {
+      "name": "hash: astral characters that double when escaped",
+      "input": {
+        "policy": "hash",
+        "json": "\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\""
+      },
+      "expected": {
+        "value": "sha256:669dd340990f6cf27e4c56560c94f6641425b60a092e0a295958e34819ff2a46"
+      }
+    },
+    {
+      "name": "hash: a large nested object",
+      "input": {
+        "policy": "hash",
+        "json": "{\"k0\": [0, 0.0, \"xxxxxxxxxx\"], \"k1\": [1, 1.5, \"xxxxxxxxxx\"], \"k2\": [2, 3.0, \"xxxxxxxxxx\"], \"k3\": [3, 4.5, \"xxxxxxxxxx\"], \"k4\": [4, 6.0, \"xxxxxxxxxx\"], \"k5\": [5, 7.5, \"xxxxxxxxxx\"], \"k6\": [6, 9.0, \"xxxxxxxxxx\"], \"k7\": [7, 10.5, \"xxxxxxxxxx\"], \"k8\": [8, 12.0, \"xxxxxxxxxx\"], \"k9\": [9, 13.5, \"xxxxxxxxxx\"], \"k10\": [10, 15.0, \"xxxxxxxxxx\"], \"k11\": [11, 16.5, \"xxxxxxxxxx\"], \"k12\": [12, 18.0, \"xxxxxxxxxx\"], \"k13\": [13, 19.5, \"xxxxxxxxxx\"], \"k14\": [14, 21.0, \"xxxxxxxxxx\"], \"k15\": [15, 22.5, \"xxxxxxxxxx\"], \"k16\": [16, 24.0, \"xxxxxxxxxx\"], \"k17\": [17, 25.5, \"xxxxxxxxxx\"], \"k18\": [18, 27.0, \"xxxxxxxxxx\"], \"k19\": [19, 28.5, \"xxxxxxxxxx\"], \"k20\": [20, 30.0, \"xxxxxxxxxx\"], \"k21\": [21, 31.5, \"xxxxxxxxxx\"], \"k22\": [22, 33.0, \"xxxxxxxxxx\"], \"k23\": [23, 34.5, \"xxxxxxxxxx\"], \"k24\": [24, 36.0, \"xxxxxxxxxx\"], \"k25\": [25, 37.5, \"xxxxxxxxxx\"], \"k26\": [26, 39.0, \"xxxxxxxxxx\"], \"k27\": [27, 40.5, \"xxxxxxxxxx\"], \"k28\": [28, 42.0, \"xxxxxxxxxx\"], \"k29\": [29, 43.5, \"xxxxxxxxxx\"]}"
+      },
+      "expected": {
+        "value": "sha256:4a27d5dc159f3d9c4a19e82f1d134ff96c8a44ae4f6aa76ed578d804b893f5ae"
+      },
+      "differs": {
+        "js": {
+          "value": "sha256:0cdde8a699891aa7d9e212bade9f7be46661469fe0c4ff7522194f69aa3affbb"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 in the canonical text"
+    },
+    {
+      "name": "truncate: a short string",
+      "input": {
+        "policy": "truncate",
+        "json": "\"hello\""
+      },
+      "expected": {
+        "value": "\"hello\""
+      }
+    },
+    {
+      "name": "truncate: an object with floats",
+      "input": {
+        "policy": "truncate",
+        "json": "{\"b\":1,\"a\":[1.0,\"\u00e9\"]}"
+      },
+      "expected": {
+        "value": "{\"a\": [1.0, \"\\u00e9\"], \"b\": 1}"
+      },
+      "differs": {
+        "js": {
+          "value": "{\"a\": [1, \"\\u00e9\"], \"b\": 1}"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 in the canonical text"
+    },
+    {
+      "name": "truncate: a message list",
+      "input": {
+        "policy": "truncate",
+        "json": "[{\"role\":\"user\",\"content\":\"hi\"}]"
+      },
+      "expected": {
+        "value": "[{\"content\": \"hi\", \"role\": \"user\"}]"
+      }
+    },
+    {
+      "name": "truncate: a number",
+      "input": {
+        "policy": "truncate",
+        "json": "12.0"
+      },
+      "expected": {
+        "value": "12.0"
+      },
+      "differs": {
+        "js": {
+          "value": "12"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 in the canonical text"
+    },
+    {
+      "name": "truncate: null",
+      "input": {
+        "policy": "truncate",
+        "json": "null"
+      },
+      "expected": {
+        "value": "null"
+      }
+    },
+    {
+      "name": "truncate: a boolean",
+      "input": {
+        "policy": "truncate",
+        "json": "true"
+      },
+      "expected": {
+        "value": "true"
+      }
+    },
+    {
+      "name": "truncate: an empty list",
+      "input": {
+        "policy": "truncate",
+        "json": "[]"
+      },
+      "expected": {
+        "value": "[]"
+      }
+    },
+    {
+      "name": "truncate: a string of 190 characters",
+      "input": {
+        "policy": "truncate",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "truncate: text of exactly 200 characters",
+      "input": {
+        "policy": "truncate",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "truncate: text of 201 characters",
+      "input": {
+        "policy": "truncate",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...(truncated, 201 chars total)"
+      }
+    },
+    {
+      "name": "truncate: a long string",
+      "input": {
+        "policy": "truncate",
+        "json": "\"word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \""
+      },
+      "expected": {
+        "value": "\"word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word...(truncated, 1002 chars total)"
+      }
+    },
+    {
+      "name": "truncate: non-ASCII that grows when escaped",
+      "input": {
+        "policy": "truncate",
+        "json": "\"\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\""
+      },
+      "expected": {
+        "value": "\"\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\...(truncated, 602 chars total)"
+      }
+    },
+    {
+      "name": "truncate: astral characters that double when escaped",
+      "input": {
+        "policy": "truncate",
+        "json": "\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\""
+      },
+      "expected": {
+        "value": "\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\...(truncated, 482 chars total)"
+      }
+    },
+    {
+      "name": "truncate: a large nested object",
+      "input": {
+        "policy": "truncate",
+        "json": "{\"k0\": [0, 0.0, \"xxxxxxxxxx\"], \"k1\": [1, 1.5, \"xxxxxxxxxx\"], \"k2\": [2, 3.0, \"xxxxxxxxxx\"], \"k3\": [3, 4.5, \"xxxxxxxxxx\"], \"k4\": [4, 6.0, \"xxxxxxxxxx\"], \"k5\": [5, 7.5, \"xxxxxxxxxx\"], \"k6\": [6, 9.0, \"xxxxxxxxxx\"], \"k7\": [7, 10.5, \"xxxxxxxxxx\"], \"k8\": [8, 12.0, \"xxxxxxxxxx\"], \"k9\": [9, 13.5, \"xxxxxxxxxx\"], \"k10\": [10, 15.0, \"xxxxxxxxxx\"], \"k11\": [11, 16.5, \"xxxxxxxxxx\"], \"k12\": [12, 18.0, \"xxxxxxxxxx\"], \"k13\": [13, 19.5, \"xxxxxxxxxx\"], \"k14\": [14, 21.0, \"xxxxxxxxxx\"], \"k15\": [15, 22.5, \"xxxxxxxxxx\"], \"k16\": [16, 24.0, \"xxxxxxxxxx\"], \"k17\": [17, 25.5, \"xxxxxxxxxx\"], \"k18\": [18, 27.0, \"xxxxxxxxxx\"], \"k19\": [19, 28.5, \"xxxxxxxxxx\"], \"k20\": [20, 30.0, \"xxxxxxxxxx\"], \"k21\": [21, 31.5, \"xxxxxxxxxx\"], \"k22\": [22, 33.0, \"xxxxxxxxxx\"], \"k23\": [23, 34.5, \"xxxxxxxxxx\"], \"k24\": [24, 36.0, \"xxxxxxxxxx\"], \"k25\": [25, 37.5, \"xxxxxxxxxx\"], \"k26\": [26, 39.0, \"xxxxxxxxxx\"], \"k27\": [27, 40.5, \"xxxxxxxxxx\"], \"k28\": [28, 42.0, \"xxxxxxxxxx\"], \"k29\": [29, 43.5, \"xxxxxxxxxx\"]}"
+      },
+      "expected": {
+        "value": "{\"k0\": [0, 0.0, \"xxxxxxxxxx\"], \"k1\": [1, 1.5, \"xxxxxxxxxx\"], \"k10\": [10, 15.0, \"xxxxxxxxxx\"], \"k11\": [11, 16.5, \"xxxxxxxxxx\"], \"k12\": [12, 18.0, \"xxxxxxxxxx\"], \"k13\": [13, 19.5, \"xxxxxxxxxx\"], \"k14\": ...(truncated, 963 chars total)"
+      },
+      "differs": {
+        "js": {
+          "value": "{\"k0\": [0, 0, \"xxxxxxxxxx\"], \"k1\": [1, 1.5, \"xxxxxxxxxx\"], \"k10\": [10, 15, \"xxxxxxxxxx\"], \"k11\": [11, 16.5, \"xxxxxxxxxx\"], \"k12\": [12, 18, \"xxxxxxxxxx\"], \"k13\": [13, 19.5, \"xxxxxxxxxx\"], \"k14\": [14, 2...(truncated, 933 chars total)"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 in the canonical text"
+    },
+    {
+      "name": "full: a short string",
+      "input": {
+        "policy": "full",
+        "json": "\"hello\""
+      },
+      "expected": {
+        "value": "hello"
+      }
+    },
+    {
+      "name": "full: an object with floats",
+      "input": {
+        "policy": "full",
+        "json": "{\"b\":1,\"a\":[1.0,\"\u00e9\"]}"
+      },
+      "expected": {
+        "value": {
+          "b": 1,
+          "a": [
+            1.0,
+            "\u00e9"
+          ]
+        }
+      },
+      "differs": {
+        "js": {
+          "value": {
+            "b": 1,
+            "a": [
+              1,
+              "\u00e9"
+            ]
+          }
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 in the canonical text"
+    },
+    {
+      "name": "full: a message list",
+      "input": {
+        "policy": "full",
+        "json": "[{\"role\":\"user\",\"content\":\"hi\"}]"
+      },
+      "expected": {
+        "value": [
+          {
+            "role": "user",
+            "content": "hi"
+          }
+        ]
+      }
+    },
+    {
+      "name": "full: a number",
+      "input": {
+        "policy": "full",
+        "json": "12.0"
+      },
+      "expected": {
+        "value": 12.0
+      },
+      "differs": {
+        "js": {
+          "value": 12
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 in the canonical text"
+    },
+    {
+      "name": "full: null",
+      "input": {
+        "policy": "full",
+        "json": "null"
+      },
+      "expected": {
+        "value": null
+      }
+    },
+    {
+      "name": "full: a boolean",
+      "input": {
+        "policy": "full",
+        "json": "true"
+      },
+      "expected": {
+        "value": true
+      }
+    },
+    {
+      "name": "full: an empty list",
+      "input": {
+        "policy": "full",
+        "json": "[]"
+      },
+      "expected": {
+        "value": []
+      }
+    },
+    {
+      "name": "full: a string of 190 characters",
+      "input": {
+        "policy": "full",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "name": "full: text of exactly 200 characters",
+      "input": {
+        "policy": "full",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "name": "full: text of 201 characters",
+      "input": {
+        "policy": "full",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      },
+      "expected": {
+        "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "name": "full: a long string",
+      "input": {
+        "policy": "full",
+        "json": "\"word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \""
+      },
+      "expected": {
+        "value": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word "
+      }
+    },
+    {
+      "name": "full: non-ASCII that grows when escaped",
+      "input": {
+        "policy": "full",
+        "json": "\"\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\""
+      },
+      "expected": {
+        "value": "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9"
+      }
+    },
+    {
+      "name": "full: astral characters that double when escaped",
+      "input": {
+        "policy": "full",
+        "json": "\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\""
+      },
+      "expected": {
+        "value": "\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00"
+      }
+    },
+    {
+      "name": "full: a large nested object",
+      "input": {
+        "policy": "full",
+        "json": "{\"k0\": [0, 0.0, \"xxxxxxxxxx\"], \"k1\": [1, 1.5, \"xxxxxxxxxx\"], \"k2\": [2, 3.0, \"xxxxxxxxxx\"], \"k3\": [3, 4.5, \"xxxxxxxxxx\"], \"k4\": [4, 6.0, \"xxxxxxxxxx\"], \"k5\": [5, 7.5, \"xxxxxxxxxx\"], \"k6\": [6, 9.0, \"xxxxxxxxxx\"], \"k7\": [7, 10.5, \"xxxxxxxxxx\"], \"k8\": [8, 12.0, \"xxxxxxxxxx\"], \"k9\": [9, 13.5, \"xxxxxxxxxx\"], \"k10\": [10, 15.0, \"xxxxxxxxxx\"], \"k11\": [11, 16.5, \"xxxxxxxxxx\"], \"k12\": [12, 18.0, \"xxxxxxxxxx\"], \"k13\": [13, 19.5, \"xxxxxxxxxx\"], \"k14\": [14, 21.0, \"xxxxxxxxxx\"], \"k15\": [15, 22.5, \"xxxxxxxxxx\"], \"k16\": [16, 24.0, \"xxxxxxxxxx\"], \"k17\": [17, 25.5, \"xxxxxxxxxx\"], \"k18\": [18, 27.0, \"xxxxxxxxxx\"], \"k19\": [19, 28.5, \"xxxxxxxxxx\"], \"k20\": [20, 30.0, \"xxxxxxxxxx\"], \"k21\": [21, 31.5, \"xxxxxxxxxx\"], \"k22\": [22, 33.0, \"xxxxxxxxxx\"], \"k23\": [23, 34.5, \"xxxxxxxxxx\"], \"k24\": [24, 36.0, \"xxxxxxxxxx\"], \"k25\": [25, 37.5, \"xxxxxxxxxx\"], \"k26\": [26, 39.0, \"xxxxxxxxxx\"], \"k27\": [27, 40.5, \"xxxxxxxxxx\"], \"k28\": [28, 42.0, \"xxxxxxxxxx\"], \"k29\": [29, 43.5, \"xxxxxxxxxx\"]}"
+      },
+      "expected": {
+        "value": {
+          "k0": [
+            0,
+            0.0,
+            "xxxxxxxxxx"
+          ],
+          "k1": [
+            1,
+            1.5,
+            "xxxxxxxxxx"
+          ],
+          "k2": [
+            2,
+            3.0,
+            "xxxxxxxxxx"
+          ],
+          "k3": [
+            3,
+            4.5,
+            "xxxxxxxxxx"
+          ],
+          "k4": [
+            4,
+            6.0,
+            "xxxxxxxxxx"
+          ],
+          "k5": [
+            5,
+            7.5,
+            "xxxxxxxxxx"
+          ],
+          "k6": [
+            6,
+            9.0,
+            "xxxxxxxxxx"
+          ],
+          "k7": [
+            7,
+            10.5,
+            "xxxxxxxxxx"
+          ],
+          "k8": [
+            8,
+            12.0,
+            "xxxxxxxxxx"
+          ],
+          "k9": [
+            9,
+            13.5,
+            "xxxxxxxxxx"
+          ],
+          "k10": [
+            10,
+            15.0,
+            "xxxxxxxxxx"
+          ],
+          "k11": [
+            11,
+            16.5,
+            "xxxxxxxxxx"
+          ],
+          "k12": [
+            12,
+            18.0,
+            "xxxxxxxxxx"
+          ],
+          "k13": [
+            13,
+            19.5,
+            "xxxxxxxxxx"
+          ],
+          "k14": [
+            14,
+            21.0,
+            "xxxxxxxxxx"
+          ],
+          "k15": [
+            15,
+            22.5,
+            "xxxxxxxxxx"
+          ],
+          "k16": [
+            16,
+            24.0,
+            "xxxxxxxxxx"
+          ],
+          "k17": [
+            17,
+            25.5,
+            "xxxxxxxxxx"
+          ],
+          "k18": [
+            18,
+            27.0,
+            "xxxxxxxxxx"
+          ],
+          "k19": [
+            19,
+            28.5,
+            "xxxxxxxxxx"
+          ],
+          "k20": [
+            20,
+            30.0,
+            "xxxxxxxxxx"
+          ],
+          "k21": [
+            21,
+            31.5,
+            "xxxxxxxxxx"
+          ],
+          "k22": [
+            22,
+            33.0,
+            "xxxxxxxxxx"
+          ],
+          "k23": [
+            23,
+            34.5,
+            "xxxxxxxxxx"
+          ],
+          "k24": [
+            24,
+            36.0,
+            "xxxxxxxxxx"
+          ],
+          "k25": [
+            25,
+            37.5,
+            "xxxxxxxxxx"
+          ],
+          "k26": [
+            26,
+            39.0,
+            "xxxxxxxxxx"
+          ],
+          "k27": [
+            27,
+            40.5,
+            "xxxxxxxxxx"
+          ],
+          "k28": [
+            28,
+            42.0,
+            "xxxxxxxxxx"
+          ],
+          "k29": [
+            29,
+            43.5,
+            "xxxxxxxxxx"
+          ]
+        }
+      },
+      "differs": {
+        "js": {
+          "value": {
+            "k0": [
+              0,
+              0,
+              "xxxxxxxxxx"
+            ],
+            "k1": [
+              1,
+              1.5,
+              "xxxxxxxxxx"
+            ],
+            "k2": [
+              2,
+              3,
+              "xxxxxxxxxx"
+            ],
+            "k3": [
+              3,
+              4.5,
+              "xxxxxxxxxx"
+            ],
+            "k4": [
+              4,
+              6,
+              "xxxxxxxxxx"
+            ],
+            "k5": [
+              5,
+              7.5,
+              "xxxxxxxxxx"
+            ],
+            "k6": [
+              6,
+              9,
+              "xxxxxxxxxx"
+            ],
+            "k7": [
+              7,
+              10.5,
+              "xxxxxxxxxx"
+            ],
+            "k8": [
+              8,
+              12,
+              "xxxxxxxxxx"
+            ],
+            "k9": [
+              9,
+              13.5,
+              "xxxxxxxxxx"
+            ],
+            "k10": [
+              10,
+              15,
+              "xxxxxxxxxx"
+            ],
+            "k11": [
+              11,
+              16.5,
+              "xxxxxxxxxx"
+            ],
+            "k12": [
+              12,
+              18,
+              "xxxxxxxxxx"
+            ],
+            "k13": [
+              13,
+              19.5,
+              "xxxxxxxxxx"
+            ],
+            "k14": [
+              14,
+              21,
+              "xxxxxxxxxx"
+            ],
+            "k15": [
+              15,
+              22.5,
+              "xxxxxxxxxx"
+            ],
+            "k16": [
+              16,
+              24,
+              "xxxxxxxxxx"
+            ],
+            "k17": [
+              17,
+              25.5,
+              "xxxxxxxxxx"
+            ],
+            "k18": [
+              18,
+              27,
+              "xxxxxxxxxx"
+            ],
+            "k19": [
+              19,
+              28.5,
+              "xxxxxxxxxx"
+            ],
+            "k20": [
+              20,
+              30,
+              "xxxxxxxxxx"
+            ],
+            "k21": [
+              21,
+              31.5,
+              "xxxxxxxxxx"
+            ],
+            "k22": [
+              22,
+              33,
+              "xxxxxxxxxx"
+            ],
+            "k23": [
+              23,
+              34.5,
+              "xxxxxxxxxx"
+            ],
+            "k24": [
+              24,
+              36,
+              "xxxxxxxxxx"
+            ],
+            "k25": [
+              25,
+              37.5,
+              "xxxxxxxxxx"
+            ],
+            "k26": [
+              26,
+              39,
+              "xxxxxxxxxx"
+            ],
+            "k27": [
+              27,
+              40.5,
+              "xxxxxxxxxx"
+            ],
+            "k28": [
+              28,
+              42,
+              "xxxxxxxxxx"
+            ],
+            "k29": [
+              29,
+              43.5,
+              "xxxxxxxxxx"
+            ]
+          }
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 in the canonical text"
+    },
+    {
+      "name": "every content field is governed",
+      "input": {
+        "policy": "hash",
+        "json": "\"x\"",
+        "field": "tool_result"
+      },
+      "expected": {
+        "value": "sha256:ba2df4903a2c14e86dc3bcca58911b44ac1d2514b7227bf6eb08cfb978f55a1b"
+      }
+    },
+    {
+      "name": "off applies to output_messages",
+      "input": {
+        "policy": "off",
+        "json": "\"secret prompt\"",
+        "field": "output_messages"
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off applies to system_instructions",
+      "input": {
+        "policy": "off",
+        "json": "\"secret prompt\"",
+        "field": "system_instructions"
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off applies to tool_arguments",
+      "input": {
+        "policy": "off",
+        "json": "\"secret prompt\"",
+        "field": "tool_arguments"
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "off applies to state_diff",
+      "input": {
+        "policy": "off",
+        "json": "\"secret prompt\"",
+        "field": "state_diff"
+      },
+      "expected": {
+        "value": "<content capture is off \u2014 set the logger's content policy to capture it>"
+      },
+      "differs": {
+        "python": {
+          "value": "<content capture is off \u2014 see Logger(content_policy=...)>"
+        },
+        "js": {
+          "value": "<content capture is off \u2014 see Logger's contentPolicy option>"
+        }
+      },
+      "rule": "D3 \u2014 one neutral placeholder for every language"
+    },
+    {
+      "name": "invalid policy ''",
+      "input": {
+        "error_policy": ""
+      },
+      "expected": {
+        "error": "content policy must be one of \"off\", \"hash\", \"truncate\", \"full\", got \"\""
+      },
+      "differs": {
+        "python": {
+          "error": "content_policy must be one of ('off', 'hash', 'truncate', 'full'), got ''"
+        },
+        "js": {
+          "error": "contentPolicy must be one of \"off\", \"hash\", \"truncate\", \"full\", got \"\""
+        }
+      },
+      "rule": "D37 \u2014 one error text in the core; bindings may name their own option"
+    },
+    {
+      "name": "invalid policy 'OFF'",
+      "input": {
+        "error_policy": "OFF"
+      },
+      "expected": {
+        "error": "content policy must be one of \"off\", \"hash\", \"truncate\", \"full\", got \"OFF\""
+      },
+      "differs": {
+        "python": {
+          "error": "content_policy must be one of ('off', 'hash', 'truncate', 'full'), got 'OFF'"
+        },
+        "js": {
+          "error": "contentPolicy must be one of \"off\", \"hash\", \"truncate\", \"full\", got \"OFF\""
+        }
+      },
+      "rule": "D37 \u2014 one error text in the core; bindings may name their own option"
+    },
+    {
+      "name": "invalid policy 'none'",
+      "input": {
+        "error_policy": "none"
+      },
+      "expected": {
+        "error": "content policy must be one of \"off\", \"hash\", \"truncate\", \"full\", got \"none\""
+      },
+      "differs": {
+        "python": {
+          "error": "content_policy must be one of ('off', 'hash', 'truncate', 'full'), got 'none'"
+        },
+        "js": {
+          "error": "contentPolicy must be one of \"off\", \"hash\", \"truncate\", \"full\", got \"none\""
+        }
+      },
+      "rule": "D37 \u2014 one error text in the core; bindings may name their own option"
+    },
+    {
+      "name": "invalid policy 'Full'",
+      "input": {
+        "error_policy": "Full"
+      },
+      "expected": {
+        "error": "content policy must be one of \"off\", \"hash\", \"truncate\", \"full\", got \"Full\""
+      },
+      "differs": {
+        "python": {
+          "error": "content_policy must be one of ('off', 'hash', 'truncate', 'full'), got 'Full'"
+        },
+        "js": {
+          "error": "contentPolicy must be one of \"off\", \"hash\", \"truncate\", \"full\", got \"Full\""
+        }
+      },
+      "rule": "D37 \u2014 one error text in the core; bindings may name their own option"
+    },
+    {
+      "name": "invalid policy ' hash'",
+      "input": {
+        "error_policy": " hash"
+      },
+      "expected": {
+        "error": "content policy must be one of \"off\", \"hash\", \"truncate\", \"full\", got \" hash\""
+      },
+      "differs": {
+        "python": {
+          "error": "content_policy must be one of ('off', 'hash', 'truncate', 'full'), got ' hash'"
+        },
+        "js": {
+          "error": "contentPolicy must be one of \"off\", \"hash\", \"truncate\", \"full\", got \" hash\""
+        }
+      },
+      "rule": "D37 \u2014 one error text in the core; bindings may name their own option"
+    }
+  ]
+}

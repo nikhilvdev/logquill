@@ -20,6 +20,7 @@ two disagree both behaviours are written down, tagged **P** (Python) and **J**
 | `07-adapters-instrumentation-bridges.md` | Framework adapters, SDK patching, logging bridges, browser entry |
 | `08-tests-benchmarks-ci.md` | Test inventory, property-test generators, memory budgets, CI and release flows |
 | `09-parity-and-gap-closing.md` | The rule that Python is the baseline, what JS must gain, what everyone adopts from JS, and the parity acceptance test |
+| `10-corpus-divergences.md` | Generated: every case where the Python 2.0.0 or JavaScript reference differs from the settled behaviour, with the deciding rule |
 | `legacy-tests/` | One line per existing test (775 Python, 525 JS): the checklist for the ported SDK tests |
 
 Reference material copied verbatim from the old repos, in `../legacy/`: both READMEs

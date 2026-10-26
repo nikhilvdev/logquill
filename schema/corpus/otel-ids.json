@@ -1,0 +1,408 @@
+{
+  "group": "otel-ids",
+  "description": "OpenTelemetry span and trace ids derived from LogQuill ids, including hostile inputs.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "span id: a 16-hex id is kept",
+      "input": {
+        "op": "span_id",
+        "value": "00f067aa0ba902b7"
+      },
+      "expected": {
+        "id": "00f067aa0ba902b7"
+      }
+    },
+    {
+      "name": "span id: an upper-case 16-hex id is hashed",
+      "input": {
+        "op": "span_id",
+        "value": "00F067AA0BA902B7"
+      },
+      "expected": {
+        "id": "4d0e8b180e29c849"
+      }
+    },
+    {
+      "name": "span id: fifteen hex characters are hashed",
+      "input": {
+        "op": "span_id",
+        "value": "00f067aa0ba902b"
+      },
+      "expected": {
+        "id": "8ec90973971c61fb"
+      }
+    },
+    {
+      "name": "span id: seventeen hex characters are hashed",
+      "input": {
+        "op": "span_id",
+        "value": "00f067aa0ba902b70"
+      },
+      "expected": {
+        "id": "1a4ddc7e593f9d54"
+      }
+    },
+    {
+      "name": "span id: sixteen zeros are hashed",
+      "input": {
+        "op": "span_id",
+        "value": "0000000000000000"
+      },
+      "expected": {
+        "id": "fcdb4b423f4e5283"
+      }
+    },
+    {
+      "name": "span id: a 16-hex id with a trailing newline is hashed",
+      "input": {
+        "op": "span_id",
+        "value": "00f067aa0ba902b7\n"
+      },
+      "expected": {
+        "id": "734e27c6456e7148"
+      },
+      "differs": {
+        "python": {
+          "id": "00f067aa0ba902b7"
+        }
+      },
+      "rule": "D40 \u2014 ids match `^[0-9a-f]{n}$` strictly: no trailing newline, no non-ASCII digits"
+    },
+    {
+      "name": "span id: sixteen non-hex characters",
+      "input": {
+        "op": "span_id",
+        "value": "gggggggggggggggg"
+      },
+      "expected": {
+        "id": "b56233cba7d90e24"
+      }
+    },
+    {
+      "name": "span id: a UUID",
+      "input": {
+        "op": "span_id",
+        "value": "550e8400-e29b-41d4-a716-446655440000"
+      },
+      "expected": {
+        "id": "a3a9e1ed9732cab2"
+      }
+    },
+    {
+      "name": "span id: an empty string",
+      "input": {
+        "op": "span_id",
+        "value": ""
+      },
+      "expected": {
+        "id": "e3b0c44298fc1c14"
+      }
+    },
+    {
+      "name": "span id: a short id",
+      "input": {
+        "op": "span_id",
+        "value": "abc"
+      },
+      "expected": {
+        "id": "ba7816bf8f01cfea"
+      }
+    },
+    {
+      "name": "span id: non-ASCII text",
+      "input": {
+        "op": "span_id",
+        "value": "caf\u00e9"
+      },
+      "expected": {
+        "id": "850f7dc43910ff89"
+      }
+    },
+    {
+      "name": "span id: an astral character",
+      "input": {
+        "op": "span_id",
+        "value": "\ud834\udd1e"
+      },
+      "expected": {
+        "id": "e419efd3d6046adf"
+      }
+    },
+    {
+      "name": "span id: a long id",
+      "input": {
+        "op": "span_id",
+        "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "expected": {
+        "id": "44f8354494a5ba03"
+      }
+    },
+    {
+      "name": "span id: Arabic-Indic digits",
+      "input": {
+        "op": "span_id",
+        "value": "\u0660\u0660\u0660\u0660\u0660\u0660\u0660\u0660\u0660\u0660\u0660\u0660\u0660\u0660\u0660\u0660"
+      },
+      "expected": {
+        "id": "4b6b354b99b9b931"
+      }
+    },
+    {
+      "name": "trace id: a 32-hex trace_id is kept",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
+        }
+      },
+      "expected": {
+        "id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "trace id: an upper-case trace_id falls back to run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "4BF92F3577B34DA6A3CE929D0E0E4736",
+          "run_id": "r"
+        }
+      },
+      "expected": {
+        "id": "6d8e00b6044b8734c456fe9912f80a03"
+      }
+    },
+    {
+      "name": "trace id: an upper-case trace_id alone",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "4BF92F3577B34DA6A3CE929D0E0E4736"
+        }
+      },
+      "expected": {
+        "id": null
+      }
+    },
+    {
+      "name": "trace id: an all-zero trace_id falls back to run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "00000000000000000000000000000000",
+          "run_id": "r"
+        }
+      },
+      "expected": {
+        "id": "6d8e00b6044b8734c456fe9912f80a03"
+      }
+    },
+    {
+      "name": "trace id: an all-zero trace_id alone",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "00000000000000000000000000000000"
+        }
+      },
+      "expected": {
+        "id": null
+      }
+    },
+    {
+      "name": "trace id: a short trace_id falls back to run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "abc",
+          "run_id": "r"
+        }
+      },
+      "expected": {
+        "id": "6d8e00b6044b8734c456fe9912f80a03"
+      }
+    },
+    {
+      "name": "trace id: a trace_id with a trailing newline",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736\n",
+          "run_id": "r"
+        }
+      },
+      "expected": {
+        "id": "6d8e00b6044b8734c456fe9912f80a03"
+      },
+      "differs": {
+        "python": {
+          "id": "4bf92f3577b34da6a3ce929d0e0e4736"
+        }
+      },
+      "rule": "D40 \u2014 ids match `^[0-9a-f]{n}$` strictly: no trailing newline, no non-ASCII digits"
+    },
+    {
+      "name": "trace id: a numeric trace_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": 5,
+          "run_id": "r"
+        }
+      },
+      "expected": {
+        "id": "6d8e00b6044b8734c456fe9912f80a03"
+      }
+    },
+    {
+      "name": "trace id: a run_id alone",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "run_id": "run-1"
+        }
+      },
+      "expected": {
+        "id": "cef38b0fc7db416194938237d5c0a942"
+      }
+    },
+    {
+      "name": "trace id: an empty run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "run_id": ""
+        }
+      },
+      "expected": {
+        "id": null
+      }
+    },
+    {
+      "name": "trace id: a numeric run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "run_id": 7
+        }
+      },
+      "expected": {
+        "id": null
+      }
+    },
+    {
+      "name": "trace id: a null run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "run_id": null
+        }
+      },
+      "expected": {
+        "id": null
+      }
+    },
+    {
+      "name": "trace id: a non-ASCII run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "run_id": "caf\u00e9"
+        }
+      },
+      "expected": {
+        "id": "78878630bb9d634c2c41b6cf3aac57f5"
+      }
+    },
+    {
+      "name": "trace id: neither",
+      "input": {
+        "op": "trace_id",
+        "meta": {}
+      },
+      "expected": {
+        "id": null
+      }
+    },
+    {
+      "name": "trace id: other keys only",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "span_id": "00f067aa0ba902b7"
+        }
+      },
+      "expected": {
+        "id": null
+      }
+    },
+    {
+      "name": "trace id: trace_id wins over run_id",
+      "input": {
+        "op": "trace_id",
+        "meta": {
+          "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+          "run_id": "r"
+        }
+      },
+      "expected": {
+        "id": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "trace id from parent: a span id",
+      "input": {
+        "op": "trace_id_from_parent",
+        "value": "00f067aa0ba902b7"
+      },
+      "expected": {
+        "id": "9d9fd86b51423d2046f2e1b05abd42dd"
+      }
+    },
+    {
+      "name": "trace id from parent: an empty string",
+      "input": {
+        "op": "trace_id_from_parent",
+        "value": ""
+      },
+      "expected": {
+        "id": "ae1ad6208a46e83c33739ce6ecaba735"
+      }
+    },
+    {
+      "name": "trace id from parent: non-ASCII text",
+      "input": {
+        "op": "trace_id_from_parent",
+        "value": "caf\u00e9"
+      },
+      "expected": {
+        "id": "8d125e329495d9a8d42c623327ca2040"
+      }
+    },
+    {
+      "name": "trace id from parent: a long id",
+      "input": {
+        "op": "trace_id_from_parent",
+        "value": "pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp"
+      },
+      "expected": {
+        "id": "242750329474787b99c599bddcb02f14"
+      }
+    },
+    {
+      "name": "trace id from parent: a UUID",
+      "input": {
+        "op": "trace_id_from_parent",
+        "value": "550e8400-e29b-41d4-a716-446655440000"
+      },
+      "expected": {
+        "id": "1d77e8e0562529b45c624d173e2faa79"
+      }
+    }
+  ]
+}

@@ -5,6 +5,28 @@ the 2.x Python release does (and as the shared fixtures say), with no I/O and no
 Behaviour is specified in `docs/spec/01-records-and-logger.md` and
 `docs/spec/03-privacy-tracing-otel.md`. The Rust CLI gets one command, `verify`.
 
+## Status: complete
+
+All eleven work packages are implemented in `crates/logquill-core` and `crates/logquill-cli`.
+
+- **Fixtures:** `golden_records`, the Python-written `golden_chain` and corpus groups 1–6
+  (`canonical-json`, `hash-chain`, `content-policy`, `field-classes`, `levels`, `records`) pass.
+  The 24 hash-chain cases reproduce Python's hashes, signatures and verification results
+  exactly, so a log written by Python 2.0.0 verifies in Rust; the reverse follows from the
+  identical hashes, and `logquill verify` prints the same two lines as Python on the golden chain.
+- **Property tests:** `tests/robustness.rs` (10 properties: timestamp shape, canonical text is ASCII
+  and stable, no panic on any value, any chained log verifies and any edit breaks it, hashing
+  ignores `meta` order, `off` hides every content value).
+- **Fuzzing:** a throwaway `cargo-fuzz` run (60 seconds each on the record reader, the canonical
+  parser and chain verification, about 15 million executions) found no crash. The targets were
+  removed from the repository; the property tests in `tests/robustness.rs` stay. Re-create them
+  with `cargo fuzz init` if a fuzz budget is wanted in CI.
+- **Not done:** the cross-version test that shells out to the pinned reference in CI (the
+  fixtures cover the same ground), and CI results on macOS and Windows (not pushed).
+- **Choices made:** `serde_json` with `arbitrary_precision` keeps `12.0` and big integers;
+  the canonical parser is the core's own (`Canon`) because Python's reader accepts `NaN` and
+  `Infinity`; lone surrogate escapes are refused at that boundary. `clap` is used for the CLI.
+
 ## What is in and out
 
 | In (this stage) | Out (later stages) |
