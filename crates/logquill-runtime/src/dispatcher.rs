@@ -59,19 +59,27 @@ impl Dispatcher {
     /// Waits for queued records, then asks every transport to send what it buffers. Does not
     /// close anything, so a serverless handler can flush and keep logging.
     pub fn flush(&self, timeout: Option<Duration>) -> bool {
-        let drained = self.worker.drain(timeout);
+        // If the drain timed out the worker is still writing and holds the transports (after a
+        // `fork` it may hold them forever), so waiting for them here would ignore `timeout`.
+        if !self.worker.drain(timeout) {
+            return false;
+        }
         let mut list = self.transports.lock().unwrap_or_else(|p| p.into_inner());
         for transport in list.iter_mut() {
             if let Err(error) = transport.flush() {
                 (self.warn)(&format!("a transport failed to flush \u{2014} {error}"));
             }
         }
-        drained
+        true
     }
 
-    /// Drains, closes the worker, then closes each transport once. Idempotent.
+    /// Drains, closes the worker, then closes each transport once. Idempotent. If the drain does
+    /// not finish in time the transports are left open (the worker is still using them) and a
+    /// later call tries again.
     pub fn close(&self, timeout: Option<Duration>) -> bool {
-        let drained = self.worker.close(timeout);
+        if !self.worker.close(timeout) {
+            return false;
+        }
         let mut closed = self.closed.lock().unwrap_or_else(|p| p.into_inner());
         if !*closed {
             *closed = true;
@@ -82,7 +90,7 @@ impl Dispatcher {
                 }
             }
         }
-        drained
+        true
     }
 
     /// The worker's counters.

@@ -372,7 +372,7 @@ fn the_file_rotates_by_size_and_keeps_only_backup_count_files() {
     let options = FileOptions {
         max_bytes: 400,
         backup_count: 2,
-        formatter: Formatter::Json,
+        ..FileOptions::default()
     };
     let mut transport = FileTransport::new(&path, options).unwrap();
     write_lines(&mut transport, 20);
@@ -400,7 +400,7 @@ fn without_backups_a_rotation_deletes_the_file() {
     let options = FileOptions {
         max_bytes: 300,
         backup_count: 0,
-        formatter: Formatter::Json,
+        ..FileOptions::default()
     };
     let mut transport = FileTransport::new(&path, options).unwrap();
     write_lines(&mut transport, 10);
@@ -418,7 +418,7 @@ fn a_failed_rotation_does_not_leave_the_transport_without_a_file() {
     let options = FileOptions {
         max_bytes: 200,
         backup_count: 1,
-        formatter: Formatter::Json,
+        ..FileOptions::default()
     };
     let mut transport = FileTransport::new(&path, options).unwrap();
     let mut failures = 0;
@@ -543,5 +543,39 @@ fn a_dispatcher_delivers_in_order_and_survives_a_failing_transport() {
         warnings.lock().unwrap().len(),
         100,
         "each failure is reported, none stops logging"
+    );
+}
+
+/// Blocks in `write` until the gate opens.
+struct Stuck(Gate);
+
+impl Transport for Stuck {
+    fn format(&self, _record: &Value) -> String {
+        String::new()
+    }
+
+    fn write(&mut self, _formatted: &str, _record: &Value) -> Result<(), String> {
+        self.0.wait();
+        Ok(())
+    }
+}
+
+#[test]
+fn flush_and_close_honour_their_timeout_when_a_transport_is_stuck() {
+    let (opts, _warnings) = options(10, Backpressure::DropOldest);
+    let gate = Gate::default();
+    let dispatcher = Dispatcher::new(opts, vec![Box::new(Stuck(gate.clone()))]).unwrap();
+    dispatcher.emit(json!({"message": "x"}));
+    let started = std::time::Instant::now();
+    assert!(!dispatcher.flush(Some(Duration::from_millis(100))));
+    assert!(!dispatcher.close(Some(Duration::from_millis(100))));
+    assert!(
+        started.elapsed() < Duration::from_secs(2),
+        "flush and close waited for the stuck transport instead of giving up at the timeout"
+    );
+    gate.open();
+    assert!(
+        dispatcher.close(Some(Duration::from_secs(5))),
+        "a later close finishes the job"
     );
 }

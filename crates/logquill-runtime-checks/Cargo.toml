@@ -1,0 +1,27 @@
+[package]
+name = "logquill-runtime-checks"
+description = "Runtime checks that need `unsafe` (a real fork, a counting allocator), kept out of the library, which forbids it."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[dependencies]
+logquill-runtime = { path = "../logquill-runtime" }
+serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+# The fork test needs a process with no harness threads, so it runs as a plain `main`.
+[[test]]
+name = "fork"
+harness = false
+
+# Not `[lints] workspace = true`: this crate exists to hold the `unsafe` the workspace forbids.
+[lints.rust]
+unsafe_code = "allow"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

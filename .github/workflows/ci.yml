@@ -30,3 +30,21 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
+      # Timing is only meaningful optimised; the budget is a ratio to serialising, so it travels across runners.
+      - run: cargo test --release -p logquill-runtime-checks --test timing
+
+  # The queue and worker are the only hand-rolled concurrency in the runtime; Miri checks them
+  # for undefined behaviour and data races. Needs nightly, so it is its own job.
+  miri:
+    name: miri (worker and queue)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install nightly --profile minimal --component miri
+      - run: cargo +nightly miri test -p logquill-runtime --test runtime -- tasks_run drop_ block_ closing_ drain_ the_worker
+        env:
+          # ignore-leaks: the simulated-fork test abandons the "parent" worker thread on purpose.
+          MIRIFLAGS: -Zmiri-disable-isolation -Zmiri-ignore-leaks
