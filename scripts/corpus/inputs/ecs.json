@@ -1,0 +1,243 @@
+{
+  "group": "ecs",
+  "description": "The Elastic Common Schema document built from a record.",
+  "cases": [
+    {
+      "name": "a plain record",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "a trace and span id",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {
+            "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+            "span_id": "00f067aa0ba902b7"
+          }
+        }
+      }
+    },
+    {
+      "name": "a stack",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {
+            "stack": "Traceback...\\n  boom"
+          }
+        }
+      }
+    },
+    {
+      "name": "an empty stack",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {
+            "stack": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "a non-string stack",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {
+            "stack": 5
+          }
+        }
+      }
+    },
+    {
+      "name": "a null trace id",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {
+            "trace_id": null,
+            "span_id": null
+          }
+        }
+      }
+    },
+    {
+      "name": "a numeric trace id",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {
+            "trace_id": 12,
+            "span_id": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "an empty trace id",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {
+            "trace_id": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "an llm block",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "keeps the record's own fields",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "WARN",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {
+            "run_id": "r",
+            "kind": "thought",
+            "user": "u"
+          }
+        }
+      }
+    },
+    {
+      "name": "a meta key that looks like an ECS field",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {
+            "@timestamp": "x",
+            "log": 1,
+            "service": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "every level",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "TRACE",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "non-ASCII",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.\\u00e9",
+          "message": "caf\\u00e9",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "no meta",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom"
+        }
+      }
+    },
+    {
+      "name": "null meta",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": null
+        }
+      }
+    },
+    {
+      "name": "an extra top-level key",
+      "input": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "svc.api",
+          "message": "boom",
+          "meta": {},
+          "extra": 1
+        }
+      }
+    }
+  ]
+}

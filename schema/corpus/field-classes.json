@@ -1,0 +1,62 @@
+{
+  "group": "field-classes",
+  "description": "The field-class registry, the content fields in order, and keys_in_class for each class.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "the registry",
+      "input": {},
+      "expected": {
+        "registry": {
+          "password": "secret",
+          "token": "secret",
+          "secret": "secret",
+          "api_key": "secret",
+          "authorization": "secret",
+          "email": "pii",
+          "ssn": "pii",
+          "phone": "pii",
+          "input_messages": "content",
+          "output_messages": "content",
+          "system_instructions": "content",
+          "tool_arguments": "content",
+          "tool_result": "content",
+          "state_diff": "content"
+        },
+        "content_fields": [
+          "input_messages",
+          "output_messages",
+          "system_instructions",
+          "tool_arguments",
+          "tool_result",
+          "state_diff"
+        ],
+        "keys_in_class": {
+          "secret": [
+            "api_key",
+            "authorization",
+            "password",
+            "secret",
+            "token"
+          ],
+          "pii": [
+            "email",
+            "phone",
+            "ssn"
+          ],
+          "content": [
+            "input_messages",
+            "output_messages",
+            "state_diff",
+            "system_instructions",
+            "tool_arguments",
+            "tool_result"
+          ]
+        }
+      }
+    }
+  ]
+}

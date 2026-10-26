@@ -12,13 +12,13 @@ repos:
     hooks:
       - id: cargo-fmt
         name: cargo fmt
-        entry: cargo fmt --all --check
+        entry: sh -c 'PATH="$HOME/.cargo/bin:$PATH"; cargo fmt --all --check'
         language: system
         types: [rust]
         pass_filenames: false
       - id: cargo-clippy
         name: cargo clippy
-        entry: cargo clippy --workspace --all-targets -- -D warnings
+        entry: sh -c 'PATH="$HOME/.cargo/bin:$PATH"; cargo clippy --workspace --all-targets -- -D warnings'
         language: system
         types: [rust]
         pass_filenames: false

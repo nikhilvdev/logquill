@@ -1,0 +1,493 @@
+{
+  "group": "alert-dedupe",
+  "description": "Collapsing repeated errors into one alert with a count, over a deterministic clock.",
+  "cases": [
+    {
+      "name": "the first error alerts at once, repeats are counted",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          },
+          {
+            "at": 10,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          },
+          {
+            "at": 20,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          }
+        ],
+        "end": 100,
+        "options": {
+          "dedupe_window_seconds": 60
+        }
+      }
+    },
+    {
+      "name": "a single error never sends a second alert",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          }
+        ],
+        "end": 100,
+        "options": {
+          "dedupe_window_seconds": 60
+        }
+      }
+    },
+    {
+      "name": "below the threshold nothing happens",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "WARN",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          },
+          {
+            "at": 1,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          }
+        ],
+        "end": 100,
+        "options": {
+          "dedupe_window_seconds": 60
+        }
+      }
+    },
+    {
+      "name": "a lower threshold",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "WARN",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          },
+          {
+            "at": 1,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "WARN",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          }
+        ],
+        "end": 100,
+        "options": {
+          "threshold": "WARN",
+          "dedupe_window_seconds": 60
+        }
+      }
+    },
+    {
+      "name": "different messages alert separately",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            }
+          },
+          {
+            "at": 1,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            }
+          },
+          {
+            "at": 2,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            }
+          }
+        ],
+        "end": 100,
+        "options": {
+          "dedupe_window_seconds": 60
+        }
+      }
+    },
+    {
+      "name": "the key includes level and logger",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "x",
+              "message": "m",
+              "meta": {}
+            }
+          },
+          {
+            "at": 1,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "y",
+              "message": "m",
+              "meta": {}
+            }
+          },
+          {
+            "at": 2,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "FATAL",
+              "logger": "x",
+              "message": "m",
+              "meta": {}
+            }
+          }
+        ],
+        "end": 100,
+        "options": {
+          "dedupe_window_seconds": 60
+        }
+      }
+    },
+    {
+      "name": "a custom key collapses by message",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "x",
+              "message": "m",
+              "meta": {}
+            }
+          },
+          {
+            "at": 1,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "FATAL",
+              "logger": "y",
+              "message": "m",
+              "meta": {}
+            }
+          }
+        ],
+        "end": 100,
+        "options": {
+          "dedupe_window_seconds": 60,
+          "key": "message"
+        }
+      }
+    },
+    {
+      "name": "after the window a new alert starts",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          },
+          {
+            "at": 5,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          },
+          {
+            "at": 61,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          },
+          {
+            "at": 62,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          }
+        ],
+        "end": 200,
+        "options": {
+          "dedupe_window_seconds": 60
+        }
+      }
+    },
+    {
+      "name": "a repeat exactly at the window end falls in the next window",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          },
+          {
+            "at": 60,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          }
+        ],
+        "end": 200,
+        "options": {
+          "dedupe_window_seconds": 60
+        }
+      }
+    },
+    {
+      "name": "a full table still alerts and does not collapse repeats",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            }
+          },
+          {
+            "at": 1,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            }
+          },
+          {
+            "at": 2,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "c",
+              "meta": {}
+            }
+          },
+          {
+            "at": 3,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "c",
+              "meta": {}
+            }
+          },
+          {
+            "at": 4,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            }
+          }
+        ],
+        "end": 100,
+        "options": {
+          "dedupe_window_seconds": 60,
+          "max_tracked_keys": 2
+        }
+      }
+    },
+    {
+      "name": "closing cancels pending summaries",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          },
+          {
+            "at": 1,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          }
+        ],
+        "close": true,
+        "options": {
+          "dedupe_window_seconds": 60
+        }
+      }
+    },
+    {
+      "name": "a zero-length window sends every time",
+      "input": {
+        "steps": [
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          },
+          {
+            "at": 0,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          },
+          {
+            "at": 1,
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {}
+            }
+          }
+        ],
+        "end": 5,
+        "options": {
+          "dedupe_window_seconds": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,901 @@
+{
+  "group": "records",
+  "description": "Timestamp formatting, the llm block builder with its warnings, and reading records back (current and 1.x).",
+  "cases": [
+    {
+      "name": "timestamp for 0 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 0
+      }
+    },
+    {
+      "name": "timestamp for 1 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1
+      }
+    },
+    {
+      "name": "timestamp for 999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 999
+      }
+    },
+    {
+      "name": "timestamp for 1000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1000
+      }
+    },
+    {
+      "name": "timestamp for 1001 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1001
+      }
+    },
+    {
+      "name": "timestamp for 999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 999999
+      }
+    },
+    {
+      "name": "timestamp for 1000000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1000000
+      }
+    },
+    {
+      "name": "timestamp for 1999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1999999
+      }
+    },
+    {
+      "name": "timestamp for 59999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 59999999
+      }
+    },
+    {
+      "name": "timestamp for 86399999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 86399999999
+      }
+    },
+    {
+      "name": "timestamp for 86400000000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 86400000000
+      }
+    },
+    {
+      "name": "timestamp for 951782400999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 951782400999999
+      }
+    },
+    {
+      "name": "timestamp for 1000000000000000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1000000000000000
+      }
+    },
+    {
+      "name": "timestamp for 1700000000123456 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1700000000123456
+      }
+    },
+    {
+      "name": "timestamp for 1709164800000000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1709164800000000
+      }
+    },
+    {
+      "name": "timestamp for 1709251199999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1709251199999999
+      }
+    },
+    {
+      "name": "timestamp for 1735689599999000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1735689599999000
+      }
+    },
+    {
+      "name": "timestamp for 4102444800000001 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 4102444800000001
+      }
+    },
+    {
+      "name": "timestamp for 253402300799000000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 253402300799000000
+      }
+    },
+    {
+      "name": "llm block: every field",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": "gpt-4o",
+          "tokens_in": 10,
+          "tokens_out": 20,
+          "cost_usd": 0.5,
+          "latency_ms": 12,
+          "finish_reason": "stop"
+        }
+      }
+    },
+    {
+      "name": "llm block: no fields",
+      "input": {
+        "op": "llm_block",
+        "fields": {}
+      }
+    },
+    {
+      "name": "llm block: zeros are valid",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": 0,
+          "latency_ms": 0.0
+        }
+      }
+    },
+    {
+      "name": "llm block: null fields are skipped",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": null,
+          "tokens_in": null,
+          "cost_usd": null
+        }
+      }
+    },
+    {
+      "name": "llm block: a negative count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": "m",
+          "tokens_in": -1
+        }
+      }
+    },
+    {
+      "name": "llm block: a fractional count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": 1.5
+        }
+      }
+    },
+    {
+      "name": "llm block: a whole-number float count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": 10.0
+        }
+      }
+    },
+    {
+      "name": "llm block: a string count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_out": "7"
+        }
+      }
+    },
+    {
+      "name": "llm block: a boolean count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": true
+        }
+      }
+    },
+    {
+      "name": "llm block: a negative cost",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "cost_usd": -0.01
+        }
+      }
+    },
+    {
+      "name": "llm block: a string cost",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "cost_usd": "0.5"
+        }
+      }
+    },
+    {
+      "name": "llm block: a boolean latency",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "latency_ms": true
+        }
+      }
+    },
+    {
+      "name": "llm block: a negative latency",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "latency_ms": -1
+        }
+      }
+    },
+    {
+      "name": "llm block: a numeric model",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": 5
+        }
+      }
+    },
+    {
+      "name": "llm block: a list for finish_reason",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "finish_reason": [
+            "stop"
+          ]
+        }
+      }
+    },
+    {
+      "name": "llm block: an unknown field",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "temperature": 0.2
+        }
+      }
+    },
+    {
+      "name": "llm block: an unknown field beside a good one",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": "m",
+          "temperature": 0.2
+        }
+      }
+    },
+    {
+      "name": "llm block: a huge count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": 9007199254740993
+        }
+      }
+    },
+    {
+      "name": "llm block: only invalid fields",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": -5,
+          "cost_usd": "x"
+        }
+      }
+    },
+    {
+      "name": "llm block: an empty model string",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": ""
+        }
+      }
+    },
+    {
+      "name": "parse: a current record",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a current record with an llm block",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "llm": {
+            "model": "m",
+            "tokens_in": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a record with a null llm",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "llm": null
+        }
+      }
+    },
+    {
+      "name": "parse: a record with an unknown key",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "future": {
+            "x": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a newer minor version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.7",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: an older minor version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a 1.x record",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a 1.x record with camelCase meta",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "runId": "r",
+            "spanId": "s",
+            "parentSpanId": "p",
+            "traceId": "t",
+            "durationMs": 5,
+            "prevHash": "h",
+            "other": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a 2.x record keeps camelCase meta",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "runId": "r"
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a 1.x record without meta",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi"
+        }
+      }
+    },
+    {
+      "name": "parse: a record without meta",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi"
+        }
+      }
+    },
+    {
+      "name": "parse: a version 1.0 record",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "1.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a newer major version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "3.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a far-newer major version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "99999999999999999999999.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a version without a dot",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a version with three parts",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0.1",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a version with a letter",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.x",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a version with a trailing newline",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0\n",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a version in Arabic-Indic digits",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "٢.٠",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a version with an empty part",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a numeric version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": 2,
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a null version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": null,
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a lower-case level",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "info",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: an unknown level",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "NOTICE",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a numeric level",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": 20,
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a missing logger",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a numeric message",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": 5,
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a null timestamp",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": null,
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: meta as a string",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": "x"
+        }
+      }
+    },
+    {
+      "name": "parse: meta as a list",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "parse: meta as null",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": null
+        }
+      }
+    },
+    {
+      "name": "parse: llm as a string",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "llm": "x"
+        }
+      }
+    },
+    {
+      "name": "parse: llm as a list",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "llm": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "parse: not an object: a list",
+      "input": {
+        "op": "parse_record",
+        "record": [
+          "a"
+        ]
+      }
+    },
+    {
+      "name": "parse: not an object: a string",
+      "input": {
+        "op": "parse_record",
+        "record": "x"
+      }
+    },
+    {
+      "name": "parse: not an object: null",
+      "input": {
+        "op": "parse_record",
+        "record": null
+      }
+    },
+    {
+      "name": "parse: not an object: a number",
+      "input": {
+        "op": "parse_record",
+        "record": 5
+      }
+    },
+    {
+      "name": "parse: not an object: a boolean",
+      "input": {
+        "op": "parse_record",
+        "record": true
+      }
+    }
+  ]
+}

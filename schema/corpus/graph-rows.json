@@ -1,0 +1,672 @@
+{
+  "group": "graph-rows",
+  "description": "The node, parent edge and session a record becomes in a graph database, and the shared Cypher statement.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "js_gaps": [
+    "no graph transport in the JavaScript package"
+  ],
+  "cases": [
+    {
+      "name": "row: a span record",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "step",
+          "meta": {
+            "span_id": "s1",
+            "run_id": "r1",
+            "parent_span_id": "p1",
+            "trace_id": "t1"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "step",
+            "meta": "{\"span_id\":\"s1\",\"run_id\":\"r1\",\"parent_span_id\":\"p1\",\"trace_id\":\"t1\"}",
+            "run_id": "r1",
+            "trace_id": "t1",
+            "span_id": "s1",
+            "parent_span_id": "p1"
+          },
+          "session_key": "r1",
+          "parent_key": "p1"
+        }
+      }
+    },
+    {
+      "name": "row: a record with no ids",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "user": "u"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "leaf-<random>",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"user\":\"u\"}"
+          },
+          "session_key": null,
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: a leaf with a parent and a run",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "parent_span_id": "p1",
+            "run_id": "r1"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "leaf-<random>",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"parent_span_id\":\"p1\",\"run_id\":\"r1\"}",
+            "run_id": "r1",
+            "parent_span_id": "p1"
+          },
+          "session_key": "r1",
+          "parent_key": "p1"
+        }
+      }
+    },
+    {
+      "name": "row: a trace but no run",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1",
+            "trace_id": "t1"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\",\"trace_id\":\"t1\"}",
+            "trace_id": "t1",
+            "span_id": "s1"
+          },
+          "session_key": "t1",
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: a run wins over a trace",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1",
+            "run_id": "r1",
+            "trace_id": "t1"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\",\"run_id\":\"r1\",\"trace_id\":\"t1\"}",
+            "run_id": "r1",
+            "trace_id": "t1",
+            "span_id": "s1"
+          },
+          "session_key": "r1",
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: an empty run falls back to the trace",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1",
+            "run_id": "",
+            "trace_id": "t1"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\",\"run_id\":\"\",\"trace_id\":\"t1\"}",
+            "trace_id": "t1",
+            "span_id": "s1"
+          },
+          "session_key": "t1",
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: a non-string run falls back to the trace",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1",
+            "run_id": 5,
+            "trace_id": "t1"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\",\"run_id\":5,\"trace_id\":\"t1\"}",
+            "trace_id": "t1",
+            "span_id": "s1"
+          },
+          "session_key": "t1",
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: no session",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\"}",
+            "span_id": "s1"
+          },
+          "session_key": null,
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: a span that is its own parent",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1",
+            "parent_span_id": "s1"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\",\"parent_span_id\":\"s1\"}",
+            "span_id": "s1",
+            "parent_span_id": "s1"
+          },
+          "session_key": null,
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: an empty parent",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1",
+            "parent_span_id": ""
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\",\"parent_span_id\":\"\"}",
+            "span_id": "s1"
+          },
+          "session_key": null,
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: a non-string parent",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1",
+            "parent_span_id": 5
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\",\"parent_span_id\":5}",
+            "span_id": "s1"
+          },
+          "session_key": null,
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: an empty span id is a leaf",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "",
+            "run_id": "r"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "leaf-<random>",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"\",\"run_id\":\"r\"}",
+            "run_id": "r"
+          },
+          "session_key": "r",
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: a non-string span id is a leaf",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": 5
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "leaf-<random>",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":5}"
+          },
+          "session_key": null,
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: empty ids are not properties",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1",
+            "run_id": "",
+            "trace_id": "",
+            "parent_span_id": ""
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\",\"run_id\":\"\",\"trace_id\":\"\",\"parent_span_id\":\"\"}",
+            "span_id": "s1"
+          },
+          "session_key": null,
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: non-ASCII meta",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "\u65e5\u672c",
+          "meta": {
+            "span_id": "s1",
+            "name": "caf\u00e9"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "\u65e5\u672c",
+            "meta": "{\"span_id\":\"s1\",\"name\":\"caf\u00e9\"}",
+            "span_id": "s1"
+          },
+          "session_key": null,
+          "parent_key": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "key": "s1",
+            "props": {
+              "timestamp": "2026-01-01T00:00:00.123Z",
+              "level": "INFO",
+              "logger": "app.db",
+              "message": "\u65e5\u672c",
+              "meta": "{\"span_id\":\"s1\",\"name\":\"caf\\u00e9\"}",
+              "span_id": "s1"
+            },
+            "session_key": null,
+            "parent_key": null
+          }
+        }
+      },
+      "rule": "09 \u2014 graph rows exist in Python only; every binding reaches them"
+    },
+    {
+      "name": "row: floats in meta",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1",
+            "x": 1.0,
+            "y": 1e-07
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\",\"x\":1.0,\"y\":1e-07}",
+            "span_id": "s1"
+          },
+          "session_key": null,
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: an llm block is not a property",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\"}",
+            "span_id": "s1"
+          },
+          "session_key": null,
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: custom session keys, the first wins",
+      "input": {
+        "op": "row",
+        "run_key": "job",
+        "trace_key": "req",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1",
+            "job": "j1",
+            "req": "q1",
+            "run_id": "r1"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\",\"job\":\"j1\",\"req\":\"q1\",\"run_id\":\"r1\"}",
+            "run_id": "r1",
+            "span_id": "s1"
+          },
+          "session_key": "j1",
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "row: custom session keys, the second is the fallback",
+      "input": {
+        "op": "row",
+        "run_key": "job",
+        "trace_key": "req",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "span_id": "s1",
+            "req": "q1",
+            "run_id": "r1"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "key": "s1",
+          "props": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"span_id\":\"s1\",\"req\":\"q1\",\"run_id\":\"r1\"}",
+            "run_id": "r1",
+            "span_id": "s1"
+          },
+          "session_key": "q1",
+          "parent_key": null
+        }
+      }
+    },
+    {
+      "name": "the statement",
+      "input": {
+        "op": "statement"
+      },
+      "expected": {
+        "cypher": "UNWIND $rows AS row MERGE (n:LogRecord {key: row.key}) SET n += row.props FOREACH (_ IN CASE WHEN row.session_key IS NULL THEN [] ELSE [1] END |   MERGE (s:Session {key: row.session_key})   MERGE (s)-[:HAS_RECORD]->(n) ) FOREACH (_ IN CASE WHEN row.parent_key IS NULL THEN [] ELSE [1] END |   MERGE (p:LogRecord {key: row.parent_key})   MERGE (p)-[:PARENT_OF]->(n) )"
+      }
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "group": "run-plugin",
+  "description": "Stamping meta.run_id and a per-run step counter on every record.",
+  "cases": [
+    {
+      "name": "steps count up and the run id is added",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "c",
+              "meta": {}
+            }
+          }
+        ],
+        "options": {
+          "run_id": "run-1"
+        }
+      }
+    },
+    {
+      "name": "an existing run id is kept",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {
+                "run_id": "mine"
+              }
+            }
+          }
+        ],
+        "options": {
+          "run_id": "run-1"
+        }
+      }
+    },
+    {
+      "name": "an existing step is overwritten",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {
+                "step": 99
+              }
+            }
+          }
+        ],
+        "options": {
+          "run_id": "run-1"
+        }
+      }
+    },
+    {
+      "name": "a generated run id",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            }
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "name": "an empty run id is replaced by a generated one",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            }
+          }
+        ],
+        "options": {
+          "run_id": ""
+        }
+      }
+    }
+  ]
+}

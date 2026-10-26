@@ -1,0 +1,2399 @@
+{
+  "group": "formatters",
+  "description": "The JSON, text and logfmt line formats, and reading a logfmt line back.",
+  "cases": [
+    {
+      "name": "json: a plain record",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "json: a record with meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "user": "u1",
+            "n": 3,
+            "ok": true,
+            "none": null
+          }
+        }
+      }
+    },
+    {
+      "name": "json: a record with an llm block",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": 1,
+            "tokens_out": 2,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        }
+      }
+    },
+    {
+      "name": "json: an llm block and meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "json: an empty llm block",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {}
+        }
+      }
+    },
+    {
+      "name": "json: a stack in meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "Traceback (most recent call last):\n  boom\n\n\n",
+            "code": 5
+          }
+        }
+      }
+    },
+    {
+      "name": "json: a stack and nothing else",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "line1\nline2"
+          }
+        }
+      }
+    },
+    {
+      "name": "json: an empty stack",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "",
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "json: a non-string stack",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": 5,
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "json: a null stack",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": null
+          }
+        }
+      }
+    },
+    {
+      "name": "json: no meta key",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello"
+        }
+      }
+    },
+    {
+      "name": "json: no message",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "json: no timestamp, level or logger",
+      "input": {
+        "op": "json",
+        "record": {
+          "message": "only a message",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "json: an empty message",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "json: a null level",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": null,
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "json: an unknown level",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "NOTICE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "json: a lower-case level",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "warn",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "json: every level",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "TRACE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "json: a message with a newline",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "line one\nline two",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "json: non-ASCII text",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "svc.é",
+          "message": "café 日本 𝄞",
+          "meta": {
+            "kéy": "vál"
+          }
+        }
+      }
+    },
+    {
+      "name": "json: control characters in a message",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "a\tb\u0001cd",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "json: floats in meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1.0,
+            "b": 0.1,
+            "c": 1e+16,
+            "d": 1e-07,
+            "e": -0.0
+          }
+        }
+      }
+    },
+    {
+      "name": "json: big integers in meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "big": 9007199254740993,
+            "huge": 123456789012345678901234567890
+          }
+        }
+      }
+    },
+    {
+      "name": "json: nested meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "http": {
+              "status": 200,
+              "headers": {
+                "x": "y"
+              }
+            },
+            "tags": [
+              "a",
+              "b"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "json: empty meta values",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "o": {},
+            "l": [],
+            "s": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "json: meta keys shadowing record fields",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "timestamp": "t",
+            "level": "l",
+            "logger": "g",
+            "message": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "json: extra top-level keys",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "extra": "x"
+        }
+      }
+    },
+    {
+      "name": "json: a long message",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "text: a plain record",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "text: a record with meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "user": "u1",
+            "n": 3,
+            "ok": true,
+            "none": null
+          }
+        }
+      }
+    },
+    {
+      "name": "text: a record with an llm block",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": 1,
+            "tokens_out": 2,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        }
+      }
+    },
+    {
+      "name": "text: an llm block and meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "text: an empty llm block",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {}
+        }
+      }
+    },
+    {
+      "name": "text: a stack in meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "Traceback (most recent call last):\n  boom\n\n\n",
+            "code": 5
+          }
+        }
+      }
+    },
+    {
+      "name": "text: a stack and nothing else",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "line1\nline2"
+          }
+        }
+      }
+    },
+    {
+      "name": "text: an empty stack",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "",
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "text: a non-string stack",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": 5,
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "text: a null stack",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": null
+          }
+        }
+      }
+    },
+    {
+      "name": "text: no meta key",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello"
+        }
+      }
+    },
+    {
+      "name": "text: no message",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "text: no timestamp, level or logger",
+      "input": {
+        "op": "text",
+        "record": {
+          "message": "only a message",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "text: an empty message",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "text: a null level",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": null,
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "text: an unknown level",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "NOTICE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "text: a lower-case level",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "warn",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "text: every level",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "TRACE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "text: a message with a newline",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "line one\nline two",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "text: non-ASCII text",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "svc.é",
+          "message": "café 日本 𝄞",
+          "meta": {
+            "kéy": "vál"
+          }
+        }
+      }
+    },
+    {
+      "name": "text: control characters in a message",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "a\tb\u0001cd",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "text: floats in meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1.0,
+            "b": 0.1,
+            "c": 1e+16,
+            "d": 1e-07,
+            "e": -0.0
+          }
+        }
+      }
+    },
+    {
+      "name": "text: big integers in meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "big": 9007199254740993,
+            "huge": 123456789012345678901234567890
+          }
+        }
+      }
+    },
+    {
+      "name": "text: nested meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "http": {
+              "status": 200,
+              "headers": {
+                "x": "y"
+              }
+            },
+            "tags": [
+              "a",
+              "b"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "text: empty meta values",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "o": {},
+            "l": [],
+            "s": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "text: meta keys shadowing record fields",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "timestamp": "t",
+            "level": "l",
+            "logger": "g",
+            "message": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "text: extra top-level keys",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "extra": "x"
+        }
+      }
+    },
+    {
+      "name": "text: a long message",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: a plain record",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: a record with meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "user": "u1",
+            "n": 3,
+            "ok": true,
+            "none": null
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a record with an llm block",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": 1,
+            "tokens_out": 2,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: an llm block and meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: an empty llm block",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: a stack in meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "Traceback (most recent call last):\n  boom\n\n\n",
+            "code": 5
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a stack and nothing else",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "line1\nline2"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: an empty stack",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "",
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a non-string stack",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": 5,
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a null stack",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": null
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: no meta key",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello"
+        }
+      }
+    },
+    {
+      "name": "logfmt: no message",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: no timestamp, level or logger",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "message": "only a message",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: an empty message",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: a null level",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": null,
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: an unknown level",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "NOTICE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: a lower-case level",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "warn",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: every level",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "TRACE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: a message with a newline",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "line one\nline two",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: non-ASCII text",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "svc.é",
+          "message": "café 日本 𝄞",
+          "meta": {
+            "kéy": "vál"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: control characters in a message",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "a\tb\u0001cd",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: floats in meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1.0,
+            "b": 0.1,
+            "c": 1e+16,
+            "d": 1e-07,
+            "e": -0.0
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: big integers in meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "big": 9007199254740993,
+            "huge": 123456789012345678901234567890
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: nested meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "http": {
+              "status": 200,
+              "headers": {
+                "x": "y"
+              }
+            },
+            "tags": [
+              "a",
+              "b"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: empty meta values",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "o": {},
+            "l": [],
+            "s": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: meta keys shadowing record fields",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "timestamp": "t",
+            "level": "l",
+            "logger": "g",
+            "message": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: extra top-level keys",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "extra": "x"
+        }
+      }
+    },
+    {
+      "name": "logfmt: a long message",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "json: non-finite numbers",
+      "input": {
+        "op": "json",
+        "record_json": "{\"schema_version\":\"2.0\",\"timestamp\":\"t\",\"level\":\"INFO\",\"logger\":\"l\",\"message\":\"m\",\"meta\":{\"a\":NaN,\"b\":Infinity,\"c\":-Infinity,\"d\":1.0}}"
+      }
+    },
+    {
+      "name": "text: non-finite numbers",
+      "input": {
+        "op": "text",
+        "record_json": "{\"schema_version\":\"2.0\",\"timestamp\":\"t\",\"level\":\"INFO\",\"logger\":\"l\",\"message\":\"m\",\"meta\":{\"a\":NaN,\"b\":Infinity,\"c\":-Infinity,\"d\":1.0}}"
+      }
+    },
+    {
+      "name": "logfmt: non-finite numbers",
+      "input": {
+        "op": "logfmt",
+        "record_json": "{\"schema_version\":\"2.0\",\"timestamp\":\"t\",\"level\":\"INFO\",\"logger\":\"l\",\"message\":\"m\",\"meta\":{\"a\":NaN,\"b\":Infinity,\"c\":-Infinity,\"d\":1.0}}"
+      }
+    },
+    {
+      "name": "logfmt: an empty value",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with a space",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a b"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with a tab",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\tb"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with a quote",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "say \"hi\""
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with an equals sign",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a=b"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with a backslash",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\\b"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with a newline",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\nb"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with a carriage return",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\rb"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with a control character",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\u0001b"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with DEL",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "ab"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with NEL",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "ab"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with U+2028",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a b"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value with U+2029",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a b"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a plain value",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "plain"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a non-ASCII value",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "café"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a value that is only a quote",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "\""
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a key with a space",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a b": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a key with an equals sign",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a=b": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a key with a quote",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a\"b": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a key with a newline",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a\nb": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: an empty key",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a key with only spaces",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "  ": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a key with U+2028",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a b": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a non-ASCII key",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "café": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: reserved keys are prefixed",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "timestamp": "a",
+            "level": "b",
+            "logger": "c",
+            "message": "d",
+            "other": "e"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: null, booleans and numbers",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "n": null,
+            "t": true,
+            "f": false,
+            "i": 3,
+            "x": 1.5,
+            "z": 1.0,
+            "e": 1e+16,
+            "neg": -2
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: an array",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": [
+              1,
+              "two",
+              null,
+              true
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: an empty array",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": []
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: an empty object",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "o": {}
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a nested object",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "http": {
+              "status": 200,
+              "path": "/a b"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: nesting with odd keys",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": {
+              "b c": 1,
+              "d=e": 2
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: nesting to depth 4",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": {
+              "b": {
+                "c": {
+                  "d": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: nesting to depth 5",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": {
+              "b": {
+                "c": {
+                  "d": {
+                    "e": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: nesting to depth 6",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": {
+              "b": {
+                "c": {
+                  "d": {
+                    "e": {
+                      "f": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: an object inside an array",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": [
+              {
+                "b": 1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a dotted key beside a nested one",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a.b": 1,
+            "a": {
+              "b": 2
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a no-break space",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a b"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: an em space",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a b"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a form feed",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\fb"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a vertical tab",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\u000bb"
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a key with a no-break space",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a b": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: an llm block",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {
+            "model": "a b",
+            "tokens_in": 5,
+            "cost_usd": 0.25
+          }
+        }
+      }
+    },
+    {
+      "name": "logfmt: a message that needs quoting",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "he said \"hi\"\nthen left",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "logfmt: a logger with spaces",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "a b",
+          "message": "hello",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a simple pair",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1"
+      }
+    },
+    {
+      "name": "parse_logfmt: two pairs",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1 b=2"
+      }
+    },
+    {
+      "name": "parse_logfmt: a quoted value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"hello world\""
+      }
+    },
+    {
+      "name": "parse_logfmt: escapes",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"x\\ny\\tz\\\"q\\\\\""
+      }
+    },
+    {
+      "name": "parse_logfmt: a unicode escape",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"caf\\u00e9\""
+      }
+    },
+    {
+      "name": "parse_logfmt: an unknown escape",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"x\\qy\""
+      }
+    },
+    {
+      "name": "parse_logfmt: an upper-case unicode escape",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\\u00E9\""
+      }
+    },
+    {
+      "name": "parse_logfmt: a short unicode escape",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\\u00\""
+      }
+    },
+    {
+      "name": "parse_logfmt: a bare key",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "flag"
+      }
+    },
+    {
+      "name": "parse_logfmt: a bare key between pairs",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1 flag b=2"
+      }
+    },
+    {
+      "name": "parse_logfmt: an empty value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a= b=2"
+      }
+    },
+    {
+      "name": "parse_logfmt: a repeated key",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1 a=2"
+      }
+    },
+    {
+      "name": "parse_logfmt: a value with an equals sign",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=b=c"
+      }
+    },
+    {
+      "name": "parse_logfmt: a quoted empty value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\""
+      }
+    },
+    {
+      "name": "parse_logfmt: an unterminated quote",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"open"
+      }
+    },
+    {
+      "name": "parse_logfmt: a quote in an unquoted value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=b\"c d"
+      }
+    },
+    {
+      "name": "parse_logfmt: a leading equals sign",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "=v a=1"
+      }
+    },
+    {
+      "name": "parse_logfmt: tabs between pairs",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1\tb=2"
+      }
+    },
+    {
+      "name": "parse_logfmt: many spaces",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1    b=2"
+      }
+    },
+    {
+      "name": "parse_logfmt: an empty line",
+      "input": {
+        "op": "parse_logfmt",
+        "line": ""
+      }
+    },
+    {
+      "name": "parse_logfmt: only spaces",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "   "
+      }
+    },
+    {
+      "name": "parse_logfmt: a dotted key",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "http.status=200"
+      }
+    },
+    {
+      "name": "parse_logfmt: a non-ASCII value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=café"
+      }
+    },
+    {
+      "name": "parse_logfmt: a non-ASCII key",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "café=1"
+      }
+    },
+    {
+      "name": "parse_logfmt: a quoted value with an escaped newline",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"l1\\nl2\" b=2"
+      }
+    },
+    {
+      "name": "parse_logfmt: a full line",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app message=\"hello world\" llm.model=gpt-4o user=u1"
+      }
+    },
+    {
+      "name": "parse_logfmt: a trailing backslash in quotes",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"x\\\\\""
+      }
+    },
+    {
+      "name": "parse_logfmt: a single quote character",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\""
+      }
+    },
+    {
+      "name": "parse_logfmt: a no-break space separates nothing",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1 b=2"
+      }
+    },
+    {
+      "name": "parse_logfmt: an em space inside a value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=x y"
+      }
+    },
+    {
+      "name": "parse_logfmt: a next-line character inside a value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=xy"
+      }
+    },
+    {
+      "name": "parse_logfmt: a form feed separates pairs",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1\fb=2"
+      }
+    },
+    {
+      "name": "parse_logfmt: a vertical tab separates pairs",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1\u000bb=2"
+      }
+    },
+    {
+      "name": "parse_logfmt: a file separator inside a value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=x\u001cy"
+      }
+    },
+    {
+      "name": "parse_logfmt: a surrogate pair escape is the character",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\\ud834\\udd1e\""
+      }
+    },
+    {
+      "name": "parse_logfmt: a lone high surrogate escape stays as text",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\\ud834x\""
+      }
+    },
+    {
+      "name": "parse_logfmt: a lone low surrogate escape stays as text",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\\udd1e\""
+      }
+    },
+    {
+      "name": "parse_logfmt: an astral character",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=𝄞"
+      }
+    }
+  ]
+}

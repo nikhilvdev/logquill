@@ -1,0 +1,3230 @@
+{
+  "group": "formatters",
+  "description": "The JSON, text and logfmt line formats, and reading a logfmt line back.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "json: a plain record",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{}}"
+      }
+    },
+    {
+      "name": "json: a record with meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "user": "u1",
+            "n": 3,
+            "ok": true,
+            "none": null
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"user\":\"u1\",\"n\":3,\"ok\":true,\"none\":null}}"
+      }
+    },
+    {
+      "name": "json: a record with an llm block",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": 1,
+            "tokens_out": 2,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{},\"llm\":{\"model\":\"m\",\"tokens_in\":1,\"tokens_out\":2,\"cost_usd\":0.5,\"latency_ms\":12.5,\"finish_reason\":\"stop\"}}"
+      }
+    },
+    {
+      "name": "json: an llm block and meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"a\":1},\"llm\":{\"model\":\"m\"}}"
+      }
+    },
+    {
+      "name": "json: an empty llm block",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {}
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{},\"llm\":{}}"
+      }
+    },
+    {
+      "name": "json: a stack in meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "Traceback (most recent call last):\n  boom\n\n\n",
+            "code": 5
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"ERROR\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"stack\":\"Traceback (most recent call last):\\n  boom\\n\\n\\n\",\"code\":5}}"
+      }
+    },
+    {
+      "name": "json: a stack and nothing else",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "line1\nline2"
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"ERROR\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"stack\":\"line1\\nline2\"}}"
+      }
+    },
+    {
+      "name": "json: an empty stack",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "",
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"stack\":\"\",\"a\":1}}"
+      }
+    },
+    {
+      "name": "json: a non-string stack",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": 5,
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"stack\":5,\"a\":1}}"
+      }
+    },
+    {
+      "name": "json: a null stack",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": null
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"stack\":null}}"
+      }
+    },
+    {
+      "name": "json: no meta key",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello"
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\"}"
+      }
+    },
+    {
+      "name": "json: no message",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"meta\":{}}"
+      }
+    },
+    {
+      "name": "json: no timestamp, level or logger",
+      "input": {
+        "op": "json",
+        "record": {
+          "message": "only a message",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "{\"message\":\"only a message\",\"meta\":{}}"
+      }
+    },
+    {
+      "name": "json: an empty message",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"\",\"meta\":{}}"
+      }
+    },
+    {
+      "name": "json: a null level",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": null,
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":null,\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{}}"
+      }
+    },
+    {
+      "name": "json: an unknown level",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "NOTICE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"NOTICE\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{}}"
+      }
+    },
+    {
+      "name": "json: a lower-case level",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "warn",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"warn\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{}}"
+      }
+    },
+    {
+      "name": "json: every level",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "TRACE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"TRACE\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{}}"
+      }
+    },
+    {
+      "name": "json: a message with a newline",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "line one\nline two",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"line one\\nline two\",\"meta\":{}}"
+      }
+    },
+    {
+      "name": "json: non-ASCII text",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "svc.\u00e9",
+          "message": "caf\u00e9 \u65e5\u672c \ud834\udd1e",
+          "meta": {
+            "k\u00e9y": "v\u00e1l"
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"svc.\u00e9\",\"message\":\"caf\u00e9 \u65e5\u672c \ud834\udd1e\",\"meta\":{\"k\u00e9y\":\"v\u00e1l\"}}"
+      },
+      "differs": {
+        "python": {
+          "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"svc.\\u00e9\",\"message\":\"caf\\u00e9 \\u65e5\\u672c \\ud834\\udd1e\",\"meta\":{\"k\\u00e9y\":\"v\\u00e1l\"}}"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "json: control characters in a message",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "a\tb\u0001c\u007fd",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"a\\tb\\u0001c\u007fd\",\"meta\":{}}"
+      },
+      "differs": {
+        "python": {
+          "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"a\\tb\\u0001c\\u007fd\",\"meta\":{}}"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "json: floats in meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1.0,
+            "b": 0.1,
+            "c": 1e+16,
+            "d": 1e-07,
+            "e": -0.0
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"a\":1.0,\"b\":0.1,\"c\":1e+16,\"d\":1e-07,\"e\":-0.0}}"
+      },
+      "differs": {
+        "js": {
+          "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"a\":1,\"b\":0.1,\"c\":10000000000000000,\"d\":1e-7,\"e\":0}}"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "json: big integers in meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "big": 9007199254740993,
+            "huge": 123456789012345678901234567890
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"big\":9007199254740993,\"huge\":123456789012345678901234567890}}"
+      },
+      "differs": {
+        "js": {
+          "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"big\":9007199254740992,\"huge\":1.2345678901234568e+29}}"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "json: nested meta",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "http": {
+              "status": 200,
+              "headers": {
+                "x": "y"
+              }
+            },
+            "tags": [
+              "a",
+              "b"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"http\":{\"status\":200,\"headers\":{\"x\":\"y\"}},\"tags\":[\"a\",\"b\"]}}"
+      }
+    },
+    {
+      "name": "json: empty meta values",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "o": {},
+            "l": [],
+            "s": ""
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"o\":{},\"l\":[],\"s\":\"\"}}"
+      }
+    },
+    {
+      "name": "json: meta keys shadowing record fields",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "timestamp": "t",
+            "level": "l",
+            "logger": "g",
+            "message": "m"
+          }
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{\"timestamp\":\"t\",\"level\":\"l\",\"logger\":\"g\",\"message\":\"m\"}}"
+      }
+    },
+    {
+      "name": "json: extra top-level keys",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "extra": "x"
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"hello\",\"meta\":{},\"extra\":\"x\"}"
+      }
+    },
+    {
+      "name": "json: a long message",
+      "input": {
+        "op": "json",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"2026-01-01T00:00:00.123Z\",\"level\":\"INFO\",\"logger\":\"app.api\",\"message\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"meta\":{}}"
+      }
+    },
+    {
+      "name": "text: a plain record",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello"
+      }
+    },
+    {
+      "name": "text: a record with meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "user": "u1",
+            "n": 3,
+            "ok": true,
+            "none": null
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello {\"user\":\"u1\",\"n\":3,\"ok\":true,\"none\":null}"
+      }
+    },
+    {
+      "name": "text: a record with an llm block",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": 1,
+            "tokens_out": 2,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello llm={\"model\":\"m\",\"tokens_in\":1,\"tokens_out\":2,\"cost_usd\":0.5,\"latency_ms\":12.5,\"finish_reason\":\"stop\"}"
+      }
+    },
+    {
+      "name": "text: an llm block and meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello llm={\"model\":\"m\"} {\"a\":1}"
+      }
+    },
+    {
+      "name": "text: an empty llm block",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {}
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello"
+      }
+    },
+    {
+      "name": "text: a stack in meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "Traceback (most recent call last):\n  boom\n\n\n",
+            "code": 5
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z ERROR app.api: hello {\"code\":5}\nTraceback (most recent call last):\n  boom"
+      }
+    },
+    {
+      "name": "text: a stack and nothing else",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "line1\nline2"
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z ERROR app.api: hello\nline1\nline2"
+      }
+    },
+    {
+      "name": "text: an empty stack",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "",
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello {\"stack\":\"\",\"a\":1}"
+      }
+    },
+    {
+      "name": "text: a non-string stack",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": 5,
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello {\"stack\":5,\"a\":1}"
+      }
+    },
+    {
+      "name": "text: a null stack",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": null
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello {\"stack\":null}"
+      }
+    },
+    {
+      "name": "text: no meta key",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello"
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello"
+      }
+    },
+    {
+      "name": "text: no message",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: "
+      }
+    },
+    {
+      "name": "text: no timestamp, level or logger",
+      "input": {
+        "op": "text",
+        "record": {
+          "message": "only a message",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "? ?     ?: only a message"
+      }
+    },
+    {
+      "name": "text: an empty message",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: "
+      }
+    },
+    {
+      "name": "text: a null level",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": null,
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z ?     app.api: hello"
+      },
+      "differs": {
+        "python": {
+          "line": "2026-01-01T00:00:00.123Z None  app.api: hello"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "text: an unknown level",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "NOTICE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z NOTICE app.api: hello"
+      }
+    },
+    {
+      "name": "text: a lower-case level",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "warn",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z warn  app.api: hello"
+      }
+    },
+    {
+      "name": "text: every level",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "TRACE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z TRACE app.api: hello"
+      }
+    },
+    {
+      "name": "text: a message with a newline",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "line one\nline two",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: line one\nline two"
+      }
+    },
+    {
+      "name": "text: non-ASCII text",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "svc.\u00e9",
+          "message": "caf\u00e9 \u65e5\u672c \ud834\udd1e",
+          "meta": {
+            "k\u00e9y": "v\u00e1l"
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  svc.\u00e9: caf\u00e9 \u65e5\u672c \ud834\udd1e {\"k\u00e9y\":\"v\u00e1l\"}"
+      },
+      "differs": {
+        "python": {
+          "line": "2026-01-01T00:00:00.123Z INFO  svc.\u00e9: caf\u00e9 \u65e5\u672c \ud834\udd1e {\"k\\u00e9y\":\"v\\u00e1l\"}"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "text: control characters in a message",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "a\tb\u0001c\u007fd",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: a\tb\u0001c\u007fd"
+      }
+    },
+    {
+      "name": "text: floats in meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1.0,
+            "b": 0.1,
+            "c": 1e+16,
+            "d": 1e-07,
+            "e": -0.0
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello {\"a\":1.0,\"b\":0.1,\"c\":1e+16,\"d\":1e-07,\"e\":-0.0}"
+      },
+      "differs": {
+        "js": {
+          "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello {\"a\":1,\"b\":0.1,\"c\":10000000000000000,\"d\":1e-7,\"e\":0}"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "text: big integers in meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "big": 9007199254740993,
+            "huge": 123456789012345678901234567890
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello {\"big\":9007199254740993,\"huge\":123456789012345678901234567890}"
+      },
+      "differs": {
+        "js": {
+          "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello {\"big\":9007199254740992,\"huge\":1.2345678901234568e+29}"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "text: nested meta",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "http": {
+              "status": 200,
+              "headers": {
+                "x": "y"
+              }
+            },
+            "tags": [
+              "a",
+              "b"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello {\"http\":{\"status\":200,\"headers\":{\"x\":\"y\"}},\"tags\":[\"a\",\"b\"]}"
+      }
+    },
+    {
+      "name": "text: empty meta values",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "o": {},
+            "l": [],
+            "s": ""
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello {\"o\":{},\"l\":[],\"s\":\"\"}"
+      }
+    },
+    {
+      "name": "text: meta keys shadowing record fields",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "timestamp": "t",
+            "level": "l",
+            "logger": "g",
+            "message": "m"
+          }
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello {\"timestamp\":\"t\",\"level\":\"l\",\"logger\":\"g\",\"message\":\"m\"}"
+      }
+    },
+    {
+      "name": "text: extra top-level keys",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "extra": "x"
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: hello"
+      }
+    },
+    {
+      "name": "text: a long message",
+      "input": {
+        "op": "text",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "2026-01-01T00:00:00.123Z INFO  app.api: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "name": "logfmt: a plain record",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello"
+      }
+    },
+    {
+      "name": "logfmt: a record with meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "user": "u1",
+            "n": 3,
+            "ok": true,
+            "none": null
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello user=u1 n=3 ok=true none=null"
+      }
+    },
+    {
+      "name": "logfmt: a record with an llm block",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": 1,
+            "tokens_out": 2,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello llm.model=m llm.tokens_in=1 llm.tokens_out=2 llm.cost_usd=0.5 llm.latency_ms=12.5 llm.finish_reason=stop"
+      }
+    },
+    {
+      "name": "logfmt: an llm block and meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello llm.model=m a=1"
+      }
+    },
+    {
+      "name": "logfmt: an empty llm block",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello"
+      }
+    },
+    {
+      "name": "logfmt: a stack in meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "Traceback (most recent call last):\n  boom\n\n\n",
+            "code": 5
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=ERROR logger=app.api message=hello stack=\"Traceback (most recent call last):\\n  boom\\n\\n\\n\" code=5"
+      }
+    },
+    {
+      "name": "logfmt: a stack and nothing else",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "line1\nline2"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=ERROR logger=app.api message=hello stack=\"line1\\nline2\""
+      }
+    },
+    {
+      "name": "logfmt: an empty stack",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": "",
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello stack=\"\" a=1"
+      }
+    },
+    {
+      "name": "logfmt: a non-string stack",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": 5,
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello stack=5 a=1"
+      }
+    },
+    {
+      "name": "logfmt: a null stack",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "stack": null
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello stack=null"
+      }
+    },
+    {
+      "name": "logfmt: no meta key",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello"
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello"
+      },
+      "differs": {
+        "python": {
+          "error": "KeyError: 'meta'"
+        },
+        "js": {
+          "error": "TypeError: Cannot convert undefined or null to object"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: no message",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=\"\""
+      },
+      "differs": {
+        "python": {
+          "error": "KeyError: 'message'"
+        },
+        "js": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=undefined"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: no timestamp, level or logger",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "message": "only a message",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=? level=? logger=? message=\"only a message\""
+      },
+      "differs": {
+        "python": {
+          "error": "KeyError: 'timestamp'"
+        },
+        "js": {
+          "line": "timestamp=undefined level=undefined logger=undefined message=\"only a message\""
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: an empty message",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=\"\""
+      }
+    },
+    {
+      "name": "logfmt: a null level",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": null,
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=? logger=app.api message=hello"
+      },
+      "differs": {
+        "python": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=None logger=app.api message=hello"
+        },
+        "js": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=null logger=app.api message=hello"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: an unknown level",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "NOTICE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=NOTICE logger=app.api message=hello"
+      }
+    },
+    {
+      "name": "logfmt: a lower-case level",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "warn",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=warn logger=app.api message=hello"
+      }
+    },
+    {
+      "name": "logfmt: every level",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "TRACE",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=TRACE logger=app.api message=hello"
+      }
+    },
+    {
+      "name": "logfmt: a message with a newline",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "line one\nline two",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=\"line one\\nline two\""
+      }
+    },
+    {
+      "name": "logfmt: non-ASCII text",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "svc.\u00e9",
+          "message": "caf\u00e9 \u65e5\u672c \ud834\udd1e",
+          "meta": {
+            "k\u00e9y": "v\u00e1l"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=svc.\u00e9 message=\"caf\u00e9 \u65e5\u672c \ud834\udd1e\" k\u00e9y=v\u00e1l"
+      }
+    },
+    {
+      "name": "logfmt: control characters in a message",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "a\tb\u0001c\u007fd",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=\"a\\tb\\u0001c\\u007fd\""
+      }
+    },
+    {
+      "name": "logfmt: floats in meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": 1.0,
+            "b": 0.1,
+            "c": 1e+16,
+            "d": 1e-07,
+            "e": -0.0
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a=1.0 b=0.1 c=1e+16 d=1e-07 e=-0.0"
+      },
+      "differs": {
+        "js": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a=1 b=0.1 c=10000000000000000 d=1e-7 e=0"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: big integers in meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "big": 9007199254740993,
+            "huge": 123456789012345678901234567890
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello big=9007199254740993 huge=123456789012345678901234567890"
+      },
+      "differs": {
+        "js": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello big=9007199254740992 huge=1.2345678901234568e+29"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: nested meta",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "http": {
+              "status": 200,
+              "headers": {
+                "x": "y"
+              }
+            },
+            "tags": [
+              "a",
+              "b"
+            ]
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello http.status=200 http.headers.x=y tags=\"[\\\"a\\\",\\\"b\\\"]\""
+      }
+    },
+    {
+      "name": "logfmt: empty meta values",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "o": {},
+            "l": [],
+            "s": ""
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello o={} l=[] s=\"\""
+      }
+    },
+    {
+      "name": "logfmt: meta keys shadowing record fields",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "timestamp": "t",
+            "level": "l",
+            "logger": "g",
+            "message": "m"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello meta.timestamp=t meta.level=l meta.logger=g meta.message=m"
+      }
+    },
+    {
+      "name": "logfmt: extra top-level keys",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "extra": "x"
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello"
+      }
+    },
+    {
+      "name": "logfmt: a long message",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "name": "json: non-finite numbers",
+      "input": {
+        "op": "json",
+        "record_json": "{\"schema_version\":\"2.0\",\"timestamp\":\"t\",\"level\":\"INFO\",\"logger\":\"l\",\"message\":\"m\",\"meta\":{\"a\":NaN,\"b\":Infinity,\"c\":-Infinity,\"d\":1.0}}"
+      },
+      "expected": {
+        "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"t\",\"level\":\"INFO\",\"logger\":\"l\",\"message\":\"m\",\"meta\":{\"a\":null,\"b\":null,\"c\":null,\"d\":1.0}}"
+      },
+      "differs": {
+        "python": {
+          "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"t\",\"level\":\"INFO\",\"logger\":\"l\",\"message\":\"m\",\"meta\":{\"a\":NaN,\"b\":Infinity,\"c\":-Infinity,\"d\":1.0}}"
+        },
+        "js": {
+          "line": "{\"schema_version\":\"2.0\",\"timestamp\":\"t\",\"level\":\"INFO\",\"logger\":\"l\",\"message\":\"m\",\"meta\":{\"a\":null,\"b\":null,\"c\":null,\"d\":1}}"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "text: non-finite numbers",
+      "input": {
+        "op": "text",
+        "record_json": "{\"schema_version\":\"2.0\",\"timestamp\":\"t\",\"level\":\"INFO\",\"logger\":\"l\",\"message\":\"m\",\"meta\":{\"a\":NaN,\"b\":Infinity,\"c\":-Infinity,\"d\":1.0}}"
+      },
+      "expected": {
+        "line": "t INFO  l: m {\"a\":null,\"b\":null,\"c\":null,\"d\":1.0}"
+      },
+      "differs": {
+        "python": {
+          "line": "t INFO  l: m {\"a\":NaN,\"b\":Infinity,\"c\":-Infinity,\"d\":1.0}"
+        },
+        "js": {
+          "line": "t INFO  l: m {\"a\":null,\"b\":null,\"c\":null,\"d\":1}"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: non-finite numbers",
+      "input": {
+        "op": "logfmt",
+        "record_json": "{\"schema_version\":\"2.0\",\"timestamp\":\"t\",\"level\":\"INFO\",\"logger\":\"l\",\"message\":\"m\",\"meta\":{\"a\":NaN,\"b\":Infinity,\"c\":-Infinity,\"d\":1.0}}"
+      },
+      "expected": {
+        "line": "timestamp=t level=INFO logger=l message=m a=null b=null c=null d=1.0"
+      },
+      "differs": {
+        "python": {
+          "line": "timestamp=t level=INFO logger=l message=m a=nan b=inf c=-inf d=1.0"
+        },
+        "js": {
+          "line": "timestamp=t level=INFO logger=l message=m a=NaN b=Infinity c=-Infinity d=1"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: an empty value",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": ""
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"\""
+      }
+    },
+    {
+      "name": "logfmt: a value with a space",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a b"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a b\""
+      }
+    },
+    {
+      "name": "logfmt: a value with a tab",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\tb"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\\tb\""
+      }
+    },
+    {
+      "name": "logfmt: a value with a quote",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "say \"hi\""
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"say \\\"hi\\\"\""
+      }
+    },
+    {
+      "name": "logfmt: a value with an equals sign",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a=b"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a=b\""
+      }
+    },
+    {
+      "name": "logfmt: a value with a backslash",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\\b"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\\\\b\""
+      }
+    },
+    {
+      "name": "logfmt: a value with a newline",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\nb"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\\nb\""
+      }
+    },
+    {
+      "name": "logfmt: a value with a carriage return",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\rb"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\\rb\""
+      }
+    },
+    {
+      "name": "logfmt: a value with a control character",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\u0001b"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\\u0001b\""
+      }
+    },
+    {
+      "name": "logfmt: a value with DEL",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\u007fb"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\\u007fb\""
+      }
+    },
+    {
+      "name": "logfmt: a value with NEL",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\u0085b"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\\u0085b\""
+      }
+    },
+    {
+      "name": "logfmt: a value with U+2028",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\u2028b"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\\u2028b\""
+      }
+    },
+    {
+      "name": "logfmt: a value with U+2029",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\u2029b"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\\u2029b\""
+      }
+    },
+    {
+      "name": "logfmt: a plain value",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "plain"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=plain"
+      }
+    },
+    {
+      "name": "logfmt: a non-ASCII value",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "caf\u00e9"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=caf\u00e9"
+      }
+    },
+    {
+      "name": "logfmt: a value that is only a quote",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "\""
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"\\\"\""
+      }
+    },
+    {
+      "name": "logfmt: a key with a space",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a b": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a_b=1"
+      }
+    },
+    {
+      "name": "logfmt: a key with an equals sign",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a=b": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a_b=1"
+      }
+    },
+    {
+      "name": "logfmt: a key with a quote",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a\"b": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a_b=1"
+      }
+    },
+    {
+      "name": "logfmt: a key with a newline",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a\nb": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a_b=1"
+      }
+    },
+    {
+      "name": "logfmt: an empty key",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello _=1"
+      }
+    },
+    {
+      "name": "logfmt: a key with only spaces",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "  ": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello __=1"
+      }
+    },
+    {
+      "name": "logfmt: a key with U+2028",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a\u2028b": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a_b=1"
+      }
+    },
+    {
+      "name": "logfmt: a non-ASCII key",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "caf\u00e9": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello caf\u00e9=1"
+      }
+    },
+    {
+      "name": "logfmt: reserved keys are prefixed",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "timestamp": "a",
+            "level": "b",
+            "logger": "c",
+            "message": "d",
+            "other": "e"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello meta.timestamp=a meta.level=b meta.logger=c meta.message=d other=e"
+      }
+    },
+    {
+      "name": "logfmt: null, booleans and numbers",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "n": null,
+            "t": true,
+            "f": false,
+            "i": 3,
+            "x": 1.5,
+            "z": 1.0,
+            "e": 1e+16,
+            "neg": -2
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello n=null t=true f=false i=3 x=1.5 z=1.0 e=1e+16 neg=-2"
+      },
+      "differs": {
+        "js": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello n=null t=true f=false i=3 x=1.5 z=1 e=10000000000000000 neg=-2"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: an array",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": [
+              1,
+              "two",
+              null,
+              true
+            ]
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a=\"[1,\\\"two\\\",null,true]\""
+      }
+    },
+    {
+      "name": "logfmt: an empty array",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": []
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a=[]"
+      }
+    },
+    {
+      "name": "logfmt: an empty object",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "o": {}
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello o={}"
+      }
+    },
+    {
+      "name": "logfmt: a nested object",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "http": {
+              "status": 200,
+              "path": "/a b"
+            }
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello http.status=200 http.path=\"/a b\""
+      }
+    },
+    {
+      "name": "logfmt: nesting with odd keys",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": {
+              "b c": 1,
+              "d=e": 2
+            }
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a.b_c=1 a.d_e=2"
+      }
+    },
+    {
+      "name": "logfmt: nesting to depth 4",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": {
+              "b": {
+                "c": {
+                  "d": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a.b.c.d=1"
+      }
+    },
+    {
+      "name": "logfmt: nesting to depth 5",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": {
+              "b": {
+                "c": {
+                  "d": {
+                    "e": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a.b.c.d.e=1"
+      }
+    },
+    {
+      "name": "logfmt: nesting to depth 6",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": {
+              "b": {
+                "c": {
+                  "d": {
+                    "e": {
+                      "f": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a.b.c.d.e=\"{\\\"f\\\":1}\""
+      }
+    },
+    {
+      "name": "logfmt: an object inside an array",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a": [
+              {
+                "b": 1
+              }
+            ]
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a=\"[{\\\"b\\\":1}]\""
+      }
+    },
+    {
+      "name": "logfmt: a dotted key beside a nested one",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a.b": 1,
+            "a": {
+              "b": 2
+            }
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a.b=1 a.b=2"
+      }
+    },
+    {
+      "name": "logfmt: a no-break space",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\u00a0b"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=a\u00a0b"
+      },
+      "differs": {
+        "python": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\u00a0b\""
+        },
+        "js": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\u00a0b\""
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: an em space",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\u2003b"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=a\u2003b"
+      },
+      "differs": {
+        "python": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\u2003b\""
+        },
+        "js": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\u2003b\""
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: a form feed",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\fb"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\\u000cb\""
+      }
+    },
+    {
+      "name": "logfmt: a vertical tab",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "v": "a\u000bb"
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello v=\"a\\u000bb\""
+      }
+    },
+    {
+      "name": "logfmt: a key with a no-break space",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {
+            "a\u00a0b": 1
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a\u00a0b=1"
+      },
+      "differs": {
+        "python": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a_b=1"
+        },
+        "js": {
+          "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello a_b=1"
+        }
+      },
+      "rule": "D4 \u2014 floats keep Python's spelling; D31 \u2014 non-finite numbers are null; D32 \u2014 UTF-8, not \\\\u escapes; D42 \u2014 one tolerant treatment of incomplete records and ASCII whitespace in logfmt"
+    },
+    {
+      "name": "logfmt: an llm block",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "hello",
+          "meta": {},
+          "llm": {
+            "model": "a b",
+            "tokens_in": 5,
+            "cost_usd": 0.25
+          }
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=hello llm.model=\"a b\" llm.tokens_in=5 llm.cost_usd=0.25"
+      }
+    },
+    {
+      "name": "logfmt: a message that needs quoting",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.api",
+          "message": "he said \"hi\"\nthen left",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app.api message=\"he said \\\"hi\\\"\\nthen left\""
+      }
+    },
+    {
+      "name": "logfmt: a logger with spaces",
+      "input": {
+        "op": "logfmt",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "a b",
+          "message": "hello",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=\"a b\" message=hello"
+      }
+    },
+    {
+      "name": "parse_logfmt: a simple pair",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1"
+      },
+      "expected": {
+        "fields": {
+          "a": "1"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: two pairs",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1 b=2"
+      },
+      "expected": {
+        "fields": {
+          "a": "1",
+          "b": "2"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a quoted value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"hello world\""
+      },
+      "expected": {
+        "fields": {
+          "a": "hello world"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: escapes",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"x\\ny\\tz\\\"q\\\\\""
+      },
+      "expected": {
+        "fields": {
+          "a": "x\ny\tz\"q\\"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a unicode escape",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"caf\\u00e9\""
+      },
+      "expected": {
+        "fields": {
+          "a": "caf\u00e9"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: an unknown escape",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"x\\qy\""
+      },
+      "expected": {
+        "fields": {
+          "a": "x\\qy"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: an upper-case unicode escape",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\\u00E9\""
+      },
+      "expected": {
+        "fields": {
+          "a": "\u00e9"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a short unicode escape",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\\u00\""
+      },
+      "expected": {
+        "fields": {
+          "a": "\\u00"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a bare key",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "flag"
+      },
+      "expected": {
+        "fields": {
+          "flag": ""
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a bare key between pairs",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1 flag b=2"
+      },
+      "expected": {
+        "fields": {
+          "a": "1",
+          "flag": "",
+          "b": "2"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: an empty value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a= b=2"
+      },
+      "expected": {
+        "fields": {
+          "a": "",
+          "b": "2"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a repeated key",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1 a=2"
+      },
+      "expected": {
+        "fields": {
+          "a": "2"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a value with an equals sign",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=b=c"
+      },
+      "expected": {
+        "fields": {
+          "a": "b=c"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a quoted empty value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\""
+      },
+      "expected": {
+        "fields": {
+          "a": ""
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: an unterminated quote",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"open"
+      },
+      "expected": {
+        "fields": {
+          "a": "",
+          "open": ""
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a quote in an unquoted value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=b\"c d"
+      },
+      "expected": {
+        "fields": {
+          "a": "b",
+          "c": "",
+          "d": ""
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a leading equals sign",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "=v a=1"
+      },
+      "expected": {
+        "fields": {
+          "v": "",
+          "a": "1"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: tabs between pairs",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1\tb=2"
+      },
+      "expected": {
+        "fields": {
+          "a": "1",
+          "b": "2"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: many spaces",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1    b=2"
+      },
+      "expected": {
+        "fields": {
+          "a": "1",
+          "b": "2"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: an empty line",
+      "input": {
+        "op": "parse_logfmt",
+        "line": ""
+      },
+      "expected": {
+        "fields": {}
+      }
+    },
+    {
+      "name": "parse_logfmt: only spaces",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "   "
+      },
+      "expected": {
+        "fields": {}
+      }
+    },
+    {
+      "name": "parse_logfmt: a dotted key",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "http.status=200"
+      },
+      "expected": {
+        "fields": {
+          "http.status": "200"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a non-ASCII value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=caf\u00e9"
+      },
+      "expected": {
+        "fields": {
+          "a": "caf\u00e9"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a non-ASCII key",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "caf\u00e9=1"
+      },
+      "expected": {
+        "fields": {
+          "caf\u00e9": "1"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a quoted value with an escaped newline",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"l1\\nl2\" b=2"
+      },
+      "expected": {
+        "fields": {
+          "a": "l1\nl2",
+          "b": "2"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a full line",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "timestamp=2026-01-01T00:00:00.123Z level=INFO logger=app message=\"hello world\" llm.model=gpt-4o user=u1"
+      },
+      "expected": {
+        "fields": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hello world",
+          "llm.model": "gpt-4o",
+          "user": "u1"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a trailing backslash in quotes",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"x\\\\\""
+      },
+      "expected": {
+        "fields": {
+          "a": "x\\"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a single quote character",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\""
+      },
+      "expected": {
+        "fields": {
+          "a": ""
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a no-break space separates nothing",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1\u00a0b=2"
+      },
+      "expected": {
+        "fields": {
+          "a": "1\u00a0b=2"
+        }
+      },
+      "differs": {
+        "python": {
+          "fields": {
+            "a": "1",
+            "b": "2"
+          }
+        },
+        "js": {
+          "fields": {
+            "a": "1",
+            "b": "2"
+          }
+        }
+      },
+      "rule": "D42 \u2014 ASCII whitespace only; a lone surrogate escape stays as text; a valid pair is the character"
+    },
+    {
+      "name": "parse_logfmt: an em space inside a value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=x\u2003y"
+      },
+      "expected": {
+        "fields": {
+          "a": "x\u2003y"
+        }
+      },
+      "differs": {
+        "python": {
+          "fields": {
+            "a": "x",
+            "y": ""
+          }
+        },
+        "js": {
+          "fields": {
+            "a": "x",
+            "y": ""
+          }
+        }
+      },
+      "rule": "D42 \u2014 ASCII whitespace only; a lone surrogate escape stays as text; a valid pair is the character"
+    },
+    {
+      "name": "parse_logfmt: a next-line character inside a value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=x\u0085y"
+      },
+      "expected": {
+        "fields": {
+          "a": "x\u0085y"
+        }
+      },
+      "differs": {
+        "python": {
+          "fields": {
+            "a": "x",
+            "y": ""
+          }
+        }
+      },
+      "rule": "D42 \u2014 ASCII whitespace only; a lone surrogate escape stays as text; a valid pair is the character"
+    },
+    {
+      "name": "parse_logfmt: a form feed separates pairs",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1\fb=2"
+      },
+      "expected": {
+        "fields": {
+          "a": "1",
+          "b": "2"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a vertical tab separates pairs",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=1\u000bb=2"
+      },
+      "expected": {
+        "fields": {
+          "a": "1",
+          "b": "2"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a file separator inside a value",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=x\u001cy"
+      },
+      "expected": {
+        "fields": {
+          "a": "x\u001cy"
+        }
+      },
+      "differs": {
+        "python": {
+          "fields": {
+            "a": "x",
+            "y": ""
+          }
+        }
+      },
+      "rule": "D42 \u2014 ASCII whitespace only; a lone surrogate escape stays as text; a valid pair is the character"
+    },
+    {
+      "name": "parse_logfmt: a surrogate pair escape is the character",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\\ud834\\udd1e\""
+      },
+      "expected": {
+        "fields": {
+          "a": "\ud834\udd1e"
+        }
+      }
+    },
+    {
+      "name": "parse_logfmt: a lone high surrogate escape stays as text",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\\ud834x\""
+      },
+      "expected": {
+        "fields": {
+          "a": "\\ud834x"
+        }
+      },
+      "differs": {
+        "python": {
+          "fields": {
+            "a": "\ufffdx"
+          }
+        },
+        "js": {
+          "fields": {
+            "a": "\ufffdx"
+          }
+        }
+      },
+      "rule": "D42 \u2014 ASCII whitespace only; a lone surrogate escape stays as text; a valid pair is the character"
+    },
+    {
+      "name": "parse_logfmt: a lone low surrogate escape stays as text",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\"\\udd1e\""
+      },
+      "expected": {
+        "fields": {
+          "a": "\\udd1e"
+        }
+      },
+      "differs": {
+        "python": {
+          "fields": {
+            "a": "\ufffd"
+          }
+        },
+        "js": {
+          "fields": {
+            "a": "\ufffd"
+          }
+        }
+      },
+      "rule": "D42 \u2014 ASCII whitespace only; a lone surrogate escape stays as text; a valid pair is the character"
+    },
+    {
+      "name": "parse_logfmt: an astral character",
+      "input": {
+        "op": "parse_logfmt",
+        "line": "a=\ud834\udd1e"
+      },
+      "expected": {
+        "fields": {
+          "a": "\ud834\udd1e"
+        }
+      }
+    }
+  ]
+}

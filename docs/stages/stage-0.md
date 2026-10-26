@@ -7,6 +7,23 @@ whose fixtures already exist (see the table in work package 0.4).
 
 Overview in `docs/rust-core-plan.md`, section 6; behaviour in `docs/spec/`.
 
+## Status: complete
+
+| Work package | Result |
+|---|---|
+| 0.1 decisions | D3, D4, D18, D19, D31, D32 settled as recommended, and D35–D45 added and settled for every place the two releases disagreed in the fixtures (`docs/spec/00-decisions.md`). Still the author's call, none blocking Stage 1: the licence for the shared core, whether to finish JS 2.0, the repository name. |
+| 0.2 references | `scripts/corpus/references.json` pins the Python tag `v2.0.0` and one `logquill-js` commit; the generator unpacks the tag itself. The local branch `py-2.x` marks `main`. Not done: a `js-1.x` tag (that repository is separate), and `git stash branch fix/2.x-pending` — the pending 2.x change set is still in `git stash` and moving it means switching branches, so it is left to be done with a clean tree. |
+| 0.3 format | `schema/corpus/<group>.json`, documented in `schema/corpus/README.md`, loaded by `crates/logquill-core/tests/corpus.rs`. |
+| 0.4 groups | All twelve rows below are generated: 22 files, 865 cases (`ls schema/corpus`). Every case where a reference disagrees with `expected` carries the deciding rule; `docs/spec/10-corpus-divergences.md` lists them all. Not covered because the stage plan did not list them: the NoSQL and queue transports' document and key shapes, `ContextPlugin` / `TraceContextPlugin` record stamping, the Metrics bridge, the CLI beyond the trace tree, and the OTLP exporters' span assembly (Stage 2 and later add their groups through the same generator). |
+| 0.5 CI | `.github/workflows/corpus.yml`: weekly, and on any change to the generator or fixtures; unpacks the tag, clones the pinned JavaScript commit, runs `build.py --check`. Not yet run in GitHub Actions. |
+| 0.6 housekeeping | Rust 1.99.1 installed; `cargo fmt`, `clippy -D warnings` and `cargo test --workspace` pass; the pre-commit hooks run on every commit. |
+
+What the generator found that the written spec had not (all settled in D35–D45): the Python
+trace builder silently dropped any record that became its own ancestor; both references let a
+redaction or sampling set grow without bound or leave deep values unredacted; Unicode digits and a
+trailing newline passed the "ASCII" checks in Python; `RunPlugin("")` was silently replaced;
+`epoch_ns` was off by up to a few hundred nanoseconds; and booleans were accepted as token counts.
+
 ## 0.1 Settle the decisions
 
 | Decision | Needed by | Recommendation |
@@ -63,7 +80,7 @@ One file per group in `schema/corpus/<group>.json`:
 Bindings read only `input` and `expected`. `differs` and `rule` record where the references
 disagreed and which decision settled it, so a reviewer can audit every divergence. Every
 language loads the same files through a small loader; the Rust loader is
-`crates/logquill-core/tests/corpus.rs` (extend the existing `fixtures.rs`).
+`crates/logquill-core/tests/corpus.rs` (`tests/corpus.rs`).
 
 ## 0.4 Generate the groups
 
@@ -100,7 +117,7 @@ the settled decision and records the old behaviour under `differs`.
 
 A scheduled workflow installs the **published** reference releases and re-runs
 `build.py --check`, so a reference that changes (a re-release, a yanked version) is noticed.
-Add it only after the generator exists.
+The generator exists; the workflow is in `.github/workflows/corpus.yml`.
 
 ## 0.6 Housekeeping
 

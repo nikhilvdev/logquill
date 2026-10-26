@@ -1,0 +1,3627 @@
+{
+  "group": "redaction",
+  "description": "Key redaction (RedactPlugin) and pattern redaction (PIIRedactPlugin) over meta, including nested and hostile values.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "js_gaps": [
+    "no redact_local in the JavaScript package"
+  ],
+  "cases": [
+    {
+      "name": "keys: the default secret keys",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "password": "p",
+          "token": "t",
+          "secret": "s",
+          "api_key": "k",
+          "authorization": "a",
+          "user": "u"
+        }
+      },
+      "expected": {
+        "meta": {
+          "password": "***",
+          "token": "***",
+          "secret": "***",
+          "api_key": "***",
+          "authorization": "***",
+          "user": "u"
+        }
+      }
+    },
+    {
+      "name": "keys: keys match in any case",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "Password": 1,
+          "TOKEN": 2,
+          "Api_Key": 3,
+          "AUTHORIZATION": 4,
+          "x": 5
+        }
+      },
+      "expected": {
+        "meta": {
+          "Password": "***",
+          "TOKEN": "***",
+          "Api_Key": "***",
+          "AUTHORIZATION": "***",
+          "x": 5
+        }
+      }
+    },
+    {
+      "name": "keys: the Kelvin sign lower-cases to k",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "api_\u212aey": "x",
+          "to\u212aen": "y"
+        }
+      },
+      "expected": {
+        "meta": {
+          "api_\u212aey": "***",
+          "to\u212aen": "***"
+        }
+      }
+    },
+    {
+      "name": "keys: a key that only contains a secret word is kept",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "password_hint": "h",
+          "mytoken": "t",
+          "tokens": 1
+        }
+      },
+      "expected": {
+        "meta": {
+          "password_hint": "h",
+          "mytoken": "t",
+          "tokens": 1
+        }
+      }
+    },
+    {
+      "name": "keys: non-string values are replaced too",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "password": 12,
+          "token": null,
+          "secret": [
+            1,
+            2
+          ],
+          "api_key": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "meta": {
+          "password": "***",
+          "token": "***",
+          "secret": "***",
+          "api_key": "***"
+        }
+      }
+    },
+    {
+      "name": "keys: an empty meta",
+      "input": {
+        "op": "redact",
+        "meta": {}
+      },
+      "expected": {
+        "meta": {}
+      }
+    },
+    {
+      "name": "keys: a custom replacement",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "password": "p"
+        },
+        "replacement": "[hidden]"
+      },
+      "expected": {
+        "meta": {
+          "password": "[hidden]"
+        }
+      }
+    },
+    {
+      "name": "keys: an empty replacement",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "password": "p"
+        },
+        "replacement": ""
+      },
+      "expected": {
+        "meta": {
+          "password": ""
+        }
+      }
+    },
+    {
+      "name": "keys: custom keys",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "ssn": "1",
+          "password": "p",
+          "Card": "c"
+        },
+        "keys": [
+          "ssn",
+          "CARD"
+        ]
+      },
+      "expected": {
+        "meta": {
+          "ssn": "***",
+          "password": "p",
+          "Card": "***"
+        }
+      }
+    },
+    {
+      "name": "keys: no keys at all",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "password": "p"
+        },
+        "keys": []
+      },
+      "expected": {
+        "meta": {
+          "password": "p"
+        }
+      }
+    },
+    {
+      "name": "keys: the secret class",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "password": "p",
+          "email": "e",
+          "input_messages": "m"
+        },
+        "keys": [],
+        "classes": [
+          "secret"
+        ]
+      },
+      "expected": {
+        "meta": {
+          "password": "***",
+          "email": "e",
+          "input_messages": "m"
+        }
+      }
+    },
+    {
+      "name": "keys: the pii class",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "password": "p",
+          "email": "e",
+          "ssn": "s",
+          "phone": "p",
+          "input_messages": "m"
+        },
+        "keys": [],
+        "classes": [
+          "pii"
+        ]
+      },
+      "expected": {
+        "meta": {
+          "password": "p",
+          "email": "***",
+          "ssn": "***",
+          "phone": "***",
+          "input_messages": "m"
+        }
+      }
+    },
+    {
+      "name": "keys: the content class",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "input_messages": "a",
+          "output_messages": "b",
+          "system_instructions": "c",
+          "tool_arguments": "d",
+          "tool_result": "e",
+          "state_diff": "f",
+          "message": "ok"
+        },
+        "keys": [],
+        "classes": [
+          "content"
+        ]
+      },
+      "expected": {
+        "meta": {
+          "input_messages": "***",
+          "output_messages": "***",
+          "system_instructions": "***",
+          "tool_arguments": "***",
+          "tool_result": "***",
+          "state_diff": "***",
+          "message": "ok"
+        }
+      }
+    },
+    {
+      "name": "keys: keys and classes together",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "password": "p",
+          "email": "e",
+          "custom": "c"
+        },
+        "keys": [
+          "custom"
+        ],
+        "classes": [
+          "pii"
+        ]
+      },
+      "expected": {
+        "meta": {
+          "password": "p",
+          "email": "***",
+          "custom": "***"
+        }
+      }
+    },
+    {
+      "name": "keys: a nested key",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "request": {
+            "headers": {
+              "Authorization": "Bearer x",
+              "accept": "json"
+            }
+          }
+        }
+      },
+      "expected": {
+        "meta": {
+          "request": {
+            "headers": {
+              "Authorization": "***",
+              "accept": "json"
+            }
+          }
+        }
+      },
+      "differs": {
+        "python": {
+          "meta": {
+            "request": {
+              "headers": {
+                "Authorization": "Bearer x",
+                "accept": "json"
+              }
+            }
+          }
+        },
+        "js": {
+          "meta": {
+            "request": {
+              "headers": {
+                "Authorization": "Bearer x",
+                "accept": "json"
+              }
+            }
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "keys: a key inside a list of objects",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "items": [
+            {
+              "token": "t",
+              "id": 1
+            },
+            {
+              "id": 2
+            },
+            "plain",
+            [
+              {
+                "password": "p"
+              }
+            ]
+          ]
+        }
+      },
+      "expected": {
+        "meta": {
+          "items": [
+            {
+              "token": "***",
+              "id": 1
+            },
+            {
+              "id": 2
+            },
+            "plain",
+            [
+              {
+                "password": "***"
+              }
+            ]
+          ]
+        }
+      },
+      "differs": {
+        "python": {
+          "meta": {
+            "items": [
+              {
+                "token": "t",
+                "id": 1
+              },
+              {
+                "id": 2
+              },
+              "plain",
+              [
+                {
+                  "password": "p"
+                }
+              ]
+            ]
+          }
+        },
+        "js": {
+          "meta": {
+            "items": [
+              {
+                "token": "t",
+                "id": 1
+              },
+              {
+                "id": 2
+              },
+              "plain",
+              [
+                {
+                  "password": "p"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "keys: a nested key under a secret key is replaced as a whole",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "password": {
+            "password": "p"
+          }
+        }
+      },
+      "expected": {
+        "meta": {
+          "password": "***"
+        }
+      }
+    },
+    {
+      "name": "keys: a secret deep in the tree",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "a": {
+            "b": {
+              "c": {
+                "d": {
+                  "secret": "s",
+                  "ok": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "meta": {
+          "a": {
+            "b": {
+              "c": {
+                "d": {
+                  "secret": "***",
+                  "ok": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "differs": {
+        "python": {
+          "meta": {
+            "a": {
+              "b": {
+                "c": {
+                  "d": {
+                    "secret": "s",
+                    "ok": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "js": {
+          "meta": {
+            "a": {
+              "b": {
+                "c": {
+                  "d": {
+                    "secret": "s",
+                    "ok": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "keys: fifty levels deep is still checked",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "outer": {
+            "n": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "password": "deep"
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "meta": {
+          "outer": {
+            "n": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "password": "***"
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "differs": {
+        "python": {
+          "meta": {
+            "outer": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "password": "deep"
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "js": {
+          "meta": {
+            "outer": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "password": "deep"
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "keys: beyond fifty levels the subtree is replaced",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "outer": {
+            "n": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": {
+                                                                                                                "n": {
+                                                                                                                  "n": {
+                                                                                                                    "n": {
+                                                                                                                      "n": {
+                                                                                                                        "n": {
+                                                                                                                          "n": {
+                                                                                                                            "n": {
+                                                                                                                              "n": {
+                                                                                                                                "n": {
+                                                                                                                                  "n": {
+                                                                                                                                    "password": "deep",
+                                                                                                                                    "note": "n"
+                                                                                                                                  }
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "meta": {
+          "outer": {
+            "n": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": "***"
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "differs": {
+        "python": {
+          "meta": {
+            "outer": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": {
+                                                                                                                "n": {
+                                                                                                                  "n": {
+                                                                                                                    "n": {
+                                                                                                                      "n": {
+                                                                                                                        "n": {
+                                                                                                                          "n": {
+                                                                                                                            "n": {
+                                                                                                                              "n": {
+                                                                                                                                "n": {
+                                                                                                                                  "n": {
+                                                                                                                                    "n": {
+                                                                                                                                      "password": "deep",
+                                                                                                                                      "note": "n"
+                                                                                                                                    }
+                                                                                                                                  }
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "js": {
+          "meta": {
+            "outer": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": {
+                                                                                                                "n": {
+                                                                                                                  "n": {
+                                                                                                                    "n": {
+                                                                                                                      "n": {
+                                                                                                                        "n": {
+                                                                                                                          "n": {
+                                                                                                                            "n": {
+                                                                                                                              "n": {
+                                                                                                                                "n": {
+                                                                                                                                  "n": {
+                                                                                                                                    "n": {
+                                                                                                                                      "password": "deep",
+                                                                                                                                      "note": "n"
+                                                                                                                                    }
+                                                                                                                                  }
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "keys: a long list of objects",
+      "input": {
+        "op": "redact",
+        "meta": {
+          "rows": [
+            {
+              "token": "0",
+              "i": 0
+            },
+            {
+              "token": "1",
+              "i": 1
+            },
+            {
+              "token": "2",
+              "i": 2
+            },
+            {
+              "token": "3",
+              "i": 3
+            },
+            {
+              "token": "4",
+              "i": 4
+            }
+          ]
+        }
+      },
+      "expected": {
+        "meta": {
+          "rows": [
+            {
+              "token": "***",
+              "i": 0
+            },
+            {
+              "token": "***",
+              "i": 1
+            },
+            {
+              "token": "***",
+              "i": 2
+            },
+            {
+              "token": "***",
+              "i": 3
+            },
+            {
+              "token": "***",
+              "i": 4
+            }
+          ]
+        }
+      },
+      "differs": {
+        "python": {
+          "meta": {
+            "rows": [
+              {
+                "token": "0",
+                "i": 0
+              },
+              {
+                "token": "1",
+                "i": 1
+              },
+              {
+                "token": "2",
+                "i": 2
+              },
+              {
+                "token": "3",
+                "i": 3
+              },
+              {
+                "token": "4",
+                "i": 4
+              }
+            ]
+          }
+        },
+        "js": {
+          "meta": {
+            "rows": [
+              {
+                "token": "0",
+                "i": 0
+              },
+              {
+                "token": "1",
+                "i": 1
+              },
+              {
+                "token": "2",
+                "i": 2
+              },
+              {
+                "token": "3",
+                "i": 3
+              },
+              {
+                "token": "4",
+                "i": 4
+              }
+            ]
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "local variable: a secret name",
+      "input": {
+        "op": "redact_local",
+        "name": "Password",
+        "text": "'hunter2'"
+      },
+      "expected": {
+        "text": "***"
+      }
+    },
+    {
+      "name": "local variable: an ordinary name",
+      "input": {
+        "op": "redact_local",
+        "name": "count",
+        "text": "42"
+      },
+      "expected": {
+        "text": "42"
+      }
+    },
+    {
+      "name": "local variable: a class-selected name",
+      "input": {
+        "op": "redact_local",
+        "keys": [],
+        "classes": [
+          "pii"
+        ],
+        "name": "EMAIL",
+        "text": "'a@b.co'"
+      },
+      "expected": {
+        "text": "***"
+      }
+    },
+    {
+      "name": "pii: an email",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "contact jane.doe+tag@example.co.uk now"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "contact *** now"
+        }
+      }
+    },
+    {
+      "name": "pii: an email in upper case",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "JANE@EXAMPLE.COM"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      }
+    },
+    {
+      "name": "pii: two emails",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "a@b.io and c@d.org"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "*** and ***"
+        }
+      }
+    },
+    {
+      "name": "pii: an email next to a Latin-1 letter",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "\u00e9user@example.com"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "\u00e9***"
+        }
+      },
+      "differs": {
+        "python": {
+          "meta": {
+            "note": "\u00e9user@example.com"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: an email followed by a Latin-1 letter",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "user@example.com\u00e9"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***\u00e9"
+        }
+      },
+      "differs": {
+        "python": {
+          "meta": {
+            "note": "user@example.com\u00e9"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: an email with a one-letter top-level domain",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "user@example.c"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "user@example.c"
+        }
+      }
+    },
+    {
+      "name": "pii: an email with an underscore host",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "user@ex_ample.com"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "user@ex_ample.com"
+        }
+      }
+    },
+    {
+      "name": "pii: a bare at sign",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "meet @ noon"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "meet @ noon"
+        }
+      }
+    },
+    {
+      "name": "pii: an SSN",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "ssn 123-45-6789 ok"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "ssn *** ok"
+        }
+      }
+    },
+    {
+      "name": "pii: an SSN without dashes",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "123456789"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "123456789"
+        }
+      }
+    },
+    {
+      "name": "pii: an SSN in Arabic-Indic digits",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "\u0661\u0662\u0663-\u0664\u0665-\u0666\u0667\u0668\u0669"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "\u0661\u0662\u0663-\u0664\u0665-\u0666\u0667\u0668\u0669"
+        }
+      },
+      "differs": {
+        "python": {
+          "meta": {
+            "note": "***"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: a card number with spaces",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "card 4111 1111 1111 1111 end"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "card ***end"
+        }
+      }
+    },
+    {
+      "name": "pii: a card number with dashes",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "4111-1111-1111-1111"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      }
+    },
+    {
+      "name": "pii: a card number without separators",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "4111111111111111"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      }
+    },
+    {
+      "name": "pii: a thirteen-digit number",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "1234567890123"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      }
+    },
+    {
+      "name": "pii: a twelve-digit number",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "123456789012"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "123456789012"
+        }
+      }
+    },
+    {
+      "name": "pii: a seventeen-digit number",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "12345678901234567"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "12345678901234567"
+        }
+      }
+    },
+    {
+      "name": "pii: a US phone number",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "call (555) 123-4567 today"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "call (*** today"
+        }
+      }
+    },
+    {
+      "name": "pii: a phone number with a country code",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "+1 555.123.4567"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "+***"
+        }
+      }
+    },
+    {
+      "name": "pii: a phone number with dashes",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "555-123-4567"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      }
+    },
+    {
+      "name": "pii: a ten-digit run",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "5551234567"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      }
+    },
+    {
+      "name": "pii: an OpenAI key",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "key sk-abcdefghijklmnopqrstuvwxyz0123 done"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "key *** done"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "key sk-abcdefghijklmnopqrstuvwxyz0123 done"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: an OpenAI project key",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "sk-proj-abcdefghijklmnopqrstuv_wx-yz"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "sk-proj-abcdefghijklmnopqrstuv_wx-yz"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: a short sk- key",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "sk-short"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "sk-short"
+        }
+      }
+    },
+    {
+      "name": "pii: an Anthropic key",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "sk-ant-api03-abcdefghijklmnopqrstuvwxyz"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "sk-ant-api03-abcdefghijklmnopqrstuvwxyz"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: an AWS access key id",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "AKIAIOSFODNN7EXAMPLE and ASIAIOSFODNN7EXAMPLE"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "*** and ***"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "AKIAIOSFODNN7EXAMPLE and ASIAIOSFODNN7EXAMPLE"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: a lower-case AWS-like id",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "akiaiosfodnn7example"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "akiaiosfodnn7example"
+        }
+      }
+    },
+    {
+      "name": "pii: a GitHub token",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: a short GitHub token",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      }
+    },
+    {
+      "name": "pii: a Slack token",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "xoxb-1234567890-abcdefghij"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "xoxb-***-abcdefghij"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: a JWT",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVPmB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVPmB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: a private key block",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA\nabc\n-----END RSA PRIVATE KEY-----"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA\nabc\n-----END RSA PRIVATE KEY-----"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: a private key block without a kind",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "x -----BEGIN PRIVATE KEY-----abc-----END PRIVATE KEY----- y"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "x *** y"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "x -----BEGIN PRIVATE KEY-----abc-----END PRIVATE KEY----- y"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: an unterminated private key block",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "-----BEGIN PRIVATE KEY-----\nabc"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "-----BEGIN PRIVATE KEY-----\nabc"
+        }
+      }
+    },
+    {
+      "name": "pii: two private key blocks",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "-----BEGIN EC PRIVATE KEY-----a-----END EC PRIVATE KEY----- mid -----BEGIN DSA PRIVATE KEY-----b-----END DSA PRIVATE KEY-----"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "*** mid ***"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "-----BEGIN EC PRIVATE KEY-----a-----END EC PRIVATE KEY----- mid -----BEGIN DSA PRIVATE KEY-----b-----END DSA PRIVATE KEY-----"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: a bearer token",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "Authorization: Bearer abcdefghijklmnopqrstuvwxyz123456"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "Authorization: ***"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "Authorization: Bearer abcdefghijklmnopqrstuvwxyz123456"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: a short bearer token",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "Bearer short"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "Bearer short"
+        }
+      }
+    },
+    {
+      "name": "pii: a bearer token across whitespace",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "Bearer\t\tabcdefghijklmnopqrstuv"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      },
+      "differs": {
+        "js": {
+          "meta": {
+            "note": "Bearer\t\tabcdefghijklmnopqrstuv"
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: an SSN inside a longer number",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "a1123-45-6789b"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "a1123-45-6789b"
+        }
+      }
+    },
+    {
+      "name": "pii: adjacent matches",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "a@b.co,c@d.co"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***,***"
+        }
+      }
+    },
+    {
+      "name": "pii: an email that overlaps a key-like token",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "sk-abcdefghijklmnopqrstu@example.com"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "***"
+        }
+      }
+    },
+    {
+      "name": "pii: a phone number inside a card number",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "4111 1111 1111 1111 555-123-4567"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "******"
+        }
+      }
+    },
+    {
+      "name": "pii: plain text",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "nothing to see here"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "nothing to see here"
+        }
+      }
+    },
+    {
+      "name": "pii: an empty string",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": ""
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": ""
+        }
+      }
+    },
+    {
+      "name": "pii: text with non-ASCII around a match",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "caf\u00e9 a@b.co \u65e5\u672c"
+        }
+      },
+      "expected": {
+        "meta": {
+          "note": "caf\u00e9 *** \u65e5\u672c"
+        }
+      }
+    },
+    {
+      "name": "pii: numbers, booleans and null are untouched",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "a": 123456789,
+          "b": true,
+          "c": null,
+          "d": 4111111111111111
+        }
+      },
+      "expected": {
+        "meta": {
+          "a": 123456789,
+          "b": true,
+          "c": null,
+          "d": 4111111111111111
+        }
+      }
+    },
+    {
+      "name": "pii: a key that looks like an email is not scanned",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "a@b.co": "value"
+        }
+      },
+      "expected": {
+        "meta": {
+          "a@b.co": "value"
+        }
+      }
+    },
+    {
+      "name": "pii: nested objects and lists",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "a": {
+            "b": [
+              "x@y.co",
+              {
+                "c": "123-45-6789"
+              },
+              5
+            ]
+          },
+          "d": [
+            "ok",
+            [
+              "deep a@b.co"
+            ]
+          ]
+        }
+      },
+      "expected": {
+        "meta": {
+          "a": {
+            "b": [
+              "***",
+              {
+                "c": "***"
+              },
+              5
+            ]
+          },
+          "d": [
+            "ok",
+            [
+              "deep ***"
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "name": "pii: a custom replacement",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "a@b.co"
+        },
+        "replacement": "[pii]"
+      },
+      "expected": {
+        "meta": {
+          "note": "[pii]"
+        }
+      }
+    },
+    {
+      "name": "pii: an empty replacement",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "note": "a@b.co"
+        },
+        "replacement": ""
+      },
+      "expected": {
+        "meta": {
+          "note": ""
+        }
+      }
+    },
+    {
+      "name": "pii: fifty levels deep is still scanned",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "o": {
+            "n": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": "a@b.co"
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "meta": {
+          "o": {
+            "n": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": "***"
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "pii: beyond fifty levels the subtree is replaced",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "o": {
+            "n": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": {
+                                                                                                                "n": {
+                                                                                                                  "n": {
+                                                                                                                    "n": {
+                                                                                                                      "n": {
+                                                                                                                        "n": {
+                                                                                                                          "n": {
+                                                                                                                            "n": {
+                                                                                                                              "n": {
+                                                                                                                                "n": {
+                                                                                                                                  "n": "a@b.co"
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "meta": {
+          "o": {
+            "n": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": "***"
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "differs": {
+        "python": {
+          "meta": {
+            "o": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": {
+                                                                                                                "n": {
+                                                                                                                  "n": {
+                                                                                                                    "n": {
+                                                                                                                      "n": {
+                                                                                                                        "n": {
+                                                                                                                          "n": {
+                                                                                                                            "n": {
+                                                                                                                              "n": {
+                                                                                                                                "n": {
+                                                                                                                                  "n": {
+                                                                                                                                    "n": "a@b.co"
+                                                                                                                                  }
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "js": {
+          "meta": {
+            "o": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": {
+                                                                                                                "n": {
+                                                                                                                  "n": {
+                                                                                                                    "n": {
+                                                                                                                      "n": {
+                                                                                                                        "n": {
+                                                                                                                          "n": {
+                                                                                                                            "n": {
+                                                                                                                              "n": {
+                                                                                                                                "n": {
+                                                                                                                                  "n": {
+                                                                                                                                    "n": "a@b.co"
+                                                                                                                                  }
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii: beyond fifty levels even a container holding a number is replaced",
+      "input": {
+        "op": "pii",
+        "meta": {
+          "o": {
+            "n": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": {
+                                                                                                                "n": {
+                                                                                                                  "n": {
+                                                                                                                    "n": {
+                                                                                                                      "n": {
+                                                                                                                        "n": {
+                                                                                                                          "n": {
+                                                                                                                            "n": {
+                                                                                                                              "n": {
+                                                                                                                                "n": {
+                                                                                                                                  "n": 7
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "expected": {
+        "meta": {
+          "o": {
+            "n": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": "***"
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "differs": {
+        "python": {
+          "meta": {
+            "o": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": {
+                                                                                                                "n": {
+                                                                                                                  "n": {
+                                                                                                                    "n": {
+                                                                                                                      "n": {
+                                                                                                                        "n": {
+                                                                                                                          "n": {
+                                                                                                                            "n": {
+                                                                                                                              "n": {
+                                                                                                                                "n": {
+                                                                                                                                  "n": {
+                                                                                                                                    "n": 7
+                                                                                                                                  }
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "js": {
+          "meta": {
+            "o": {
+              "n": {
+                "n": {
+                  "n": {
+                    "n": {
+                      "n": {
+                        "n": {
+                          "n": {
+                            "n": {
+                              "n": {
+                                "n": {
+                                  "n": {
+                                    "n": {
+                                      "n": {
+                                        "n": {
+                                          "n": {
+                                            "n": {
+                                              "n": {
+                                                "n": {
+                                                  "n": {
+                                                    "n": {
+                                                      "n": {
+                                                        "n": {
+                                                          "n": {
+                                                            "n": {
+                                                              "n": {
+                                                                "n": {
+                                                                  "n": {
+                                                                    "n": {
+                                                                      "n": {
+                                                                        "n": {
+                                                                          "n": {
+                                                                            "n": {
+                                                                              "n": {
+                                                                                "n": {
+                                                                                  "n": {
+                                                                                    "n": {
+                                                                                      "n": {
+                                                                                        "n": {
+                                                                                          "n": {
+                                                                                            "n": {
+                                                                                              "n": {
+                                                                                                "n": {
+                                                                                                  "n": {
+                                                                                                    "n": {
+                                                                                                      "n": {
+                                                                                                        "n": {
+                                                                                                          "n": {
+                                                                                                            "n": {
+                                                                                                              "n": {
+                                                                                                                "n": {
+                                                                                                                  "n": {
+                                                                                                                    "n": {
+                                                                                                                      "n": {
+                                                                                                                        "n": {
+                                                                                                                          "n": {
+                                                                                                                            "n": {
+                                                                                                                              "n": {
+                                                                                                                                "n": {
+                                                                                                                                  "n": {
+                                                                                                                                    "n": 7
+                                                                                                                                  }
+                                                                                                                                }
+                                                                                                                              }
+                                                                                                                            }
+                                                                                                                          }
+                                                                                                                        }
+                                                                                                                      }
+                                                                                                                    }
+                                                                                                                  }
+                                                                                                                }
+                                                                                                              }
+                                                                                                            }
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "rule": "D6 \u2014 all 12 patterns; D27 \u2014 keys are checked at every depth; D41 \u2014 ASCII \\b \\d \\s, and a value deeper than 50 levels is replaced, not left alone"
+    },
+    {
+      "name": "pii local variable: a repr with an email",
+      "input": {
+        "op": "pii_local",
+        "name": "user",
+        "text": "'a@b.co'"
+      },
+      "expected": {
+        "text": "'***'"
+      }
+    },
+    {
+      "name": "pii local variable: no match",
+      "input": {
+        "op": "pii_local",
+        "name": "n",
+        "text": "42"
+      },
+      "expected": {
+        "text": "42"
+      }
+    }
+  ]
+}

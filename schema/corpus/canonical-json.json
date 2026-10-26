@@ -1,0 +1,622 @@
+{
+  "group": "canonical-json",
+  "description": "Canonical JSON text (Python json.dumps with sorted keys and ASCII escapes) and its SHA-256, for hostile values.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "empty object",
+      "input": {
+        "json": "{}"
+      },
+      "expected": {
+        "text": "{}",
+        "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+      }
+    },
+    {
+      "name": "empty array",
+      "input": {
+        "json": "[]"
+      },
+      "expected": {
+        "text": "[]",
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    {
+      "name": "empty string",
+      "input": {
+        "json": "\"\""
+      },
+      "expected": {
+        "text": "\"\"",
+        "sha256": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+      }
+    },
+    {
+      "name": "keys sort by code point",
+      "input": {
+        "json": "{\"b\":1,\"a\":2,\"B\":3,\"_\":4,\"\u00e9\":5,\"Z\":6}"
+      },
+      "expected": {
+        "text": "{\"B\": 3, \"Z\": 6, \"_\": 4, \"a\": 2, \"b\": 1, \"\\u00e9\": 5}",
+        "sha256": "79affd24324d44315ceacbda0213a4b14ef2c9342acd9f58fe116da262177f5b"
+      }
+    },
+    {
+      "name": "nested keys sort at every depth",
+      "input": {
+        "json": "{\"z\":{\"y\":1,\"x\":[{\"d\":1,\"c\":2}]},\"a\":{}}"
+      },
+      "expected": {
+        "text": "{\"a\": {}, \"z\": {\"x\": [{\"c\": 2, \"d\": 1}], \"y\": 1}}",
+        "sha256": "b9b7f1ced71cca8e514486b13ee71e6dbf00346f139801aadcc02bf29d527bd2"
+      }
+    },
+    {
+      "name": "astral key sorts after a high BMP key",
+      "input": {
+        "json": "{\"\\ud834\\udd1e\":1,\"\\uffff\":2,\"a\":3}"
+      },
+      "expected": {
+        "text": "{\"a\": 3, \"\\uffff\": 2, \"\\ud834\\udd1e\": 1}",
+        "sha256": "244d2b0b97fa0378132965789c7528a123cf3cc74bfd0b7efc513b9595719abf"
+      },
+      "differs": {
+        "js": {
+          "text": "{\"a\": 3, \"\\ud834\\udd1e\": 1, \"\\uffff\": 2}",
+          "sha256": "83637ae9a9309bf6bdbe719805def3546f49fbcb2861da700a0b6418e9fb5803"
+        }
+      },
+      "rule": "03 \u2014 keys sort by Unicode code point (JS sorts by UTF-16 unit)"
+    },
+    {
+      "name": "duplicate keys keep the last value",
+      "input": {
+        "json": "{\"a\":1,\"b\":2,\"a\":3}"
+      },
+      "expected": {
+        "text": "{\"a\": 3, \"b\": 2}",
+        "sha256": "34600dd287a7fe5153d2ee3752ccdc970a90166cb940849bc3bfa7c1733d07a6"
+      }
+    },
+    {
+      "name": "ascii passes through",
+      "input": {
+        "json": "\"plain text 123\""
+      },
+      "expected": {
+        "text": "\"plain text 123\"",
+        "sha256": "b5bda98c05e2bd144ae16dadae31d94198269775bceda6b1974b2ce23593d801"
+      }
+    },
+    {
+      "name": "quote and backslash",
+      "input": {
+        "json": "\"say \\\"hi\\\" \\\\ done\""
+      },
+      "expected": {
+        "text": "\"say \\\"hi\\\" \\\\ done\"",
+        "sha256": "7e2a1e0c60a7bb87f6f2d08bf37c9a364fdf1dc6cc659ddaff5b7ffac0b91810"
+      }
+    },
+    {
+      "name": "forward slash is not escaped",
+      "input": {
+        "json": "\"a/b\""
+      },
+      "expected": {
+        "text": "\"a/b\"",
+        "sha256": "f5effa31772a3689cb116700c569f4b72d765290968f099016a899ab6c1e4ee3"
+      }
+    },
+    {
+      "name": "named control escapes",
+      "input": {
+        "json": "\"\\n\\r\\t\\b\\f\""
+      },
+      "expected": {
+        "text": "\"\\n\\r\\t\\b\\f\"",
+        "sha256": "9238ce80d35d301c4411072a8f184960a77840aee9f8c6bbc89116dd5471bf24"
+      }
+    },
+    {
+      "name": "other control characters use \\u00xx",
+      "input": {
+        "json": "\"\\u0000\\u0001\\u001f\""
+      },
+      "expected": {
+        "text": "\"\\u0000\\u0001\\u001f\"",
+        "sha256": "842096a6d3fcd0968fe35809ea5810d33f7072b93743fc0f7b4ff484ae727d20"
+      }
+    },
+    {
+      "name": "U+007F is escaped",
+      "input": {
+        "json": "\"\\u007f\""
+      },
+      "expected": {
+        "text": "\"\\u007f\"",
+        "sha256": "226453a6508483054f1ddc449c26b45077f5a45d993034f0f5f04f3f9801c32c"
+      }
+    },
+    {
+      "name": "latin-1 is escaped lower-case",
+      "input": {
+        "json": "\"\u00e9 \u00ff\""
+      },
+      "expected": {
+        "text": "\"\\u00e9 \\u00ff\"",
+        "sha256": "a65a9c4290a860ce4d5742699be364276d0dab75e0c3ea635b8aba6b64b0358a"
+      }
+    },
+    {
+      "name": "BMP character",
+      "input": {
+        "json": "\"\u65e5\u672c\u8a9e\""
+      },
+      "expected": {
+        "text": "\"\\u65e5\\u672c\\u8a9e\"",
+        "sha256": "074aeb45b116186c75c381f35ffecf3ac8b5a1d182682d12f756954a5c4d7a6a"
+      }
+    },
+    {
+      "name": "U+2028 and U+2029",
+      "input": {
+        "json": "\"\\u2028\\u2029\""
+      },
+      "expected": {
+        "text": "\"\\u2028\\u2029\"",
+        "sha256": "b36c0076c7e28a52a8a9cb89306b164f887df89d715680d7b1ca8a858a8f3d33"
+      }
+    },
+    {
+      "name": "astral character becomes a surrogate pair",
+      "input": {
+        "json": "\"\ud834\udd1e \ud83d\ude00\""
+      },
+      "expected": {
+        "text": "\"\\ud834\\udd1e \\ud83d\\ude00\"",
+        "sha256": "e91b62b7fc492ba8d080df3b8d3339d2dff5c3a860ab6531ad408afa1b5da3b3"
+      }
+    },
+    {
+      "name": "U+FFFF",
+      "input": {
+        "json": "\"\\uffff\""
+      },
+      "expected": {
+        "text": "\"\\uffff\"",
+        "sha256": "1ef1b6da15ca38e4564f03db3fa65252bcdd156176731c3b671fb2a6734fd8f2"
+      }
+    },
+    {
+      "name": "integer",
+      "input": {
+        "json": "12"
+      },
+      "expected": {
+        "text": "12",
+        "sha256": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918"
+      }
+    },
+    {
+      "name": "negative integer",
+      "input": {
+        "json": "-7"
+      },
+      "expected": {
+        "text": "-7",
+        "sha256": "a770d3270c9dcdedf12ed9fd70444f7c8a95c26cae3cae9bd867499090a2f14b"
+      }
+    },
+    {
+      "name": "zero",
+      "input": {
+        "json": "0"
+      },
+      "expected": {
+        "text": "0",
+        "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      }
+    },
+    {
+      "name": "float keeps its .0",
+      "input": {
+        "json": "12.0"
+      },
+      "expected": {
+        "text": "12.0",
+        "sha256": "77c52f3feed5acdd119b1f8449d5ccc2d39be94bd0314d5b7302f36e20b6cea9"
+      },
+      "differs": {
+        "js": {
+          "text": "12",
+          "sha256": "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 and follows Python's repr; JS cannot tell 12.0 from 12"
+    },
+    {
+      "name": "negative zero float",
+      "input": {
+        "json": "-0.0"
+      },
+      "expected": {
+        "text": "-0.0",
+        "sha256": "c26617c7ccbcaa6631b45d851b8cf56e21d2ca624bdb1193afdbd4b560702cec"
+      },
+      "differs": {
+        "js": {
+          "text": "0",
+          "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 and follows Python's repr; JS cannot tell 12.0 from 12"
+    },
+    {
+      "name": "zero float",
+      "input": {
+        "json": "0.0"
+      },
+      "expected": {
+        "text": "0.0",
+        "sha256": "8aed642bf5118b9d3c859bd4be35ecac75b6e873cce34e7b6f554b06f75550d7"
+      },
+      "differs": {
+        "js": {
+          "text": "0",
+          "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 and follows Python's repr; JS cannot tell 12.0 from 12"
+    },
+    {
+      "name": "integer above 2^53",
+      "input": {
+        "json": "9007199254740993"
+      },
+      "expected": {
+        "text": "9007199254740993",
+        "sha256": "a1c367c29158357e62a3ff5d3e800fb7698a22396439dbc0a9d4929322afd35d"
+      },
+      "differs": {
+        "js": {
+          "text": "9007199254740992",
+          "sha256": "c681da39d7273a6a24c15c9cac3a75526ff2ecf8ba4ee60346a0c70c8163bdb2"
+        }
+      },
+      "rule": "D4 \u2014 integers keep every digit (JS numbers lose precision above 2^53)"
+    },
+    {
+      "name": "integer above u64",
+      "input": {
+        "json": "18446744073709551617"
+      },
+      "expected": {
+        "text": "18446744073709551617",
+        "sha256": "a8482330e723ad4642b78444cbdb507ff747c51bbc0fa57e4546641336393be7"
+      },
+      "differs": {
+        "js": {
+          "text": "18446744073709552000",
+          "sha256": "edacbbb2252b28815fa8983aad4682ab7718badd58a7e92c6b65b4292f308225"
+        }
+      },
+      "rule": "D4 \u2014 integers keep every digit (JS numbers lose precision above 2^53)"
+    },
+    {
+      "name": "integer far above u64",
+      "input": {
+        "json": "-12345678901234567890123456789"
+      },
+      "expected": {
+        "text": "-12345678901234567890123456789",
+        "sha256": "e13249437d3c31bdc824a5cd6d4ceaf9b380bb28c9f41dd492ef9c01f64a2243"
+      },
+      "differs": {
+        "js": {
+          "text": "-1.2345678901234568e+28",
+          "sha256": "e7d5b0a0359bf0740aaab785e70e3ebae705df5f435f5ccaae6cf75d27a6d55b"
+        }
+      },
+      "rule": "D4 \u2014 integers keep every digit (JS numbers lose precision above 2^53)"
+    },
+    {
+      "name": "float below 1e-4 uses an exponent",
+      "input": {
+        "json": "0.00001"
+      },
+      "expected": {
+        "text": "1e-05",
+        "sha256": "5a9530d3c6d5faad6ba8afe16fb8e438df23865128370b2ec14ef622bb5f2ec9"
+      }
+    },
+    {
+      "name": "float at 1e-4 does not",
+      "input": {
+        "json": "0.0001"
+      },
+      "expected": {
+        "text": "0.0001",
+        "sha256": "e539aebac7fd2ed8aba8854fedeaa65436962f8ee1c82341b394698f085b6496"
+      }
+    },
+    {
+      "name": "float 1e-5 spelled with an exponent",
+      "input": {
+        "json": "1e-5"
+      },
+      "expected": {
+        "text": "1e-05",
+        "sha256": "5a9530d3c6d5faad6ba8afe16fb8e438df23865128370b2ec14ef622bb5f2ec9"
+      }
+    },
+    {
+      "name": "float at 1e15 prints in full",
+      "input": {
+        "json": "1e15"
+      },
+      "expected": {
+        "text": "1000000000000000.0",
+        "sha256": "c02731631f61648f06ba5501a9c68e2b0a9186a934ff45f40ab28eb6f3673021"
+      },
+      "differs": {
+        "js": {
+          "text": "1000000000000000",
+          "sha256": "6a4ef24cb01aa0e97da4186c067128b828532db703db8872fa736a0cc0b363b1"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 and follows Python's repr; JS cannot tell 12.0 from 12"
+    },
+    {
+      "name": "float at 1e16 uses an exponent",
+      "input": {
+        "json": "1e16"
+      },
+      "expected": {
+        "text": "1e+16",
+        "sha256": "a144838520595009e7daf5aff8472573f9ce6a4bcd8c30673675618883464ab0"
+      },
+      "differs": {
+        "js": {
+          "text": "10000000000000000",
+          "sha256": "139eb393675707818651f879828a526159209ca3ad3b2f94f9f8ec8c4fb5e610"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 and follows Python's repr; JS cannot tell 12.0 from 12"
+    },
+    {
+      "name": "float 1e22",
+      "input": {
+        "json": "1e22"
+      },
+      "expected": {
+        "text": "1e+22",
+        "sha256": "814a97daeb45416e24befc0ae9a6414ac2f41f269a9f2f019fc65a0d03725f34"
+      }
+    },
+    {
+      "name": "float 1.5e300",
+      "input": {
+        "json": "1.5e300"
+      },
+      "expected": {
+        "text": "1.5e+300",
+        "sha256": "ba5b9d007ed3bac3aed4e53fff4395ec6e034ab008e90969287e3b8860c31b12"
+      }
+    },
+    {
+      "name": "smallest subnormal",
+      "input": {
+        "json": "5e-324"
+      },
+      "expected": {
+        "text": "5e-324",
+        "sha256": "c46e7ca1be4c8734f373a56530787288fa2058d73d07855e9247e949f811a42a"
+      }
+    },
+    {
+      "name": "largest double",
+      "input": {
+        "json": "1.7976931348623157e308"
+      },
+      "expected": {
+        "text": "1.7976931348623157e+308",
+        "sha256": "c2784e1abd6317452708f3fbf9641c16b959561bc621a1d408c23a20aa2cb585"
+      }
+    },
+    {
+      "name": "shortest round trip",
+      "input": {
+        "json": "0.1"
+      },
+      "expected": {
+        "text": "0.1",
+        "sha256": "14be4b45f18e0d8c67b4f719b5144eee88497e413709d11d85b096d8e2346310"
+      }
+    },
+    {
+      "name": "repeating fraction",
+      "input": {
+        "json": "0.30000000000000004"
+      },
+      "expected": {
+        "text": "0.30000000000000004",
+        "sha256": "06bad31060c1212ae832de4c031f7b31e3b48aed57858294478cb19450cf34ca"
+      }
+    },
+    {
+      "name": "exponent notation on a whole number is a float",
+      "input": {
+        "json": "1E+2"
+      },
+      "expected": {
+        "text": "100.0",
+        "sha256": "43b87f618caab482ebe4976c92bcd6ad308b48055f1c27b4c574f3e31d7683e0"
+      },
+      "differs": {
+        "js": {
+          "text": "100",
+          "sha256": "ad57366865126e55649ecb23ae1d48887544976efea46a48eb5d85a6eeb4d306"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 and follows Python's repr; JS cannot tell 12.0 from 12"
+    },
+    {
+      "name": "integer-valued exponent above 2^63",
+      "input": {
+        "json": "1e19"
+      },
+      "expected": {
+        "text": "1e+19",
+        "sha256": "00c8cb649be1d9f0fc0307335475f7654ee8018c2ada4a26fc8515df9576fb7b"
+      },
+      "differs": {
+        "js": {
+          "text": "10000000000000000000",
+          "sha256": "54a3c87634d6676581f460f0b80f424441bbb4d844369560a7b1ed2c7bc2b857"
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0 and follows Python's repr; JS cannot tell 12.0 from 12"
+    },
+    {
+      "name": "NaN",
+      "input": {
+        "json": "NaN"
+      },
+      "expected": {
+        "text": "NaN",
+        "sha256": "d5b592c05dc25b5032553f1b27f4139be95e881f73db33b02b05ab20c3f9981e"
+      },
+      "differs": {
+        "js": {
+          "text": "null",
+          "sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+        }
+      },
+      "rule": "D19 \u2014 NaN and Infinity print as those words in the canonical text (JS prints null)"
+    },
+    {
+      "name": "Infinity",
+      "input": {
+        "json": "Infinity"
+      },
+      "expected": {
+        "text": "Infinity",
+        "sha256": "d0067cad9a63e0813759a2bb841051ca73570c0da2e08e840a8eb45db6a7a010"
+      },
+      "differs": {
+        "js": {
+          "text": "null",
+          "sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+        }
+      },
+      "rule": "D19 \u2014 NaN and Infinity print as those words in the canonical text (JS prints null)"
+    },
+    {
+      "name": "negative Infinity",
+      "input": {
+        "json": "-Infinity"
+      },
+      "expected": {
+        "text": "-Infinity",
+        "sha256": "c64ddf11bcd45660f0cf66dd0c22d2b4570ef3d3fc6527a9a6f6c722aefa3c39"
+      },
+      "differs": {
+        "js": {
+          "text": "null",
+          "sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+        }
+      },
+      "rule": "D19 \u2014 NaN and Infinity print as those words in the canonical text (JS prints null)"
+    },
+    {
+      "name": "overflowing literal becomes Infinity",
+      "input": {
+        "json": "1e999"
+      },
+      "expected": {
+        "text": "Infinity",
+        "sha256": "d0067cad9a63e0813759a2bb841051ca73570c0da2e08e840a8eb45db6a7a010"
+      },
+      "differs": {
+        "js": {
+          "text": "null",
+          "sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+        }
+      },
+      "rule": "D19 \u2014 NaN and Infinity print as those words in the canonical text (JS prints null)"
+    },
+    {
+      "name": "NaN inside a structure",
+      "input": {
+        "json": "{\"a\":[NaN,Infinity,-Infinity,1.0]}"
+      },
+      "expected": {
+        "text": "{\"a\": [NaN, Infinity, -Infinity, 1.0]}",
+        "sha256": "4de520a720a64c9e8ad376d4149c6f17c45b0c0c57caf8b4ee5f43f4d3a2f0fd"
+      },
+      "differs": {
+        "js": {
+          "text": "{\"a\": [null, null, null, 1]}",
+          "sha256": "0f8e69bea130613d12abef7cf8a091ecafab812e07b17ca26e1ba833b5266ad9"
+        }
+      },
+      "rule": "D19 \u2014 NaN and Infinity print as those words in the canonical text (JS prints null)"
+    },
+    {
+      "name": "booleans and null",
+      "input": {
+        "json": "[true,false,null]"
+      },
+      "expected": {
+        "text": "[true, false, null]",
+        "sha256": "43e9c55b3333136492c7abad750c83206d8e0fce0b9c1461d35729d39def4cb4"
+      }
+    },
+    {
+      "name": "mixed nesting",
+      "input": {
+        "json": "{\"k\":[1,2.5,\"x\",{\"n\":null},[]],\"a\":true}"
+      },
+      "expected": {
+        "text": "{\"a\": true, \"k\": [1, 2.5, \"x\", {\"n\": null}, []]}",
+        "sha256": "802ccd7b4e9f22cb3a6f648e4b1143ae6b60de25e2f39e4552df77cf493a40be"
+      }
+    },
+    {
+      "name": "keys with escapes",
+      "input": {
+        "json": "{\"a\\\"b\":1,\"c\\nd\":2,\"\u00e9\":3}"
+      },
+      "expected": {
+        "text": "{\"a\\\"b\": 1, \"c\\nd\": 2, \"\\u00e9\": 3}",
+        "sha256": "da6917c237eb33b72234e3c8ad2b35e7348857d461b8d626e26000fa70603db4"
+      }
+    },
+    {
+      "name": "deep nesting",
+      "input": {
+        "json": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]"
+      },
+      "expected": {
+        "text": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+        "sha256": "27f58b7e6b2eff7e3ac87d333cf5a52f6e8a7a809cc1ec2fd39c48b34d3e6d15"
+      }
+    },
+    {
+      "name": "long string",
+      "input": {
+        "json": "\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\""
+      },
+      "expected": {
+        "text": "\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"",
+        "sha256": "fa0831df6ae1d266cfba38a70a6774843977f9f70bd53b12ac2d5d70eb1c5404"
+      }
+    }
+  ]
+}

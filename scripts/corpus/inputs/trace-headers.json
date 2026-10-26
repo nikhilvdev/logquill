@@ -1,0 +1,264 @@
+{
+  "group": "trace-headers",
+  "description": "Reading a trace id out of a W3C traceparent, an AWS X-Ray header or a GCP Cloud Trace header.",
+  "cases": [
+    {
+      "name": "a W3C traceparent",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+      }
+    },
+    {
+      "name": "a W3C traceparent, flags 00",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00"
+      }
+    },
+    {
+      "name": "a W3C traceparent with another version",
+      "input": {
+        "header": "01-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+      }
+    },
+    {
+      "name": "a W3C traceparent with surrounding spaces",
+      "input": {
+        "header": "  00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01  "
+      }
+    },
+    {
+      "name": "a W3C traceparent with a trailing newline",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\n"
+      }
+    },
+    {
+      "name": "a W3C traceparent with a tab and carriage return",
+      "input": {
+        "header": "\t00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\r"
+      }
+    },
+    {
+      "name": "a W3C traceparent in upper case",
+      "input": {
+        "header": "00-4BF92F3577B34DA6A3CE929D0E0E4736-00F067AA0BA902B7-01"
+      }
+    },
+    {
+      "name": "a W3C traceparent with a short trace id",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e47-00f067aa0ba902b7-01"
+      }
+    },
+    {
+      "name": "a W3C traceparent with a long trace id",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e473600-00f067aa0ba902b7-01"
+      }
+    },
+    {
+      "name": "a W3C traceparent with a short parent id",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902-01"
+      }
+    },
+    {
+      "name": "a W3C traceparent with a four-part tail",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01-extra"
+      }
+    },
+    {
+      "name": "a W3C traceparent with non-hex characters",
+      "input": {
+        "header": "00-gggggggggggggggggggggggggggggggg-00f067aa0ba902b7-01"
+      }
+    },
+    {
+      "name": "a W3C traceparent with an all-zero trace id",
+      "input": {
+        "header": "00-00000000000000000000000000000000-00f067aa0ba902b7-01"
+      }
+    },
+    {
+      "name": "a W3C traceparent with an all-zero parent id",
+      "input": {
+        "header": "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000000000-01"
+      }
+    },
+    {
+      "name": "a W3C traceparent with version ff",
+      "input": {
+        "header": "ff-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+      }
+    },
+    {
+      "name": "a W3C traceparent with a no-break space around it",
+      "input": {
+        "header": " 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01 "
+      }
+    },
+    {
+      "name": "a W3C traceparent with a next-line character around it",
+      "input": {
+        "header": " 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+      }
+    },
+    {
+      "name": "an X-Ray header",
+      "input": {
+        "header": "Root=1-5759e988-bd862e3fe1be46a994272793"
+      }
+    },
+    {
+      "name": "an X-Ray header with parent and sampled",
+      "input": {
+        "header": "Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1"
+      }
+    },
+    {
+      "name": "an X-Ray header with Self first",
+      "input": {
+        "header": "Self=1-67891233-abcdef012345678912345678;Root=1-5759e988-bd862e3fe1be46a994272793"
+      }
+    },
+    {
+      "name": "an X-Ray header with two roots",
+      "input": {
+        "header": "Root=1-5759e988-bd862e3fe1be46a994272793;Root=1-11111111-222222222222222222222222"
+      }
+    },
+    {
+      "name": "an X-Ray header with upper-case hex",
+      "input": {
+        "header": "Root=1-5759E988-BD862E3FE1BE46A994272793"
+      }
+    },
+    {
+      "name": "an X-Ray header with a short random part",
+      "input": {
+        "header": "Root=1-5759e988-bd862e3fe1be46a9942727"
+      }
+    },
+    {
+      "name": "an X-Ray header with a long random part",
+      "input": {
+        "header": "Root=1-5759e988-bd862e3fe1be46a994272793ab"
+      }
+    },
+    {
+      "name": "an X-Ray header with an all-zero id",
+      "input": {
+        "header": "Root=1-00000000-000000000000000000000000"
+      }
+    },
+    {
+      "name": "an X-Ray header with the wrong version",
+      "input": {
+        "header": "Root=2-5759e988-bd862e3fe1be46a994272793"
+      }
+    },
+    {
+      "name": "an X-Ray header embedded in other text",
+      "input": {
+        "header": "x Root=1-5759e988-bd862e3fe1be46a994272793 y"
+      }
+    },
+    {
+      "name": "a GCP header",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/1234567890"
+      }
+    },
+    {
+      "name": "a GCP header with the trace flag",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/1234567890;o=1"
+      }
+    },
+    {
+      "name": "a GCP header with o=0",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/1;o=0"
+      }
+    },
+    {
+      "name": "a GCP header with a two-digit option",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/1;o=10"
+      }
+    },
+    {
+      "name": "a GCP header without a span id",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/"
+      }
+    },
+    {
+      "name": "a GCP header without a slash",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736"
+      }
+    },
+    {
+      "name": "a GCP header with a non-numeric span id",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/abc"
+      }
+    },
+    {
+      "name": "a GCP header with an Arabic-Indic span id",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/١٢٣"
+      }
+    },
+    {
+      "name": "a GCP header with a trailing newline",
+      "input": {
+        "header": "4bf92f3577b34da6a3ce929d0e0e4736/1\n"
+      }
+    },
+    {
+      "name": "a GCP header with upper-case hex",
+      "input": {
+        "header": "4BF92F3577B34DA6A3CE929D0E0E4736/1"
+      }
+    },
+    {
+      "name": "a GCP header with an all-zero trace id",
+      "input": {
+        "header": "00000000000000000000000000000000/1"
+      }
+    },
+    {
+      "name": "an empty header",
+      "input": {
+        "header": ""
+      }
+    },
+    {
+      "name": "only whitespace",
+      "input": {
+        "header": "   \t "
+      }
+    },
+    {
+      "name": "a header of the wrong kind",
+      "input": {
+        "header": "Bearer abc.def.ghi"
+      }
+    },
+    {
+      "name": "a long header",
+      "input": {
+        "header": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    {
+      "name": "a header with non-ASCII text",
+      "input": {
+        "header": "00-é-é-01"
+      }
+    }
+  ]
+}

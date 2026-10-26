@@ -1,0 +1,8 @@
+{
+  "python": { "package": "logquill", "version": "2.0.0", "tag": "v2.0.0" },
+  "js": {
+    "repository": "nikhilvdev/logquill-js",
+    "commit": "4354829c8f5d849598b96748373a4da8ed0815ee",
+    "note": "the 2.0 contract is unreleased in JS; published 1.0.1 predates schema_version and the llm block"
+  }
+}

@@ -1,0 +1,1509 @@
+{
+  "group": "run-summary",
+  "description": "The summary record emitted when a run's root span closes.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "js_gaps": [
+    "no run summary in the JavaScript package"
+  ],
+  "cases": [
+    {
+      "name": "a root span closes the run with totals",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "call",
+              "meta": {
+                "run_id": "r1",
+                "kind": "action",
+                "tool": "search",
+                "span_id": "x1"
+              },
+              "llm": {
+                "tokens_in": 10,
+                "tokens_out": 5,
+                "cost_usd": 0.5
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "oops",
+              "meta": {
+                "run_id": "r1",
+                "retry_count": 2
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "call2",
+              "meta": {
+                "run_id": "r1"
+              },
+              "llm": {
+                "tokens_in": 1,
+                "tokens_out": 2,
+                "cost_usd": 0.25
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1",
+                "duration_ms": 1234.5
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 11,
+                  "tokens_out": 7,
+                  "cost_usd": 0.75,
+                  "tool_calls": 1,
+                  "retries": 2,
+                  "errors": 1,
+                  "record_count": 4,
+                  "duration_ms": 1234.5,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "a nested span is not a root",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "inner",
+              "meta": {
+                "kind": "span",
+                "span_id": "s1",
+                "parent_span_id": "s0",
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 2,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "nothing is emitted without a root span",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": []
+          }
+        ],
+        "state": {
+          "open_runs": [
+            "r1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "records without a run id are ignored",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": []
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "tool calls need an action with a string tool",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {
+                "run_id": "r1",
+                "kind": "action",
+                "tool": "t"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {
+                "run_id": "r1",
+                "kind": "action",
+                "tool": 5
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "c",
+              "meta": {
+                "run_id": "r1",
+                "kind": "thought",
+                "tool": "t"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 1,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 4,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "retries add up and ignore booleans and floats",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {
+                "run_id": "r1",
+                "retry_count": 2
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {
+                "run_id": "r1",
+                "retry_count": true
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "c",
+              "meta": {
+                "run_id": "r1",
+                "retry_count": 1.0
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "d",
+              "meta": {
+                "run_id": "r1",
+                "retry_count": 3
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 5,
+                  "errors": 0,
+                  "record_count": 5,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "errors count ERROR and FATAL",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "WARN",
+              "logger": "app",
+              "message": "w",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "e",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "FATAL",
+              "logger": "app",
+              "message": "f",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 2,
+                  "record_count": 4,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "tokens that are not integers are ignored",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {
+                "run_id": "r1"
+              },
+              "llm": {
+                "tokens_in": 1.5,
+                "tokens_out": true,
+                "cost_usd": true
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {
+                "run_id": "r1"
+              },
+              "llm": {
+                "tokens_in": 4,
+                "cost_usd": 2
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 4,
+                  "tokens_out": 0,
+                  "cost_usd": 2.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 3,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "the root span's own tokens count",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1"
+              },
+              "llm": {
+                "tokens_in": 7,
+                "tokens_out": 8,
+                "cost_usd": 0.125
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 7,
+                  "tokens_out": 8,
+                  "cost_usd": 0.125,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 1,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "a root span without a duration",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 1,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "a boolean duration is ignored",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1",
+                "duration_ms": true
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 1,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "two runs finish separately",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {
+                "run_id": "r1",
+                "kind": "action",
+                "tool": "t"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {
+                "run_id": "r2",
+                "kind": "action",
+                "tool": "t"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b2",
+              "meta": {
+                "run_id": "r2",
+                "kind": "action",
+                "tool": "t"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root2",
+              "meta": {
+                "kind": "span",
+                "span_id": "q",
+                "run_id": "r2"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r2",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 2,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 3,
+                  "parent_span_id": "q"
+                }
+              }
+            ]
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 1,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 2,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "a custom run key and logger name",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "e",
+              "meta": {
+                "job": "j1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "job": "j1"
+              }
+            }
+          }
+        ],
+        "options": {
+          "run_key": "job",
+          "logger_name": "svc.summary"
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "svc.summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "job": "j1",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 1,
+                  "record_count": 2,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "too many open runs evicts the oldest",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "c",
+              "meta": {
+                "run_id": "c"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root-a",
+              "meta": {
+                "kind": "span",
+                "span_id": "sa",
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root-b",
+              "meta": {
+                "kind": "span",
+                "span_id": "sb",
+                "run_id": "b"
+              }
+            }
+          }
+        ],
+        "options": {
+          "max_runs": 2
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "a",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 1,
+                  "parent_span_id": "sa"
+                }
+              }
+            ]
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "b",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 1,
+                  "parent_span_id": "sb"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": [
+            "c"
+          ]
+        }
+      }
+    },
+    {
+      "name": "a run seen again becomes the newest",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a1",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b1",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a2",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "c1",
+              "meta": {
+                "run_id": "c"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root-a",
+              "meta": {
+                "kind": "span",
+                "span_id": "sa",
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root-b",
+              "meta": {
+                "kind": "span",
+                "span_id": "sb",
+                "run_id": "b"
+              }
+            }
+          }
+        ],
+        "options": {
+          "max_runs": 2
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "a",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 3,
+                  "parent_span_id": "sa"
+                }
+              }
+            ]
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "b",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 1,
+                  "parent_span_id": "sb"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": [
+            "c"
+          ]
+        }
+      }
+    },
+    {
+      "name": "a record after the run closed starts a new one",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "late",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 0,
+                  "record_count": 1,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          },
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": "r1",
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 1,
+                  "record_count": 2,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    },
+    {
+      "name": "a numeric run id",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "e",
+              "meta": {
+                "run_id": 5
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "root",
+              "meta": {
+                "kind": "span",
+                "span_id": "s0",
+                "run_id": 5
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "written": []
+          },
+          {
+            "written": [
+              {
+                "schema_version": "2.0",
+                "level": "INFO",
+                "logger": "app.run_summary",
+                "message": "run summary",
+                "meta": {
+                  "kind": "run_summary",
+                  "run_id": 5,
+                  "tokens_in": 0,
+                  "tokens_out": 0,
+                  "cost_usd": 0.0,
+                  "tool_calls": 0,
+                  "retries": 0,
+                  "errors": 1,
+                  "record_count": 2,
+                  "parent_span_id": "s0"
+                }
+              }
+            ]
+          }
+        ],
+        "state": {
+          "open_runs": []
+        }
+      }
+    }
+  ]
+}
