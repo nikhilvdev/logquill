@@ -1,0 +1,554 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+## [Unreleased]
+
+### Breaking
+
+This release changes the record contract shared with `logquill-python`. See
+`MIGRATING.md` for how to move a 1.x deployment over.
+
+- Every record now carries `schema_version: "2.0"`, and LLM-call records can
+  carry an `llm` block (`model`, `tokens_in`, `tokens_out`, `cost_usd`,
+  `latency_ms`, `finish_reason`).
+- The named `meta` keys are now snake_case on the wire, matching
+  `logquill-python`: `run_id`, `span_id`, `parent_span_id`, `trace_id`,
+  `duration_ms`, `prev_hash`. They were camelCase (`runId`, `spanId`, ...).
+  Options you pass in code (`RunPlugin({ runId })`, `span(name, fn, { spanId })`)
+  keep their camelCase names.
+- `TraceContextPlugin` and `SamplingPlugin` default their `traceKey` to
+  `"trace_id"`.
+- SQL transports write `run_id`, `span_id`, `parent_span_id` and `trace_id`
+  columns, and `DynamoDBTransport` items use the same attribute names (the
+  partition key is `run_id`). Existing tables need migrating.
+- Content fields are now governed by a per-logger `contentPolicy`, **off by
+  default**: `meta.input_messages`, `output_messages`, `system_instructions`,
+  `tool_arguments`, `tool_result` and `state_diff` are replaced with a
+  placeholder before any plugin or transport sees them. Pass
+  `contentPolicy: "full"` to keep the old pass-through, or `"hash"`/`"truncate"`.
+- `TamperEvidentPlugin` hashes the same bytes `logquill-python` does
+  (`json.dumps(sort_keys=True)` formatting, ASCII escapes) and now also covers
+  `schema_version` and `llm`, so a chain written by either package verifies in
+  the other. Chains written by 1.x do not verify.
+
+### Added
+
+- `logquill/instrument` logs LLM calls with no change at the call site.
+  `anthropic.instrument(logger, { client })` and `openai.instrument(logger,
+  { client })` record each non-streaming `messages.create`,
+  `chat.completions.create` and `responses.create` as a `llmCall()` record
+  (model, token counts, latency, finish reason), and `.uninstrument()` undoes
+  it. You pass your own client, so logquill never imports the SDK and always
+  patches the copy your app actually calls. Streaming calls pass through
+  untouched, and a failure while recording can never break the call. Calls
+  consumed only through `.withResponse()` or `.asResponse()` are not recorded.
+- `propagate()` and `inbound()` (also from `logquill/instrument`) carry one
+  `trace_id` from an MCP client to the server over the request's `_meta`:
+  the client sends `propagate({ runId })` as `_meta`, and the server wraps its
+  tool handler in `inbound(extra._meta, { server, tool }, fn)`. Records logged
+  inside get the client's `trace_id` and `meta.mcp.server`/`tool`/`run_id`.
+- `OTLPTransport` exports LogQuill's agent tracing as real OpenTelemetry spans:
+  `Logger.span()` blocks (as `invoke_agent {agent}` when they name an agent),
+  tool `.action()`s (`execute_tool {tool}`) and `llmCall()` records
+  (`chat {model}` with `gen_ai.usage.input_tokens`/`output_tokens`). Spans use
+  the ids and timing the records carry, so the exported tree is exactly the
+  logged tree. Prompt and completion text is never exported unless
+  `captureContent` is on.
+- `OTelLogsTransport` sends every record as an OTLP log record, joined to its span
+  by id.
+- `semconv`: every `gen_ai.*` name in one module, pinned to a named release of the
+  GenAI conventions, with a `legacy` set for older backends and
+  `OTEL_SEMCONV_STABILITY_OPT_IN` support. Span and trace ids match the ones
+  `logquill-python` derives. The OpenTelemetry packages are optional peers,
+  tested against `@opentelemetry/sdk-trace-base` 2.0 to 2.12 with `sdk-logs` 0.220 to
+  0.223, and against the 3.0 line (`@opentelemetry/sdk-trace` 3.0, `sdk-logs` 3.0).
+- `logger.llmCall({ model, tokensIn, tokensOut, costUsd, latencyMs, finishReason })`
+  logs an LLM call as an `.action()` with the first-class `llm` block. A field of
+  the wrong type is dropped with a warning rather than thrown.
+- `logger.opt({ lazy, depth })`: `lazy` defers function-valued `meta` until the
+  record is really going to be emitted; `depth` adds `meta.caller` naming the
+  code that logged, for use inside wrappers.
+- `disable(name)` / `enable(name)`: silence a library's loggers by name prefix,
+  most specific rule wins, so a library can be quiet by default.
+- `contentPolicy` (`"off"` | `"hash"` | `"truncate"` | `"full"`) on `Logger`, and
+  the `CONTENT_FIELDS` / `FIELD_CLASSES` registries it uses. `"hash"` digests are
+  the same ones `logquill-python` produces.
+- `meta.retry_count` is stamped automatically on a tool `.action()` that reopens
+  a call which has not succeeded yet.
+- `span(name, fn, { captureState })` records what changed in the captured state
+  as `meta.state_diff`.
+- `installSignalLevelHandler` (`SIGUSR2`), `LevelFileWatcher` and
+  `LevelEnvWatcher` change a logger's level without a restart.
+- `TextFormatter` and `LogfmtFormatter` now render the `llm` block, and the
+  text-log parser reads it back.
+- `parseRecord()` reads a decoded log line from either package, labels a 1.x
+  record `"1.0"`, renames the camelCase named `meta` keys logquill-js 1.x
+  wrote, and refuses a newer major version with a message saying to upgrade.
+- `schema/record.schema.json` and `schema/golden_records.json`, copied from
+  `logquill-python`, and a contract test that runs the golden records through
+  the schema (with `ajv`) and the parser.
+- `loggerFromFile()`, `loggerFromEnv()` and `loadConfig()`: build a `Logger`
+  from a JSON or YAML file (YAML needs the optional `yaml` package) in the
+  same shape `logquill-python` reads. `LOGQUILL_CONFIG_FILE` names the file
+  and `LOGQUILL_LEVEL` overrides its level.
+- `SyslogTransport`: RFC 5424 messages over UDP or TCP via `dgram`/`net`, no
+  dependency, fire-and-forget so an unreachable server never blocks logging.
+- `TextFormatter` and `LogfmtFormatter`, matching `logquill-python`'s output
+  byte for byte, plus `parseLogfmt()` and `parse()` (stream a log file or any
+  line iterable through a regex with named groups, with optional per-group
+  casts) for reading logs back.
+- `FileTransport` `encryptKey` option: encrypts each line as a Fernet token
+  before writing, in the same format `logquill-python`'s `encrypt_key`
+  uses, so either package can decrypt the other's files. `generateFernetKey()`
+  and `fernetDecrypt()` are exported for creating a key and reading lines
+  back. A malformed key fails at construction with a message saying how to
+  generate one.
+- `FileTransport` `compression: "gz"` option: gzips each file as it is
+  rotated out, so backups become `app.log.1.gz`, `app.log.2.gz`, and so on.
+
+### Changed
+
+- `Logger.close()` now waits for every transport's own `flush()` before closing it.
+  Before, a batching transport's last send was only started, so
+  `installShutdownHandlers` could exit the process while it was still in flight.
+- `ElasticsearchTransport` now writes Elastic Common Schema fields
+  (`@timestamp`, `log.level`, `service.name`, `trace.id`, `span.id`,
+  `error.*`) alongside each record, so Kibana works with no field mapping.
+  Documents are always JSON, so a custom `formatter` is no longer applied
+  to this transport.
+
+## [1.0.1] - 2026-09-06
+
+### Documentation
+
+- README's status line still said "pre-release" after 1.0.0 shipped —
+  updated to reflect the full v1.0 feature set.
+- Added the `OtelSpanProcessor` documentation (a Features bullet, a
+  Contents entry, and a runnable example under "Agentic framework
+  adapters") that was missed when that feature was added in 1.0.0.
+
+## [1.0.0] - 2026-09-06
+
+Full v1.0 scope, as scoped in the project spec: leveled/structured logging,
+non-blocking async dispatch with configurable backpressure, the full
+transport catalog (console/file/HTTP, cloud-native, SQL, NoSQL, message
+queues), the plugin pipeline (context, redaction, PII redaction, sampling
+with tail-based elevation, rate limiting, tamper-evidence, alerting),
+agentic/harness tracing (`.thought()/.action()/.observation()/.decision()`,
+spans, `RunPlugin`, `TraceContextPlugin`, the `LangChainAdapter`/
+`LangGraphAdapter` and now `OtelSpanProcessor` integration paths), a
+browser build, and migration bridges for `winston`/`pino`.
+
+### Added
+
+OpenTelemetry-native tracing integration:
+
+- `OtelSpanProcessor` — bridges an OpenTelemetry-native integration (the
+  Vercel AI SDK's `experimental_telemetry` is the main example) into
+  LogQuill without going through a callback-handler-object model the way
+  `LangChainAdapter` does. Register an instance on any OTel tracer
+  provider (`provider.addSpanProcessor(new OtelSpanProcessor(logger))`)
+  and every span becomes one `.action()` call on start plus one
+  `.observation()` (or `.error()`, on an error status) call on end, with
+  `meta.spanId`/`meta.parentSpanId` taken directly from the span's own
+  ids — OTel span ids are already the same 16-hex-char shape LogQuill's
+  own ids use — and `meta.durationMs` on the end record. Non-empty span
+  attributes are copied onto `meta.attributes` (configurable key)
+  verbatim; renaming onto `gen_ai.*` semantic conventions is left to the
+  planned v2.0 `OTLPTransport`. Like `TraceContextPlugin`, this never
+  imports `@opentelemetry/api` or `@opentelemetry/sdk-trace-base` —
+  duck-typed against the shape a real span has, so the main `logquill`
+  import still never requires either package to be installed.
+
+Advanced context & migration bridges:
+
+- `bindContext(values, fn)`/`currentContext()` — request-scoped context
+  propagation backed by `AsyncLocalStorage`: a value bound once is visible
+  in every nested `Logger` call underneath it, through any number of
+  function calls and `await`s deep, with no manual threading. Nested calls
+  merge (inner wins on key collision); a call-site `meta` value always
+  wins over anything bound this way. Concurrent async operations sharing
+  one `Logger` never see each other's bound context.
+- `meta.err` — pass an `Error` here and it's replaced with a formatted
+  `meta.stack`, mirroring `Logger.span()`'s own error formatting. The JS
+  analogue of `logquill-python`'s `exc_info` kwarg, adapted to how JS has
+  no equivalent of `sys.exc_info()`'s "currently handled exception": the
+  caller passes the `Error` instance directly rather than `True`. A
+  non-`Error` `meta.err` is left untouched rather than rejected.
+- `RateLimitPlugin` — drops records once a key (default `(logger, level)`)
+  exceeds `maxRecords` within a rolling `perSeconds` window, so a noisy
+  loop can't drown out a logger's other messages; each key gets its own
+  window rather than resetting on a shared clock. Bounded by `maxKeys`
+  distinct keys tracked at once, evicting the least-recently-seen on
+  overflow — the same trade-off `SamplingPlugin` already makes for trace
+  buffering.
+- `LogQuillWinstonTransport` (`logquill/winston`, a separate entry point —
+  `winston-transport` is an optional peer dependency, isolated from the
+  main import the same way `LangChainAdapter` is) and
+  `LogQuillPinoDestination` (main entry point — no dependency on `pino`
+  itself, since a destination only has to duck-type as a Node `Writable`)
+  — bridge an existing `winston`/`pino` call site into LogQuill's
+  transports/plugins with no changes to that call site, for incremental
+  migration. Both map the source library's levels onto LogQuill's via an
+  overridable `levelMap`, and both re-filter by the LogQuill `Logger`'s
+  own `level` after the source library's filtering runs.
+
+Browser build:
+
+- A separate `logquill/browser` entry point (`import ... from "logquill/browser"`)
+  — the same `Logger`, levels, `JSONFormatter`, and plugin pipeline
+  (`ContextPlugin`/`RedactPlugin`/`PIIRedactPlugin`/`SamplingPlugin`), plus
+  `ConsoleTransport` and a new `BeaconTransport`. `FileTransport`,
+  `HTTPTransport`, every SQL/NoSQL/queue/cloud-native transport, and the
+  LangChain adapters are absent from this entry's module graph entirely —
+  not just tree-shaken — so it never pulls in a Node built-in.
+- `BeaconTransport` — batches formatted records and sends them via
+  `navigator.sendBeacon`, falling back to a `keepalive` `fetch` where
+  `sendBeacon` isn't available (a worker, an older browser, or Node);
+  pass `sender` to swap in a fake for tests. Also exported from the main
+  `"logquill"` entry.
+- One behavioral difference from the Node build: `Logger.span()`'s
+  `parentSpanId` nesting is backed by a plain stack in the browser build
+  instead of `AsyncLocalStorage` (which browsers don't have), so unlike the
+  Node build, two spans on the same `Logger` running concurrently across an
+  `await` can interleave and stamp the wrong `parentSpanId`. Fine for the
+  common case of one span in flight at a time; documented as a known
+  limitation rather than fixed, since there's no browser-standard
+  equivalent of `AsyncLocalStorage` to fall back on.
+- `Logger`'s internal use of `bindContext()`'s request-scoped context (see
+  "Advanced context & migration bridges" above) is isolated from the
+  browser build the same way: a stack-based `core/context-browser.ts`
+  swaps in for the `AsyncLocalStorage`-backed `core/context.ts`, so
+  `node:async_hooks` still never reaches `logquill/browser`. Same
+  concurrent-isolation trade-off as `Logger.span()` above.
+
+Async dispatch, shutdown & serverless safety:
+
+- Non-blocking dispatch — `Logger` calls now hand their write (and any
+  plugin `afterLog` hooks) to an internal `DispatchQueue` and return before
+  either runs, draining outside the caller's own call stack (`setImmediate`,
+  falling back to a microtask where it isn't available). The queue has a
+  configurable `maxSize` (default 10,000) and backpressure policy —
+  `dropOldest` (default), `dropNewest`, or `block`, the last running the
+  overflowing write inline instead of dropping it — set per `Logger` via
+  the new `queue` option. Dropped-record warnings are rate-limited via a
+  configurable `onDrop` callback rather than one `console.warn` per drop.
+- `Logger.flush()` now returns a `Promise` and actually waits for every
+  dispatched record to reach its transports, instead of being synchronous
+  and immediate; `Logger.close()` is now async too, awaiting a flush before
+  closing transports so a pending write can't be lost to a closed file
+  descriptor or connection. `Logger.queueSize` exposes the current pending
+  count.
+- `withLambda`/`withCloudFunction`/`withAzureFunction` (the same wrapper
+  under three platform-matching names) — wraps a serverless handler so
+  `logger.flush()` and every batching transport's own `flush()` are awaited
+  before the wrapped function's result settles, since a frozen or recycled
+  execution environment may never come back to finish a partial batch.
+- `installShutdownHandlers(logger)` — flushes and closes a logger once on
+  `SIGTERM`/`SIGINT`/`beforeExit`, so nothing queued is lost when a
+  long-running process stops. Node-only; returns an unsubscribe function.
+
+This is a breaking change for direct callers of `Logger.close()`, which is
+now `async`.
+
+### Fixed
+
+- `logquill/browser`: `Logger.span()` and `bindContext()` now correctly
+  survive an internal `await` for a single in-flight span/context block.
+  Previously, the stack-based fallback these use in place of
+  `AsyncLocalStorage` popped its frame the moment the async callback
+  returned its (still-pending) promise, rather than once that promise
+  settled — so any log call made _after_ an `await` inside a `span()` or
+  `bindContext()` block silently lost its `parentSpanId`/bound context,
+  even with only one block in flight. This affected every release with
+  the browser build, since it was never actually exercised by a test.
+  Two _concurrent_, overlapping blocks on the same stack can still
+  interleave and see each other's values — that part was and remains a
+  documented trade-off of not having `AsyncLocalStorage` in a browser.
+
+### Documentation
+
+- A [TypeDoc](https://typedoc.org)-generated API reference, built from
+  TSDoc comments on every exported symbol across the main, `langchain`,
+  `winston`, and `browser` entry points, with `npm run docs` and a
+  GitHub Pages deploy workflow (`.github/workflows/docs.yml`) publishing
+  it on every push to `main`.
+- Filled in TSDoc comments across the codebase so `typedoc` builds with
+  zero warnings — the base `Transport`/`BatchingTransport`/`Logger`
+  classes, every transport's options interface and driver-shaped
+  `*Like` interface, and every plugin's public fields.
+- README: a `### Kubernetes` subsection under async dispatch & shutdown
+  (default to `ConsoleTransport` in a container; flush before
+  `terminationGracePeriodSeconds` expires) and an `## API reference`
+  section linking to the published TypeDoc site.
+
+## [0.4.0] - 2026-09-02
+
+### Added
+
+Trace correlation & agentic tracing:
+
+- `.thought()/.action()/.observation()/.decision()` on `Logger` — `.info()`
+  with `meta.kind` pre-set for tagging agent reasoning steps; a call-site
+  `kind` in the passed `meta` overrides the default.
+- `Logger.span(name, fn, options?)` — `await logger.span("callLlm", async () => {...})`
+  runs `fn` and, on settling (success or throw), emits one record for the
+  span itself carrying `meta.spanId` and `meta.durationMs`. Every record
+  logged inside `fn` — through any method, and across any `await` — is
+  automatically stamped with `meta.parentSpanId` pointing at this span, via
+  a new `AsyncLocalStorage`-backed span context (`src/core/span.ts`), so
+  nested/concurrent spans reconstruct their exact nesting by sorting on
+  `spanId`/`parentSpanId` without leaking across concurrent calls sharing
+  one `Logger`. Still emits its record — at `ERROR`, with `meta.error` set
+  — if `fn` throws; the error itself propagates unchanged. `spanId`/
+  `parentSpanId` normally auto-generate/auto-nest, but can be passed
+  explicitly in `options` to adopt an id handed in from elsewhere (e.g. a
+  future framework adapter).
+- `RunPlugin` — stamps `meta.runId` (generated if not given) and an
+  incrementing `meta.step`; one instance scopes one run, so concurrent runs
+  never share a counter. A record that already carries `meta.runId`
+  (propagated from upstream) keeps it.
+- `TraceContextPlugin` — stamps `meta.traceId` for cross-service
+  correlation, distinct from `runId`. Resolves, in order: an active
+  OpenTelemetry span's trace id (via a synchronous, lazy
+  `require("@opentelemetry/api")` — never a declared dependency, and
+  injectable via `resolveActiveOtelTraceId` for tests or non-Node OTel
+  surfaces), the `traceparent` constructor option, whatever
+  `setTraceparent()` most recently set for the current execution context
+  (`AsyncLocalStorage`-backed, matching Python's `contextvars`-based
+  propagation), or a freshly generated id. Understands W3C `traceparent`,
+  AWS X-Ray `X-Amzn-Trace-Id`, and GCP `X-Cloud-Trace-Context` headers via
+  the exported `parseTraceHeader()`.
+- `LangChainAdapter` and `LangGraphAdapter` — implement LangChain.js's
+  `BaseCallbackHandler`, mapping `handleChainStart`/`handleChainEnd` to one
+  `span()`-shaped record, `handleLLMStart`/`handleLLMEnd` to
+  `.action()`/`.observation()` with `durationMs`, `handleAgentAction` to
+  `.action()`, `handleAgentEnd` to `.decision()`, and
+  `handleToolStart`/`handleToolEnd`/`handleToolError` to the matching
+  calls — LangChain's own `runId`/`parentRunId` written directly onto
+  `meta.spanId`/`meta.parentSpanId` on every event, field renaming rather
+  than translation. `LangGraphAdapter` is `LangChainAdapter` re-exported
+  under its own name: LangGraph.js nodes run as ordinary LangChain
+  `Runnable`s, so the same handler already covers them, and — unlike
+  `logquill-python`'s `LangGraphAdapter` — there's no separate
+  checkpoint-callback surface to add: `@langchain/langgraph` (checked
+  against 1.4.13) exposes no `GraphCallbackHandler`/`onInterrupt`/
+  `onResume` equivalent to LangGraph Python's; `interrupt()` instead
+  surfaces through the graph's state/stream output, not the
+  callback-handler system.
+
+  Ships as a **separate entry point**, `import { LangChainAdapter } from
+"logquill/langchain"` (new `dist/langchain.{mjs,cjs,d.ts}` build target,
+  `@langchain/core` as an optional peer dependency) — not from the main
+  `"logquill"` import. This is a deliberate deviation from this repo's
+  original plan of a fully separate `logquill-langchain` npm package: it
+  stays in this repo instead, but is still isolated to its own module
+  graph, for a real technical reason, not just organization —
+  `LangChainAdapter` has to `extends BaseCallbackHandler`, a hard static
+  import, and mixing that into the main barrel would mean every plain
+  `import { Logger } from "logquill"` needed `@langchain/core` installed
+  to resolve, even for consumers who never touch LangChain. Verified: the
+  main entry point's build output has zero references to `@langchain/core`.
+
+### Fixed
+
+- `Logger`'s per-transport dispatch had no error handling: a transport that
+  failed to format or write a given record (e.g. a circular reference in
+  `meta`) propagated straight to the caller. Now caught and reported via
+  `console.error`, per transport, matching every other internal-failure
+  path in this codebase (`BatchingTransport`, `HTTPTransport`,
+  `NewRelicTransport`) — one broken transport can no longer crash the
+  caller or stop other attached transports from receiving the record.
+- `LangChainAdapter`'s `handleChainError`/`handleLLMError`/`handleToolError`
+  assumed a real `Error` instance and read `.name`/`.message` off it
+  directly. LangChain's own type declarations type this parameter as
+  `Error`, but nothing enforces that where it actually originates — a
+  tool's `_call`, an LLM provider, or any chain step can `throw` a bare
+  string or plain object just as validly, and LangChain forwards whatever
+  was thrown unchanged. A non-`Error` throw silently corrupted the logged
+  `meta.error` (`"undefined: undefined"`); `throw null`/`throw undefined`
+  crashed the handler itself — the exact input this code path exists to
+  report. Now guarded with an `instanceof Error` check, matching
+  `Logger.span()`'s equivalent `formatSpanError` in `core/logger.ts`.
+
+## [0.3.0] - 2026-08-31
+
+### Added
+
+- `.use()` now accepts a plain `beforeLog`-style function in place of a
+  `Plugin`, wrapped internally as `FunctionPlugin` — Express/Koa-style
+  middleware ergonomics, matching `logquill-python`'s equivalent.
+- `SamplingPlugin` gained tail-based elevation: pass `transports` and a
+  sampled-out record is buffered under its `meta.traceId` instead of
+  dropped; if a later record on that trace reaches `elevateAt` (default
+  `ERROR`), the whole trace flushes, buffered records included. Buffering
+  is bounded by both `maxBufferedRecords` and `maxTraces`. Without
+  `transports`, behavior is unchanged (plain rate-based sampling).
+- `PIIRedactPlugin`: regex-based PII redaction over `meta` values (not
+  just keys) — emails, SSNs, credit-card numbers, and phone numbers,
+  recursively through nested objects/arrays, with depth- and
+  cycle-bounded recursion. Complements `RedactPlugin`'s exact-key
+  matching. Pass custom `patterns` to extend or replace the defaults.
+- `TamperEvidentPlugin`: hash-chains every record (`meta.hash`/
+  `meta.prevHash`, SHA-256) so an edited, removed, or reordered line in a
+  written log is detectable after the fact via the static
+  `verifyChain()`. Opt-in — hashing has a real per-record CPU cost.
+- `AlertingPlugin`: base for plugins that fire an external alert on
+  ERROR/FATAL (or any configurable `threshold`) without blocking the log
+  call that triggered it, with dedupe-window collapsing of repeated
+  matches into one follow-up alert reporting the total occurrence count.
+  Tracking is bounded by `maxTrackedKeys`.
+- `SlackAlertPlugin` and `PagerDutyAlertPlugin`: `fetch`-based, no extra
+  dependency.
+- `EmailAlertPlugin`: SMTP via the optional `nodemailer` peer dependency,
+  or inject a `sender` for tests or an alternate backend.
+
+## [0.2.0] - 2026-08-30
+
+### Added
+
+Database, queue, and cloud-native transports — a full matrix of new
+sinks, each with a runnable example in `README.md`. Every real driver
+(`pg`, `mysql2`, `better-sqlite3`, `mongodb`, `@aws-sdk/*`, `redis`,
+`kafkajs`, `amqplib`, `@google-cloud/*`, `applicationinsights`) is an
+**optional peer dependency** — install only the one you use, or inject a
+pre-built client for tests or alternate setups.
+
+**SQL** — `BatchingTransport`, a shared base for every batching sink
+transport that bounds its buffer by both record count and estimated byte
+size, flushing once either limit is hit — never grows unboundedly under a
+sustained burst. `BaseSQLTransport` builds on it with a fixed `logs` table
+schema (`timestamp`/`level`/`logger`/`message`/`meta`, plus
+`runId`/`spanId`/`parentSpanId`/`traceId` for upcoming trace correlation
+work) and always-batched inserts.
+
+- `SQLiteTransport`: zero-setup SQL sink via the optional `better-sqlite3`
+  peer dependency — no server process, works against a file or `:memory:`.
+- `PostgresTransport`: batches formatted records into one parameterized
+  multi-row `INSERT` per flush via the optional `pg` peer dependency, with
+  dialect-correct `SERIAL`/`JSONB` schema for `ensureSchema: true` dev/test
+  use.
+- `MySQLTransport`: batches formatted records into one parameterized
+  multi-row `INSERT` per flush via the optional `mysql2` peer dependency,
+  with dialect-correct `AUTO_INCREMENT`/`JSON` schema for `ensureSchema:
+true` dev/test use.
+- Production schema/migrations remain the caller's responsibility, per
+  LogQuill's existing stance on auto-created schema.
+
+**NoSQL**
+
+- `MongoDBTransport` batches log records into `insertMany()` calls against
+  a MongoDB collection, mapping each record 1:1 to a document; `mongodb`
+  is an optional peer dependency, or inject a pre-built `collection`.
+- `DynamoDBTransport` writes batches to DynamoDB via `BatchWriteItem`-style
+  calls chunked to the API's 25-item cap, partitioning by `meta.runId`/
+  `meta.traceId` (falling back to the logger name) with `timestamp` as the
+  sort key; `@aws-sdk/client-dynamodb` is an optional peer dependency, or
+  inject a `client`.
+- `RedisTransport` appends each record to a Redis Stream via `XADD` — a
+  fast local buffer/tail, not a durable store; `redis` is an optional peer
+  dependency, or inject an already-connected `client`.
+
+**Message queues** — `BaseQueueTransport`, a shared base for every queue
+sink, enforcing "always batch, never publish one message per log call."
+
+- `KafkaTransport` publishes batches to Kafka via `kafkajs`, keyed by
+  `runId`/`traceId` for per-trace partition ordering.
+- `RabbitMQTransport` publishes to RabbitMQ via `amqplib`.
+- `SQSTransport` publishes to SQS via batched `SendMessageBatch` calls,
+  correctly capped at 10 messages per request.
+- `PubSubTransport` publishes to GCP Pub/Sub via `@google-cloud/pubsub`.
+
+**Cloud-native**
+
+- `CloudWatchTransport` ships batched records to AWS CloudWatch Logs via
+  the AWS SDK v3 (`@aws-sdk/client-cloudwatch-logs`, optional peer
+  dependency), sorting events by timestamp before each `PutLogEvents` call.
+- `CloudLoggingTransport` ships batched records to Google Cloud Logging via
+  `@google-cloud/logging` (optional peer dependency), mapping `level` onto
+  Cloud Logging's `severity` scale.
+- `AppInsightsTransport` ships records to Azure Application Insights as
+  trace telemetry via `applicationinsights` (optional peer dependency),
+  batching at LogQuill's buffering level and looping single `trackTrace()`
+  calls per flush, since the SDK has no network-level batch API.
+- `DatadogTransport` batches records and POSTs them as JSON to Datadog's
+  Logs intake API via `fetch`, with a configurable `site` region
+  (`datadoghq.com`/`datadoghq.eu`/etc) — no new dependency.
+- `ElasticsearchTransport` batches records and POSTs them to
+  Elasticsearch's `_bulk` API as newline-delimited action+source pairs via
+  `fetch` — no client dependency.
+- `NewRelicTransport` batches and gzips records before POSTing to New
+  Relic's Log API, with a configurable US/EU region, the license key in
+  `Api-Key`, `meta.eventType` stripped per New Relic's reserved-field rule,
+  and 429 handling that reads `Retry-After` (seconds or HTTP-date) and
+  pauses further sends until it elapses instead of retrying into a live
+  rate limit.
+
+## [0.1.2] - 2026-08-29
+
+### Added
+
+- Plugins: `ContextPlugin` (merges fixed key/value pairs into every record's
+  `meta`; call-site `meta` wins on key collisions), `RedactPlugin` (replaces
+  sensitive `meta` values, matched by key case-insensitively, with a
+  placeholder — defaults to `password`/`token`/`secret`/`api_key`/
+  `authorization`), and `SamplingPlugin` (keeps roughly `rate` of records,
+  dropping the rest; `rate` outside `[0, 1]` throws). All three implement
+  the `Plugin` hook interface and are usable via `.use()`. Matches
+  `logquill-python`'s behavior test-for-test.
+
+- Transports: `ConsoleTransport` (colorized via ANSI, respects `NO_COLOR`,
+  writes via `console.log`/`console.error` so it works unmodified in a
+  browser bundle), `FileTransport` (appends to a file, rotating to numbered
+  backups `.1`, `.2`, … once it exceeds `maxBytes`), and `HTTPTransport`
+  (batches formatted lines and POSTs them as newline-delimited JSON via
+  `fetch` once `batchSize` is reached or on `.close()`/`.flush()`, with an
+  injectable `sender` for tests or alternate backends). Each extends the
+  `Transport` base class added in the previous entry. Unit tests per
+  transport use `CollectingTransport` and fakes, matching `logquill-python`'s
+  behavior (rotation scheme, batching, color routing) test-for-test.
+
+- Core API: `Logger` (`.trace()/.debug()/.info()/.warn()/.error()/.fatal()`,
+  `.child()`, `.use()`, `.setLevel()`), `Level`/`parseLevel`/`levelName`,
+  `LogRecord`, `Formatter`/`JSONFormatter`, the `Plugin` hook interface
+  (`beforeLog`/`afterLog`/`onError`), and the `Transport` base class with an
+  in-memory `CollectingTransport` for tests. Record shape and level
+  names/weights match the `logquill-python` contract byte-for-byte, verified
+  by a schema cross-check test against a Python-produced sample record.
+
+- Added `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1), `.github/CODEOWNERS`,
+  `.github/PULL_REQUEST_TEMPLATE.md`, and `CONTRIBUTING.md` documenting the
+  PR workflow (branch naming, scoping, review/CI requirements, squash-merge),
+  synced with `logquill-python`.
+
+- Added `.github/SECURITY.md`: supported-versions policy and instructions
+  to report vulnerabilities via GitHub's private vulnerability reporting
+  instead of public issues. Linked from the README.
+
+- Added `.github/dependabot.yml`: weekly version updates for `npm`
+  dependencies and GitHub Actions.
+
+- Added GitHub issue templates: `.github/ISSUE_TEMPLATE/bug_report.yml`,
+  `feature_request.yml`, and a `config.yml` that points security reports at
+  private vulnerability reporting instead of a public issue.
+
+## [0.1.1] - 2026-08-27
+
+### Changed
+
+- `release.yml` now triggers on every push to `main` (i.e. on PR merge)
+  instead of on `v*` tags, publishing only when `package.json`'s `version`
+  differs from what's live on npm.
+
+## [0.1.0] - 2026-08-27
+
+### Added
+
+- MIT `LICENSE` file, README badges (CI, npm version, license), expanded
+  `package.json` keywords/author, and GitHub repo description/topics for
+  discoverability.
+
+- Repo scaffolding: TypeScript (strict mode), `tsup` dual ESM+CJS+`.d.ts`
+  build, `eslint` (flat config, type-checked, `no-explicit-any`) + `prettier`,
+  `vitest` with coverage, and a CI workflow (`lint` → `typecheck` → `coverage` → `build`).
