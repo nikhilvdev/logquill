@@ -1,0 +1,8 @@
+version: 2
+
+secret:
+  ignored_paths:
+    # A public Fernet test vector: the key is the bytes 00 01 02 ... 1f and the IV is 00 01 ... 0f,
+    # so the tokens can be checked against the old Python and JavaScript implementations. No real
+    # credential lives here; keep it that way, since anything added to this file is not scanned.
+    - crates/logquill-runtime/tests/fernet_fixture.json
