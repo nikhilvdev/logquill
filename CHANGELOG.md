@@ -23,3 +23,8 @@ earlier releases is kept in `docs/legacy/python/CHANGELOG.md` (Python 0.3.0–2.
 - Added: `logquill verify FILE [--sign-key HEX --signature HEX]` checks a hash-chained JSONL log
   and prints the same results as the Python command.
 - Added: property tests for the record reader, the canonical JSON parser and chain verification.
+- Added: the processing layer of `logquill-core` — trace-header and id parsing, key and PII
+  redaction, JSON / text / logfmt lines, GenAI attributes and ECS documents, SQL and graph rows,
+  the trace-tree builder, the sampling, rate-limit, adaptive-sampling, flight-recorder,
+  run-summary and alert-dedupe state machines, and the log-call pipeline, which withholds a
+  record when a redactor fails. All of it passes the shared corpus.
