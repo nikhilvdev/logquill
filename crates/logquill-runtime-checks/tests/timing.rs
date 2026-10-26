@@ -11,8 +11,9 @@ use serde_json::{json, Value};
 
 const RECORDS: usize = 50_000;
 const RUNS: usize = 7;
-/// Measured at about 5 (producer and worker contend on the queue lock); 12 leaves room for noisy runners.
-const MAX_RATIO: f64 = 12.0;
+/// About 5 on a laptop and 14 on a 2-core CI runner (the producer and worker contend on the queue lock,
+/// so the ratio depends on core count). 40 is coarse: it catches order-of-magnitude regressions only.
+const MAX_RATIO: f64 = 40.0;
 
 struct Null;
 

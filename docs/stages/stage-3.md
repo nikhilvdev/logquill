@@ -23,9 +23,10 @@ Exit criteria:
   (`tests/runtime.rs`); live memory growth is also capped at 8 MiB by a counting allocator.
 - Allocation budget: at most 2 allocations per record on the dispatcher path (it is 1.00 today), asserted in
   `logquill-runtime-checks/tests/allocations.rs`, which runs in the CI `test` job. Timing is enforced as a ratio:
-  emitting and delivering 50,000 records must take at most 12x serialising them with `serde_json`, measured in the
-  same run (`logquill-runtime-checks/tests/timing.rs`, release mode). It is about 5x today. A ratio cancels out
-  machine speed, which absolute times cannot.
+  emitting and delivering 50,000 records must take at most 40x serialising them with `serde_json`, measured in the
+  same run (`logquill-runtime-checks/tests/timing.rs`, release mode). The ratio is about 5x on a laptop and 14x on
+  a 2-core CI runner, because producer and worker contend on the queue lock and that depends on core count. So
+  the budget is coarse: it catches order-of-magnitude regressions, not small ones.
 - Real `fork` test: `logquill-runtime-checks` (a separate crate, because the workspace forbids `unsafe`).
 - Miri on the queue: the `miri` CI job runs the queue and worker tests. The 100,000-record burst test is
   excluded from it as too slow.
