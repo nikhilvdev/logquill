@@ -1,0 +1,36 @@
+[package]
+name = "logquill-node"
+description = "LogQuill for Node: the native addon behind the `logquill` npm package."
+version = "3.0.0-dev.0"
+edition = "2021"
+rust-version = "1.80"
+# No licence field yet: the licence is an open decision (docs/rust-core-plan.md, section 8).
+publish = false
+
+[lib]
+name = "logquill_node"
+crate-type = ["cdylib"]
+
+[dependencies]
+logquill-core = { path = "../../crates/logquill-core" }
+# Optional: the worker, files, HTTP and metrics sinks. A WebAssembly build leaves them out (SQLite's C code and
+# sockets do not build for WASI) and keeps the core logic.
+logquill-runtime = { path = "../../crates/logquill-runtime", optional = true }
+napi = { version = "3", default-features = false, features = ["napi9", "async"] }
+napi-derive = "3"
+# arbitrary_precision keeps a number's own spelling (`1.0` stays `1.0`), which the tamper chain hashes.
+serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
+
+[features]
+default = ["runtime"]
+runtime = ["dep:logquill-runtime"]
+
+[build-dependencies]
+napi-build = "2"
+
+# Not `[lints] workspace = true`: napi's macros expand to `unsafe` code, which the workspace forbids.
+[lints.rust]
+unsafe_code = "allow"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

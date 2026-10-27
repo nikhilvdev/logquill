@@ -117,3 +117,56 @@ jobs:
           VIRTUAL_ENV: ${{ github.workspace }}/bindings/python/.venv-ft
       - run: .venv-ft/bin/python -c "import sys; assert not sys._is_gil_enabled()"
       - run: .venv-ft/bin/python -X gil=0 -m pytest -q
+
+  # The Node binding lives outside the Cargo workspace for the same reason the Python one does, so it
+  # has its own job. Uses the Node that ships on the runner; the LTS matrix comes with slice 7.
+  node:
+    name: node binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: bindings/node
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: node --version && npm --version
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      # the WebAssembly fallback: the core without the runtime, for platforms with no native build
+      - run: rustup target add wasm32-wasip1-threads
+      - run: npm run build:wasm
+      - run: node --test "tests/*.test.mjs"
+        env:
+          NAPI_RS_FORCE_WASI: "true"
+      - run: npx vitest run
+        env:
+          NAPI_RS_FORCE_WASI: "true"
+      - run: npm test
+      # the Node LTS lines, from the `node` npm package so no unpinned action is needed
+      - run: npx -y -p node@22 node --test "tests/*.test.mjs"
+      - run: npx -y -p node@24 node --test "tests/*.test.mjs"
+      - run: npx tsc --noEmit
+      - run: npm run build:sdk
+      # load the built bundles as a consumer would, as ESM and as CommonJS
+      - run: npm run smoke
+      - run: npx -y -p node@22 node scripts/smoke.mjs
+      - run: npx -y -p node@24 node scripts/smoke.mjs
+      # pack the package and a platform package, install both into a clean project, import by name
+      - run: npm run pack-smoke
+      - run: npx -y -p node@22 node scripts/pack-smoke.mjs
+      - run: npx -y -p node@24 node scripts/pack-smoke.mjs
+      # the SDK suite twice: on the Rust file transport, then with the addon off (the pure-JS fallback)
+      - run: npx vitest run
+      - run: npx vitest run
+        env:
+          LOGQUILL_NO_NATIVE: "1"
+      - run: cargo fmt --check
+      # the library only: in the test-harness build napi's registration macros compile away and
+      # every exported item looks unused
+      - run: cargo clippy -- -D warnings

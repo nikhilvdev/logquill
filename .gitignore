@@ -47,3 +47,14 @@ Agents.md
 bindings/python/python/logquill/*.so
 bindings/python/python/logquill/*.pyd
 bindings/python/python/logquill/*.dylib
+
+# ── Node binding build output ────────────────────────────────────────
+*.node
+
+# WebAssembly build output (bindings/node): built by `npm run build:wasm`
+bindings/node/wasm-out/
+bindings/node/*.wasm
+bindings/node/logquill.wasi*.cjs
+bindings/node/logquill.wasi-browser.js
+bindings/node/wasi-worker*.mjs
+bindings/node/dist/

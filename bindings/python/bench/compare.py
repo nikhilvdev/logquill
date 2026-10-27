@@ -6,6 +6,7 @@ this version is slower than 2.0.0 on a caller-side latency row by more than the 
 
 import json
 import os
+import statistics
 import subprocess
 import sys
 
@@ -23,7 +24,16 @@ def run(python):
     return json.loads(done.stdout)
 
 
-old, new = run(old_python), run(new_python)
+# The queued row times a hand-off to a background thread, which swings on a shared CI runner; one run per
+# interpreter failed a build at 1.12x and 1.48x with identical code. Take each row's median of three runs,
+# alternating old and new so a slow stretch of the machine lands on both.
+RUNS = 3
+olds, news = [], []
+for _ in range(RUNS):
+    olds.append(run(old_python))
+    news.append(run(new_python))
+old = {"results": {k: statistics.median(r["results"][k] for r in olds) for k in olds[0]["results"]}}
+new = {"results": {k: statistics.median(r["results"][k] for r in news) for k in news[0]["results"]}}
 print(f"{'':62} {'2.0.0':>10} {'3.0':>10} {'ratio':>8}")
 failed = []
 for name in old["results"]:
