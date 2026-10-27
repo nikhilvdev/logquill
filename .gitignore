@@ -42,3 +42,8 @@ graphify-out/
 .claude/
 .codex/
 Agents.md
+
+# The compiled extension that `maturin develop` places beside the Python sources.
+bindings/python/python/logquill/*.so
+bindings/python/python/logquill/*.pyd
+bindings/python/python/logquill/*.dylib

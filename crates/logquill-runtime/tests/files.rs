@@ -172,3 +172,23 @@ fn rotated_files_can_be_zipped() {
     entry.read_to_string(&mut text).unwrap();
     assert!(text.contains("secret message"));
 }
+
+#[test]
+fn a_path_that_is_not_a_regular_file_is_written_but_never_rotated() {
+    // /dev/null accepts any amount of data and cannot be renamed, so rotating it would fail.
+    #[cfg(unix)]
+    {
+        let options = FileOptions {
+            max_bytes: 100,
+            ..FileOptions::default()
+        };
+        let mut transport = FileTransport::new("/dev/null", options).unwrap();
+        let record = json!({"message": "x".repeat(60)});
+        for _ in 0..20 {
+            let line = transport.format(&record);
+            transport
+                .write(&line, &record)
+                .expect("no rotation is attempted");
+        }
+    }
+}

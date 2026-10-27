@@ -391,7 +391,7 @@ stage tags 3.0.0. The first two stages are broken down into ordered work package
 - Exit: a ~1 GB file is traced and tailed with bounded memory; output matches the old
   CLI on the fixture files; `tail -f` follows across rotation.
 
-**Stage 5 — Python binding and SDK**
+**Stage 5 — Python binding and SDK** — started, see `docs/stages/stage-5.md`
 - Extension module, then the SDK layer from section 5, then adapters, patching,
   host transports, bridges.
 - Also adds what Python gains from JS (spec 09, section B): `OtelSpanProcessor` equivalent,

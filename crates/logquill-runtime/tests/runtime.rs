@@ -579,3 +579,134 @@ fn flush_and_close_honour_their_timeout_when_a_transport_is_stuck() {
         "a later close finishes the job"
     );
 }
+
+/// Counts what happens to it.
+#[derive(Clone, Default)]
+struct Counting {
+    written: Arc<AtomicUsize>,
+    flushed: Arc<AtomicUsize>,
+    closed: Arc<AtomicUsize>,
+}
+
+impl Transport for Counting {
+    fn format(&self, _record: &Value) -> String {
+        String::new()
+    }
+
+    fn write(&mut self, _formatted: &str, _record: &Value) -> Result<(), String> {
+        self.written.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
+
+    fn flush(&mut self) -> Result<(), String> {
+        self.flushed.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
+
+    fn close(&mut self) -> Result<(), String> {
+        self.closed.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
+}
+
+#[test]
+fn dropping_a_dispatcher_writes_and_flushes_but_leaves_the_transports_open() {
+    let counting = Counting::default();
+    let (opts, _warnings) = options(100, Backpressure::DropOldest);
+    let dispatcher = Dispatcher::new(opts, vec![Box::new(counting.clone())]).unwrap();
+    for _ in 0..10 {
+        dispatcher.emit(json!({"message": "x"}));
+    }
+    drop(dispatcher);
+    assert_eq!(counting.written.load(Ordering::SeqCst), 10);
+    assert_eq!(counting.flushed.load(Ordering::SeqCst), 1);
+    assert_eq!(
+        counting.closed.load(Ordering::SeqCst),
+        0,
+        "close is explicit"
+    );
+}
+
+#[test]
+fn emit_then_runs_the_hook_after_the_write_and_write_now_skips_the_queue() {
+    let counting = Counting::default();
+    let (opts, _warnings) = options(100, Backpressure::DropOldest);
+    let dispatcher = Dispatcher::new(opts, vec![Box::new(counting.clone())]).unwrap();
+    let seen_when_hook_ran = Arc::new(AtomicUsize::new(usize::MAX));
+    let (written, seen) = (counting.written.clone(), seen_when_hook_ran.clone());
+    dispatcher.emit_then(json!({"message": "x"}), None, move |_| {
+        seen.store(written.load(Ordering::SeqCst), Ordering::SeqCst);
+    });
+    assert!(dispatcher.flush(Some(Duration::from_secs(5))));
+    assert_eq!(
+        seen_when_hook_ran.load(Ordering::SeqCst),
+        1,
+        "the write came first"
+    );
+
+    dispatcher.write_now(json!({"message": "now"}), None, |_| {});
+    assert_eq!(
+        counting.written.load(Ordering::SeqCst),
+        2,
+        "written before write_now returned"
+    );
+    dispatcher.close(Some(Duration::from_secs(5)));
+    dispatcher.write_now(json!({"message": "after close"}), None, |_| {});
+    assert_eq!(
+        counting.written.load(Ordering::SeqCst),
+        2,
+        "nothing is written once closed"
+    );
+    assert_eq!(counting.closed.load(Ordering::SeqCst), 1);
+}
+
+/// Keeps every record it is given, in the order given.
+#[derive(Clone, Default)]
+struct Keeping(Arc<Mutex<Vec<Value>>>);
+
+impl Transport for Keeping {
+    fn format(&self, _record: &Value) -> String {
+        String::new()
+    }
+
+    fn write(&mut self, _formatted: &str, record: &Value) -> Result<(), String> {
+        self.0.lock().unwrap().push(record.clone());
+        Ok(())
+    }
+}
+
+#[test]
+fn a_chain_made_at_write_time_verifies_however_many_threads_log() {
+    use logquill_core::{verify_chain, Chain, SharedChain, GENESIS_HASH};
+
+    for synchronous in [false, true] {
+        let kept = Keeping::default();
+        let (opts, _warnings) = options(100_000, Backpressure::DropOldest);
+        let dispatcher = Arc::new(Dispatcher::new(opts, vec![Box::new(kept.clone())]).unwrap());
+        let chain = Arc::new(SharedChain::new(Chain::default()));
+        let threads: Vec<_> = (0..8)
+            .map(|t| {
+                let (dispatcher, chain) = (dispatcher.clone(), chain.clone());
+                thread::spawn(move || {
+                    for i in 0..200 {
+                        let record = json!({"message": "m", "meta": {"t": t, "i": i}});
+                        if synchronous {
+                            dispatcher.write_now(record, Some(&chain), |_| {});
+                        } else {
+                            dispatcher.emit_then(record, Some(chain.clone()), |_| {});
+                        }
+                    }
+                })
+            })
+            .collect();
+        for t in threads {
+            t.join().unwrap();
+        }
+        assert!(dispatcher.flush(Some(Duration::from_secs(10))));
+        let written = kept.0.lock().unwrap().clone();
+        assert_eq!(written.len(), 1600);
+        let result = verify_chain(written.iter(), GENESIS_HASH);
+        assert!(result.ok, "synchronous={synchronous}: {:?}", result.reason);
+        assert_eq!(result.head_hash.as_deref(), Some(chain.head().as_str()));
+    }
+}

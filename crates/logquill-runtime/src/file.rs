@@ -75,6 +75,8 @@ pub struct FileTransport {
     fernet: Option<Fernet>,
     file: Option<File>,
     size: u64,
+    /// Whether the path is a regular file; only those are rotated.
+    rotatable: bool,
 }
 
 fn backup_path(path: &Path, index: usize, compression: Option<Compression>) -> PathBuf {
@@ -86,9 +88,12 @@ fn backup_path(path: &Path, index: usize, compression: Option<Compression>) -> P
     PathBuf::from(name)
 }
 
+/// Opens `path` for appending. The size is 0 for anything that is not a regular file (`/dev/null`,
+/// `/dev/stdout`, a named pipe): those cannot be rotated, so they are never counted towards it.
 fn open_append(path: &Path) -> io::Result<(File, u64)> {
     let file = OpenOptions::new().create(true).append(true).open(path)?;
-    let size = file.metadata()?.len();
+    let meta = file.metadata()?;
+    let size = if meta.is_file() { meta.len() } else { 0 };
     Ok((file, size))
 }
 
@@ -142,12 +147,14 @@ impl FileTransport {
                 path.display()
             )
         })?;
+        let rotatable = file.metadata().is_ok_and(|m| m.is_file());
         Ok(FileTransport {
             path,
             options,
             fernet,
             file: Some(file),
             size,
+            rotatable,
         })
     }
 
@@ -233,7 +240,7 @@ impl Transport for FileTransport {
             .and_then(|()| file.flush())
             .map_err(|e| e.to_string())?;
         self.size += line.len() as u64;
-        if self.options.max_bytes > 0 && self.size >= self.options.max_bytes {
+        if self.rotatable && self.options.max_bytes > 0 && self.size >= self.options.max_bytes {
             self.rotate()?;
         }
         Ok(())
