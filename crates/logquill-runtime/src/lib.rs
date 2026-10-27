@@ -42,7 +42,7 @@ pub use otlp::{
 };
 pub use shutdown::{close_all, register, with_flush};
 pub use sqlite::{sqlite_transport, SqliteOptions};
-pub use syslog::{SyslogOptions, SyslogProtocol, SyslogTransport};
+pub use syslog::{Resolver, SyslogOptions, SyslogProtocol, SyslogTransport};
 pub use transport::{Formatter, Transport};
 pub use watchers::{parse_level_setting, LevelSource, LevelWatcher};
 pub use worker::{Backpressure, Stats, Worker, WorkerOptions};

@@ -220,7 +220,8 @@ impl BatchSender<String> for Checked {
     }
 }
 
-/// Datadog log intake for `site` (default `datadoghq.com`).
+/// Datadog log intake for `site` (default `datadoghq.com`). Records are always sent as JSON
+/// objects in a JSON array, so the formatter is ignored, as for Elasticsearch and New Relic.
 pub fn datadog_transport(
     api_key: &str,
     site: &str,
@@ -239,9 +240,14 @@ pub fn datadog_transport(
         hint: "check the API key and site region",
         timeout: options.timeout,
     };
+    let to_item: ToItem<String> = Box::new(|_, record| {
+        let line = json_line(record);
+        let size = line.len();
+        (line, size)
+    });
     Batching::new(
         options.formatter,
-        line_item(),
+        to_item,
         Box::new(sender),
         options.max_records,
         options.max_bytes,
@@ -370,16 +376,24 @@ pub fn system_epoch_clock() -> EpochClock {
     })
 }
 
+/// The longest pause a server can ask for. A larger `Retry-After` is capped here, so one bad header
+/// cannot silence a transport for good.
+const LONGEST_RETRY_AFTER: f64 = 3600.0;
+
 /// `Retry-After` as a number of seconds from `now`: whole seconds, or an HTTP date; anything else
-/// (or a missing header) waits 60 seconds.
+/// (or a missing header, `inf`, `NaN`) waits 60 seconds, and nothing waits longer than an hour.
 pub fn retry_after_seconds(value: Option<&str>, now: f64) -> f64 {
     let Some(text) = value.map(str::trim) else {
         return 60.0;
     };
     if let Ok(seconds) = text.parse::<f64>() {
-        return seconds.max(0.0);
+        return if seconds.is_finite() {
+            seconds.clamp(0.0, LONGEST_RETRY_AFTER)
+        } else {
+            60.0
+        };
     }
-    parse_http_date(text).map_or(60.0, |at| (at - now).max(0.0))
+    parse_http_date(text).map_or(60.0, |at| (at - now).clamp(0.0, LONGEST_RETRY_AFTER))
 }
 
 /// `Sun, 06 Nov 1994 08:49:37 GMT` as seconds since the epoch.

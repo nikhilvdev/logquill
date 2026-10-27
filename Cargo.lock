@@ -924,6 +924,7 @@ version = "3.0.0-dev.0"
 dependencies = [
  "clap",
  "logquill-core",
+ "rusqlite",
  "serde_json",
 ]
 
@@ -964,6 +965,7 @@ name = "logquill-runtime-checks"
 version = "3.0.0-dev.0"
 dependencies = [
  "libc",
+ "logquill-cli",
  "logquill-runtime",
  "serde_json",
 ]

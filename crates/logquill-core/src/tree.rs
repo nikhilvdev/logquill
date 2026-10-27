@@ -18,6 +18,8 @@ pub struct Rollup {
 /// One record and everything nested directly inside it, in the order it was written.
 #[derive(Clone, Debug)]
 pub struct TreeNode {
+    /// The record this node was built from.
+    pub record: Value,
     pub level: Value,
     pub message: Value,
     pub rollup: Rollup,
@@ -34,6 +36,7 @@ pub struct Trace {
 }
 
 struct Raw {
+    record: Value,
     level: Value,
     message: Value,
     own: Rollup,
@@ -74,6 +77,7 @@ fn rollup(nodes: &[Raw], at: usize) -> Rollup {
 
 fn finish(nodes: &[Raw], at: usize) -> TreeNode {
     TreeNode {
+        record: nodes[at].record.clone(),
         level: nodes[at].level.clone(),
         message: nodes[at].message.clone(),
         rollup: rollup(nodes, at),
@@ -114,6 +118,7 @@ pub fn build_trace<'a>(records: impl IntoIterator<Item = &'a Value>, run_id: &st
         };
         let me = nodes.len();
         nodes.push(Raw {
+            record: record.clone(),
             level: record.get("level").cloned().unwrap_or(Value::Null),
             message: record.get("message").cloned().unwrap_or(Value::Null),
             own: Rollup {
@@ -204,24 +209,41 @@ fn label(node: &TreeNode) -> String {
     )
 }
 
-fn walk(node: &TreeNode, prefix: &str, last: bool, lines: &mut Vec<String>) {
+/// Wraps a node's label (given its level) in whatever styling the caller wants.
+pub type Paint<'a> = &'a dyn Fn(&Value, String) -> String;
+
+fn walk(node: &TreeNode, prefix: &str, last: bool, paint: Paint, lines: &mut Vec<String>) {
     let connector = if last {
         "\u{2514}\u{2500} "
     } else {
         "\u{251c}\u{2500} "
     };
-    lines.push(format!("{prefix}{connector}{}", label(node)));
+    lines.push(format!(
+        "{prefix}{connector}{}",
+        paint(&node.level, label(node))
+    ));
     let child_prefix = format!("{prefix}{}", if last { "   " } else { "\u{2502}  " });
     for (i, child) in node.children.iter().enumerate() {
-        walk(child, &child_prefix, i + 1 == node.children.len(), lines);
+        walk(
+            child,
+            &child_prefix,
+            i + 1 == node.children.len(),
+            paint,
+            lines,
+        );
     }
 }
 
 /// The tree as indented lines, one per record, annotated with duration and roll-ups.
 pub fn render_tree(roots: &[TreeNode]) -> String {
+    render_tree_with(roots, &|_, label| label)
+}
+
+/// Like [`render_tree`], with each label passed through `paint` (for colour).
+pub fn render_tree_with(roots: &[TreeNode], paint: Paint) -> String {
     let mut lines = Vec::new();
     for (i, root) in roots.iter().enumerate() {
-        walk(root, "", i + 1 == roots.len(), &mut lines);
+        walk(root, "", i + 1 == roots.len(), paint, &mut lines);
     }
     lines.join("\n")
 }
@@ -238,6 +260,19 @@ impl TreeNode {
                 "cost_usd": crate::jsonx::float_value(self.rollup.cost_usd),
             },
             "children": self.children.iter().map(TreeNode::to_value).collect::<Vec<_>>(),
+        })
+    }
+
+    /// The node as the CLI and viewer show it: the whole record, the roll-up and the children.
+    pub fn to_node_value(&self) -> Value {
+        json!({
+            "record": self.record,
+            "rollup": {
+                "tokens_in": self.rollup.tokens_in as i64,
+                "tokens_out": self.rollup.tokens_out as i64,
+                "cost_usd": crate::jsonx::float_value(self.rollup.cost_usd),
+            },
+            "children": self.children.iter().map(TreeNode::to_node_value).collect::<Vec<_>>(),
         })
     }
 }

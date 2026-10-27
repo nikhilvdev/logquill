@@ -3,9 +3,9 @@
 //! (`docs/spec/02-plugins.md`, "MetricsPlugin").
 
 use std::collections::BTreeMap;
-use std::net::UdpSocket;
+use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::Mutex;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use logquill_core::{json_line, Level};
 use serde_json::{json, Value};
@@ -86,14 +86,24 @@ impl MetricsPlugin {
 pub struct StatsdBackend {
     socket: Option<UdpSocket>,
     target: String,
+    /// The target's address, looked up once and kept until a send fails.
+    resolved: Option<SocketAddr>,
+    /// After a failed lookup, don't try again before this moment.
+    retry_lookup_at: Option<Instant>,
     prefix: Option<String>,
 }
+
+/// How long a failed host lookup is remembered, so an unresolvable host costs one lookup per
+/// interval and not one per metric.
+const LOOKUP_RETRY: Duration = Duration::from_secs(30);
 
 impl StatsdBackend {
     pub fn new(host: &str, port: u16, prefix: Option<&str>) -> StatsdBackend {
         StatsdBackend {
             socket: UdpSocket::bind("0.0.0.0:0").ok(),
             target: format!("{host}:{port}"),
+            resolved: None,
+            retry_lookup_at: None,
             prefix: prefix.map(str::to_string),
         }
     }
@@ -118,21 +128,50 @@ impl StatsdBackend {
         format!("{name}:{value}|{kind}{tags}")
     }
 
-    fn send(&self, line: &str) {
+    fn send(&mut self, line: &str) {
         // A failed send is dropped: metrics must never get in the way of logging.
-        if let Some(socket) = &self.socket {
-            let _ = socket.send_to(line.as_bytes(), &self.target);
+        let Some(socket) = &self.socket else {
+            return;
+        };
+        let target = match self.resolved {
+            Some(target) => target,
+            None => {
+                if self.retry_lookup_at.is_some_and(|at| Instant::now() < at) {
+                    return;
+                }
+                match self
+                    .target
+                    .to_socket_addrs()
+                    .ok()
+                    .and_then(|mut a| a.next())
+                {
+                    Some(target) => {
+                        self.resolved = Some(target);
+                        self.retry_lookup_at = None;
+                        target
+                    }
+                    None => {
+                        self.retry_lookup_at = Some(Instant::now() + LOOKUP_RETRY);
+                        return;
+                    }
+                }
+            }
+        };
+        if socket.send_to(line.as_bytes(), target).is_err() {
+            self.resolved = None; // the address may have changed; look it up again
         }
     }
 }
 
 impl MetricsBackend for StatsdBackend {
     fn increment(&mut self, name: &str, tags: &[(String, String)]) {
-        self.send(&self.line(name, "1", "c", tags));
+        let line = self.line(name, "1", "c", tags);
+        self.send(&line);
     }
 
     fn observe(&mut self, name: &str, value: f64, tags: &[(String, String)]) {
-        self.send(&self.line(name, &logquill_core::python_float_repr(value), "h", tags));
+        let line = self.line(name, &logquill_core::python_float_repr(value), "h", tags);
+        self.send(&line);
     }
 }
 
@@ -155,6 +194,20 @@ fn sanitize(name: &str) -> String {
 
 type Series = (String, BTreeMap<String, String>);
 
+/// How many distinct series (metric name plus tags) a backend keeps by default. A logger name
+/// comes from the application and could be made per request, so the maps must not grow forever.
+pub const DEFAULT_MAX_SERIES: usize = 1000;
+
+/// Whether the series `key` can be recorded: it already exists, or there is room for a new one.
+fn has_room<A, B>(
+    own: &BTreeMap<String, A>,
+    other: &BTreeMap<String, B>,
+    key: &str,
+    max: usize,
+) -> bool {
+    own.contains_key(key) || own.len() + other.len() < max
+}
+
 /// Accumulates counters and histogram sum / count in memory and PUTs them to a pushgateway.
 pub struct PushgatewayBackend {
     url: String,
@@ -163,6 +216,9 @@ pub struct PushgatewayBackend {
     poster: Box<dyn HttpPost>,
     counters: BTreeMap<String, (Series, f64)>,
     histograms: BTreeMap<String, (Series, f64, u64)>,
+    /// The most distinct series kept; samples for further ones are dropped and counted.
+    pub max_series: usize,
+    dropped: u64,
 }
 
 impl PushgatewayBackend {
@@ -179,7 +235,14 @@ impl PushgatewayBackend {
             poster,
             counters: BTreeMap::new(),
             histograms: BTreeMap::new(),
+            max_series: DEFAULT_MAX_SERIES,
+            dropped: 0,
         }
+    }
+
+    /// How many samples were dropped because `max_series` distinct series were already kept.
+    pub fn dropped_samples(&self) -> u64 {
+        self.dropped
     }
 
     fn series(name: &str, tags: &[(String, String)]) -> (String, Series) {
@@ -225,11 +288,19 @@ impl PushgatewayBackend {
 impl MetricsBackend for PushgatewayBackend {
     fn increment(&mut self, name: &str, tags: &[(String, String)]) {
         let (key, series) = Self::series(name, tags);
+        if !has_room(&self.counters, &self.histograms, &key, self.max_series) {
+            self.dropped += 1;
+            return;
+        }
         self.counters.entry(key).or_insert((series, 0.0)).1 += 1.0;
     }
 
     fn observe(&mut self, name: &str, value: f64, tags: &[(String, String)]) {
         let (key, series) = Self::series(name, tags);
+        if !has_room(&self.histograms, &self.counters, &key, self.max_series) {
+            self.dropped += 1;
+            return;
+        }
         let entry = self.histograms.entry(key).or_insert((series, 0.0, 0));
         entry.1 += value;
         entry.2 += 1;
@@ -265,6 +336,9 @@ pub struct OtlpMetricsBackend {
     poster: Box<dyn HttpPost>,
     counters: BTreeMap<String, (Series, f64)>,
     histograms: BTreeMap<String, (Series, f64, u64)>,
+    /// The most distinct series kept; samples for further ones are dropped and counted.
+    pub max_series: usize,
+    dropped: u64,
 }
 
 impl OtlpMetricsBackend {
@@ -281,7 +355,14 @@ impl OtlpMetricsBackend {
             poster,
             counters: BTreeMap::new(),
             histograms: BTreeMap::new(),
+            max_series: DEFAULT_MAX_SERIES,
+            dropped: 0,
         }
+    }
+
+    /// How many samples were dropped because `max_series` distinct series were already kept.
+    pub fn dropped_samples(&self) -> u64 {
+        self.dropped
     }
 
     fn attrs(labels: &BTreeMap<String, String>) -> Value {
@@ -320,6 +401,10 @@ impl OtlpMetricsBackend {
 impl MetricsBackend for OtlpMetricsBackend {
     fn increment(&mut self, name: &str, tags: &[(String, String)]) {
         let (key, _) = PushgatewayBackend::series(name, tags);
+        if !has_room(&self.counters, &self.histograms, &key, self.max_series) {
+            self.dropped += 1;
+            return;
+        }
         let labels = tags.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
         self.counters
             .entry(key)
@@ -329,6 +414,10 @@ impl MetricsBackend for OtlpMetricsBackend {
 
     fn observe(&mut self, name: &str, value: f64, tags: &[(String, String)]) {
         let (key, _) = PushgatewayBackend::series(name, tags);
+        if !has_room(&self.histograms, &self.counters, &key, self.max_series) {
+            self.dropped += 1;
+            return;
+        }
         let labels = tags.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
         let entry = self
             .histograms

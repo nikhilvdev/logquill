@@ -379,3 +379,125 @@ fn every_record_becomes_an_otlp_log_with_severity_and_trace_ids() {
         1
     );
 }
+
+#[test]
+fn syslog_looks_the_server_up_once_not_once_per_record() {
+    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+    let address = socket.local_addr().unwrap();
+    let lookups = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let counted = lookups.clone();
+    let mut transport = SyslogTransport::with_resolver(
+        SyslogOptions::default(),
+        Box::new(move |_, _| {
+            counted.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            Ok(vec![address])
+        }),
+    );
+    for n in 0..5 {
+        write(&mut transport, &record("INFO", &format!("m{n}"), json!({}))).unwrap();
+    }
+    assert_eq!(lookups.load(std::sync::atomic::Ordering::SeqCst), 1);
+}
+
+#[test]
+fn syslog_tcp_reports_a_failed_connect_once_then_pauses_instead_of_retrying_per_record() {
+    let free = TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = free.local_addr().unwrap().port();
+    drop(free); // nothing listens on `port` now
+    let mut transport = SyslogTransport::new(SyslogOptions {
+        host: "127.0.0.1".into(),
+        port,
+        protocol: SyslogProtocol::Tcp,
+        connect_timeout: Duration::from_millis(500),
+        ..SyslogOptions::default()
+    });
+    let error = write(&mut transport, &record("INFO", "first", json!({}))).unwrap_err();
+    assert!(
+        error.contains("couldn't connect") && error.contains("dropped for 1s"),
+        "{error}"
+    );
+
+    // The server comes up, but the pause has not ended: this record is dropped without a connect.
+    let listener = TcpListener::bind(("127.0.0.1", port)).unwrap();
+    listener.set_nonblocking(true).unwrap();
+    write(
+        &mut transport,
+        &record("INFO", "during the pause", json!({})),
+    )
+    .unwrap();
+    assert!(listener.accept().is_err(), "no connection during the pause");
+
+    std::thread::sleep(Duration::from_millis(1200));
+    write(
+        &mut transport,
+        &record("INFO", "after the pause", json!({})),
+    )
+    .unwrap();
+    listener.set_nonblocking(false).unwrap();
+    let (stream, _) = listener.accept().unwrap();
+    stream
+        .set_read_timeout(Some(Duration::from_secs(5)))
+        .unwrap();
+    let mut line = String::new();
+    BufReader::new(stream).read_line(&mut line).unwrap();
+    assert!(line.contains("after the pause") && !line.contains("during the pause"));
+}
+
+#[test]
+fn syslog_tcp_gives_up_on_a_server_that_stops_reading() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let _held = std::thread::spawn(move || {
+        let connection = listener.accept().unwrap(); // accepted, never read
+        std::thread::sleep(Duration::from_secs(20));
+        drop(connection);
+    });
+    let mut transport = SyslogTransport::new(SyslogOptions {
+        host: "127.0.0.1".into(),
+        port,
+        protocol: SyslogProtocol::Tcp,
+        write_timeout: Duration::from_millis(200),
+        ..SyslogOptions::default()
+    });
+    let big = "x".repeat(1024 * 1024);
+    let started = std::time::Instant::now();
+    let failure = (0..256)
+        .find_map(|_| write(&mut transport, &record("INFO", &big, json!({}))).err())
+        .expect("the buffers fill and a write times out");
+    assert!(failure.contains("lost the connection"), "{failure}");
+    assert!(
+        started.elapsed() < Duration::from_secs(15),
+        "the write timeout was ignored"
+    );
+}
+
+#[test]
+fn a_database_file_uses_wal_so_a_reader_can_read_while_the_transport_writes() {
+    let path = scratch("wal").join("logs.db");
+    let mut transport = sqlite_transport(SqliteOptions {
+        filename: path.to_string_lossy().to_string(),
+        ensure_schema: true,
+        max_records: 1,
+        ..SqliteOptions::default()
+    })
+    .unwrap();
+    write(&mut transport, &record("INFO", "one", json!({}))).unwrap();
+
+    // The transport is still open; a second connection reads what it has written.
+    let reader =
+        rusqlite::Connection::open_with_flags(&path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+            .unwrap();
+    let mode: String = reader
+        .query_row("PRAGMA journal_mode", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(mode.to_lowercase(), "wal");
+    let rows: i64 = reader
+        .query_row("SELECT count(*) FROM logs", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(rows, 1);
+    write(&mut transport, &record("INFO", "two", json!({}))).unwrap();
+    let rows: i64 = reader
+        .query_row("SELECT count(*) FROM logs", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(rows, 2, "a write is visible to an open reader");
+}

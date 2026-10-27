@@ -114,7 +114,7 @@ All batch by the common rules above (defaults 100 records / 1 MB).
 
 - **Datadog.** URL `https://http-intake.logs.<site>/api/v2/logs`, `site` default
   `datadoghq.com` (e.g. `datadoghq.eu`, `us3.datadoghq.com`, `us5.datadoghq.com`,
-  `ap1.datadoghq.com`). POST body = `[` + formatted records joined by `,` + `]`; headers
+  `ap1.datadoghq.com`). POST body = `[` + the records as compact JSON objects joined by `,` + `]` (the formatter is ignored: a non-JSON line would make the array invalid); headers
   `Content-Type: application/json`, `DD-API-KEY: <key>`; timeout 10 s. Error: `DatadogTransport:
   request to <url> failed with status <s> — check the API key and site region`.
 - **New Relic.** `region` `US` → `https://log-api.newrelic.com/log/v1`, `EU` →
