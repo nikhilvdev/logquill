@@ -48,3 +48,72 @@ jobs:
         env:
           # ignore-leaks: the simulated-fork test abandons the "parent" worker thread on purpose.
           MIRIFLAGS: -Zmiri-disable-isolation -Zmiri-ignore-leaks
+
+  # The Python binding lives outside the Cargo workspace (its macros need `unsafe`, and building it
+  # needs Python), so it has its own job: build the wheel in place, test it, lint the Rust.
+  python:
+    name: python binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: bindings/python
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 -m venv .venv && .venv/bin/pip install maturin pytest "hypothesis>=6.100"
+      - run: python3 -m venv /tmp/logquill-old && /tmp/logquill-old/bin/pip install logquill==2.0.0
+      - run: .venv/bin/maturin develop
+        env:
+          VIRTUAL_ENV: ${{ github.workspace }}/bindings/python/.venv
+      # the oracle tests compare every scenario against the published 2.0.0
+      - run: .venv/bin/python -m pytest -q
+        env:
+          LOGQUILL_ORACLE_PYTHON: /tmp/logquill-old/bin/python
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      # latency against 2.0.0 needs an optimised build; fails if a caller-side row is over the margin
+      - run: .venv/bin/maturin develop --release
+        env:
+          VIRTUAL_ENV: ${{ github.workspace }}/bindings/python/.venv
+      - run: .venv/bin/python bench/compare.py /tmp/logquill-old/bin/python ${{ github.workspace }}/bindings/python/.venv/bin/python
+      # install-and-run from a built wheel in a clean environment, with no source tree on the path
+      - run: |
+          .venv/bin/maturin build --release -o dist
+          python3 -m venv /tmp/smoke && /tmp/smoke/bin/pip install dist/*.whl
+          test -z "$(unzip -l dist/*.whl | grep -E '__pycache__|\.pyc')"
+          cd /tmp && /tmp/smoke/bin/python -I -c "
+          import json, os, tempfile, logquill
+          p = os.path.join(tempfile.mkdtemp(), 'a.log')
+          log = logquill.Logger('smoke', transports=[logquill.FileTransport(p)], meta={'service': 'x'})
+          log.info('hello', n=1)
+          log.close()
+          rec = json.loads(open(p).read())
+          assert rec['meta'] == {'service': 'x', 'n': 1} and rec['schema_version'] == '2.0', rec
+          print('smoke ok')
+          "
+
+  # PyO3 builds free-threaded CPython from 3.14 on, and not as abi3, so this is its own job.
+  python-free-threaded:
+    name: python binding (3.14t, GIL off)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: bindings/python
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 -m pip install uv && uv venv --python 3.14t .venv-ft
+      - run: uv pip install --python .venv-ft/bin/python maturin pytest "hypothesis>=6.100"
+      - run: .venv-ft/bin/maturin develop --release
+        env:
+          VIRTUAL_ENV: ${{ github.workspace }}/bindings/python/.venv-ft
+      - run: .venv-ft/bin/python -c "import sys; assert not sys._is_gil_enabled()"
+      - run: .venv-ft/bin/python -X gil=0 -m pytest -q

@@ -1,6 +1,8 @@
 [workspace]
 resolver = "2"
 members = ["crates/*"]
+# Built by maturin with its own lockfile, so `cargo test --workspace` needs no Python installation.
+exclude = ["bindings/python"]
 
 [workspace.package]
 version = "3.0.0-dev.0"

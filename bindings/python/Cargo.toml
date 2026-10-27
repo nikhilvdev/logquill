@@ -1,0 +1,32 @@
+[package]
+name = "logquill-python"
+description = "LogQuill for Python: the Rust extension module behind the `logquill` package."
+version = "3.0.0-dev.0"
+edition = "2021"
+rust-version = "1.80"
+# No licence field yet: the licence is an open decision (docs/rust-core-plan.md, section 8), and maturin
+# refuses a file outside this directory. Copy LICENSE here when it is settled.
+publish = false
+
+[lib]
+# The extension is imported as `logquill._native`.
+name = "_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+logquill-core = { path = "../../crates/logquill-core" }
+logquill-runtime = { path = "../../crates/logquill-runtime" }
+# abi3: one wheel per platform serves Python 3.10 and later.
+pyo3 = { version = "0.30.1", features = ["abi3-py310"] }
+serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
+
+[build-dependencies]
+pyo3-build-config = "0.30.1"
+
+# Not `[lints] workspace = true`: PyO3's macros expand to `unsafe` code, which the workspace forbids.
+[lints.rust]
+unsafe_code = "allow"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(Py_GIL_DISABLED)'] }
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

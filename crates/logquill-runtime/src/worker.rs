@@ -109,6 +109,11 @@ struct State {
     stats: Stats,
     dropped_since_warning: u64,
     last_warning: Option<Instant>,
+    /// Who is asleep on which condition variable. A signal is sent only when someone is, because
+    /// on Linux every signal is a system call, and a busy queue would pay for one per record.
+    worker_waiting: bool,
+    space_waiters: usize,
+    idle_waiters: usize,
 }
 
 struct Shared {
@@ -138,6 +143,9 @@ impl Shared {
                 stats: Stats::default(),
                 dropped_since_warning: 0,
                 last_warning: None,
+                worker_waiting: false,
+                space_waiters: 0,
+                idle_waiters: 0,
             }),
             work: Condvar::new(),
             space: Condvar::new(),
@@ -147,27 +155,37 @@ impl Shared {
 }
 
 fn run(shared: &Shared, warn: &Warn) {
+    let mut finished_one = false;
     loop {
         let task = {
             let mut state = lock(shared);
+            // The previous task is accounted for here, under the lock taken to fetch the next one.
+            if std::mem::take(&mut finished_one) {
+                state.stats.finished += 1;
+                if state.idle_waiters > 0 {
+                    shared.idle.notify_all();
+                }
+            }
             loop {
                 if let Some(task) = state.queue.pop_front() {
-                    shared.space.notify_one();
+                    if state.space_waiters > 0 {
+                        shared.space.notify_one();
+                    }
                     break Some(task);
                 }
                 if state.closed {
                     break None;
                 }
+                state.worker_waiting = true;
                 state = shared.work.wait(state).unwrap_or_else(|p| p.into_inner());
+                state.worker_waiting = false;
             }
         };
         let Some(task) = task else { break };
         if catch_unwind(AssertUnwindSafe(task)).is_err() {
             warn("a queued task panicked; the worker carries on");
         }
-        let mut state = lock(shared);
-        state.stats.finished += 1;
-        shared.idle.notify_all();
+        finished_one = true;
     }
     let mut state = lock(shared);
     state.thread_done = true;
@@ -274,6 +292,9 @@ impl Worker {
                 Backpressure::DropOldest => {
                     state.queue.pop_front();
                     state.stats.finished += 1;
+                    if state.idle_waiters > 0 {
+                        shared.idle.notify_all();
+                    }
                     drop(state);
                     self.note_drop(&shared);
                     state = lock(&shared);
@@ -282,7 +303,9 @@ impl Worker {
                     }
                 }
                 Backpressure::Block => {
+                    state.space_waiters += 1;
                     state = shared.space.wait(state).unwrap_or_else(|p| p.into_inner());
+                    state.space_waiters -= 1;
                     if state.closed {
                         return false;
                     }
@@ -291,7 +314,9 @@ impl Worker {
         }
         state.queue.push_back(Box::new(task));
         state.stats.submitted += 1;
-        shared.work.notify_one();
+        if state.worker_waiting {
+            shared.work.notify_one();
+        }
         true
     }
 
@@ -303,12 +328,17 @@ impl Worker {
         let mut state = lock(&shared);
         let target = state.stats.submitted;
         while state.stats.finished < target {
-            state = match deadline {
+            let wait = match deadline {
+                None => None,
+                Some(deadline) => match deadline.checked_duration_since(Instant::now()) {
+                    Some(left) => Some(left),
+                    None => return false,
+                },
+            };
+            state.idle_waiters += 1;
+            state = match wait {
                 None => shared.idle.wait(state).unwrap_or_else(|p| p.into_inner()),
-                Some(deadline) => {
-                    let Some(left) = deadline.checked_duration_since(Instant::now()) else {
-                        return false;
-                    };
+                Some(left) => {
                     shared
                         .idle
                         .wait_timeout(state, left)
@@ -316,6 +346,7 @@ impl Worker {
                         .0
                 }
             };
+            state.idle_waiters -= 1;
         }
         true
     }
@@ -344,11 +375,13 @@ impl Worker {
                 let Some(left) = deadline.checked_duration_since(Instant::now()) else {
                     return drained; // still busy with a slow task: leave the thread to finish alone
                 };
+                state.idle_waiters += 1;
                 state = shared
                     .idle
                     .wait_timeout(state, left)
                     .unwrap_or_else(|p| p.into_inner())
                     .0;
+                state.idle_waiters -= 1;
             }
             drop(state);
             let _ = handle.join();
