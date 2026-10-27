@@ -1,0 +1,111 @@
+import { describe, expect, it } from "vitest";
+import { Logger } from "../../../src/core/logger.js";
+import { DynamoDBTransport, type DynamoClientLike, type DynamoLogItem } from "../../../src/transports/nosql/dynamodb-transport.js";
+
+function fakeClient(): DynamoClientLike & { calls: { tableName: string; items: readonly DynamoLogItem[] }[] } {
+  const calls: { tableName: string; items: readonly DynamoLogItem[] }[] = [];
+  return {
+    calls,
+    batchWriteItems(tableName: string, items: readonly DynamoLogItem[]) {
+      calls.push({ tableName, items });
+      return Promise.resolve({ UnprocessedItems: {} });
+    },
+  };
+}
+
+describe("DynamoDBTransport", () => {
+  it("batches writes until maxRecords is reached", async () => {
+    const client = fakeClient();
+    const transport = new DynamoDBTransport({ client, maxRecords: 2 });
+    const logger = new Logger("app.test", { transports: [transport] });
+
+    logger.info("one");
+    await logger.flush();
+    expect(client.calls).toHaveLength(0);
+
+    logger.info("two");
+    await logger.flush();
+    expect(client.calls).toHaveLength(1);
+    expect(client.calls[0]?.items).toHaveLength(2);
+  });
+
+  it("close() flushes a partial batch, writing to the configured table with timestamp as sort key", async () => {
+    const client = fakeClient();
+    const transport = new DynamoDBTransport({ client, tableName: "custom-logs", maxRecords: 10 });
+    const logger = new Logger("app.test", { transports: [transport] });
+
+    logger.info("only one", { run_id: "run-1", span_id: "span-1" });
+    await logger.flush();
+    transport.close();
+
+    expect(client.calls).toHaveLength(1);
+    expect(client.calls[0]?.tableName).toBe("custom-logs");
+    const [item] = client.calls[0]?.items as [DynamoLogItem];
+    expect(item.run_id).toBe("run-1");
+    expect(item.span_id).toBe("span-1");
+    expect(item.message).toBe("only one");
+    expect(item.logger).toBe("app.test");
+    expect(typeof item.timestamp).toBe("string");
+  });
+
+  it("falls back to trace_id, then the logger name, for the partition key when run_id is absent", async () => {
+    const client = fakeClient();
+    const transport = new DynamoDBTransport({ client });
+    const logger = new Logger("app.test", { transports: [transport] });
+
+    logger.info("has trace only", { trace_id: "trace-1" });
+    logger.info("has neither");
+    await logger.flush();
+    transport.close();
+
+    const items = client.calls[0]?.items as DynamoLogItem[];
+    expect(items[0]?.run_id).toBe("trace-1");
+    expect(items[1]?.run_id).toBe("app.test");
+  });
+
+  it("chunks a batch of 30 records into two BatchWriteItem-equivalent calls of 25 and 5", async () => {
+    const client = fakeClient();
+    const transport = new DynamoDBTransport({ client, maxRecords: 1000 });
+    const logger = new Logger("app.test", { transports: [transport] });
+
+    for (let i = 0; i < 30; i++) {
+      logger.info(`record ${String(i)}`);
+    }
+    await logger.flush();
+    transport.close();
+
+    expect(client.calls).toHaveLength(2);
+    expect(client.calls[0]?.items).toHaveLength(25);
+    expect(client.calls[1]?.items).toHaveLength(5);
+  });
+
+  it("close() on an empty batch sends nothing", () => {
+    const client = fakeClient();
+    const transport = new DynamoDBTransport({ client });
+
+    transport.close();
+
+    expect(client.calls).toHaveLength(0);
+  });
+
+  it("throws an actionable error when @aws-sdk/client-dynamodb isn't installed and no client is given", async () => {
+    const transport = new DynamoDBTransport();
+    const logger = new Logger("app.test", { transports: [transport] });
+    const errorSpy: unknown[][] = [];
+    const originalError = console.error;
+    console.error = (...args: unknown[]) => {
+      errorSpy.push(args);
+    };
+
+    logger.info("hello");
+    await logger.flush();
+    transport.close();
+    // The failing dynamic import resolves via real filesystem I/O, not just a
+    // microtask, so give it real time rather than a single setImmediate tick.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    console.error = originalError;
+    expect(errorSpy).toHaveLength(1);
+    expect(String(errorSpy[0]?.[1])).toContain("install `@aws-sdk/client-dynamodb`");
+  });
+});

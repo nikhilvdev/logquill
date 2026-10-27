@@ -401,7 +401,7 @@ stage tags 3.0.0. The first two stages are broken down into ordered work package
   adversarial `meta` tests pass; per-call latency and allocations are at least as good
   as 2.0.0; free-threaded CI green; install-and-run smoke test from a built wheel.
 
-**Stage 6 — Node binding and SDK**
+**Stage 6 — Node binding and SDK** — started, see `docs/stages/stage-6.md`
 - napi-rs module with WASM fallback; SDK layer; pino / winston bridges; LangChain and
   LangGraph adapters; patching; `OtelSpanProcessor`; host transports.
 - Also closes the gap to Python (spec 09, section A): every Python plugin, the CLI, the
