@@ -278,3 +278,33 @@ fn a_serverless_handler_flushes_afterwards_even_if_it_panics_and_does_not_close(
         "but the record logged before it was flushed"
     );
 }
+
+#[test]
+fn a_panicking_level_callback_is_reported_and_the_watcher_carries_on() {
+    let path = scratch("panic").join("level");
+    let applied = Arc::new(Mutex::new(Vec::new()));
+    let reports = Arc::new(Mutex::new(Vec::new()));
+    let (a, r) = (applied.clone(), reports.clone());
+    let watcher = LevelWatcher::new(
+        LevelSource::File(path.clone()),
+        "app",
+        Duration::from_secs(60),
+        Arc::new(move |level| {
+            assert_ne!(level, Level::Debug, "the host's callback failed");
+            a.lock().unwrap().push(level);
+        }),
+        Arc::new(move |message| r.lock().unwrap().push(message.to_string())),
+    );
+    fs::write(&path, "debug").unwrap();
+    watcher.poll_once();
+    fs::write(&path, "error").unwrap();
+    watcher.poll_once();
+    assert_eq!(*applied.lock().unwrap(), vec![Level::Error]);
+    let reports = reports.lock().unwrap();
+    assert_eq!(reports.len(), 1);
+    assert!(
+        reports[0].contains("panicked") && reports[0].contains("logger app"),
+        "{}",
+        reports[0]
+    );
+}

@@ -2,37 +2,16 @@
 //! A counting global allocator measures two things on the dispatcher's hot path:
 //! allocations per record, and peak live memory while a sink is stalled.
 
-use std::alloc::{GlobalAlloc, Layout, System};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
 
 use logquill_runtime::{Backpressure, Dispatcher, Transport, WorkerOptions};
 use serde_json::{json, Value};
 
-static ALLOCATIONS: AtomicUsize = AtomicUsize::new(0);
-static LIVE: AtomicUsize = AtomicUsize::new(0);
-static PEAK: AtomicUsize = AtomicUsize::new(0);
-
-struct Counting;
-
-// SAFETY: every call is forwarded unchanged to the system allocator; the counters only observe.
-unsafe impl GlobalAlloc for Counting {
-    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        ALLOCATIONS.fetch_add(1, Ordering::Relaxed);
-        let live = LIVE.fetch_add(layout.size(), Ordering::Relaxed) + layout.size();
-        PEAK.fetch_max(live, Ordering::Relaxed);
-        System.alloc(layout)
-    }
-
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        LIVE.fetch_sub(layout.size(), Ordering::Relaxed);
-        System.dealloc(ptr, layout)
-    }
-}
-
-#[global_allocator]
-static ALLOCATOR: Counting = Counting;
+#[path = "common/counting.rs"]
+mod counting;
+use counting::{ALLOCATIONS, LIVE, PEAK};
 
 /// Accepts every record without allocating, so the count is the dispatcher's own.
 struct Null;

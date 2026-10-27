@@ -386,7 +386,7 @@ stage tags 3.0.0. The first two stages are broken down into ordered work package
   memory set by the queue bound; fork test passes; benchmark and allocation budgets
   enforced in CI; Miri / loom (or equivalent) on the queue.
 
-**Stage 4 — CLI and viewer**
+**Stage 4 — CLI and viewer** — done, see `docs/stages/stage-4.md`
 - `tail`, `trace`, `dev`, `serve`, `verify` with the page embedded.
 - Exit: a ~1 GB file is traced and tailed with bounded memory; output matches the old
   CLI on the fixture files; `tail -f` follows across rotation.

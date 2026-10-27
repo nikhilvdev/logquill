@@ -57,7 +57,7 @@ pub use semconv::{
 pub use time::{format_timestamp, Clock, SystemClock};
 pub use toggle::Toggle;
 pub use trace::{parse_trace_header, span_id_for, trace_id_for, trace_id_from_parent};
-pub use tree::{build_trace, render_tree, Rollup, Trace, TreeNode};
+pub use tree::{build_trace, render_tree, render_tree_with, Paint, Rollup, Trace, TreeNode};
 
 /// The record shape this version writes (`schema/record.schema.json`).
 pub const SCHEMA_VERSION: &str = "2.0";

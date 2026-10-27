@@ -348,3 +348,32 @@ fn application_insights_posts_trace_envelopes() {
     assert_eq!(envelope["data"]["baseData"]["message"], "careful");
     assert_eq!(envelope["data"]["baseData"]["properties"]["user"], "u1");
 }
+
+#[test]
+fn a_huge_or_unusable_retry_after_is_capped_or_ignored() {
+    assert_eq!(retry_after_seconds(Some("1e12"), 0.0), 3600.0);
+    assert_eq!(retry_after_seconds(Some("inf"), 0.0), 60.0);
+    assert_eq!(retry_after_seconds(Some("NaN"), 0.0), 60.0);
+    assert_eq!(retry_after_seconds(Some("-5"), 0.0), 0.0);
+    assert_eq!(
+        retry_after_seconds(Some("Sun, 06 Nov 2095 08:49:37 GMT"), 0.0),
+        3600.0
+    );
+}
+
+#[test]
+fn datadog_always_sends_json_whatever_the_formatter() {
+    let poster = Recording::default();
+    let options = HttpOptions {
+        formatter: logquill_runtime::Formatter::Logfmt,
+        ..options(2)
+    };
+    let mut transport =
+        datadog_transport("KEY", "datadoghq.com", options, Box::new(poster.clone()));
+    write(&mut transport, &record("INFO", "a")).unwrap();
+    write(&mut transport, &record("INFO", "b")).unwrap();
+    let posts = poster.posts.lock().unwrap().clone();
+    let body: Value = serde_json::from_slice(&posts[0].2).expect("the body is valid JSON");
+    assert_eq!(body[0]["message"], "a");
+    assert_eq!(body[1]["message"], "b");
+}

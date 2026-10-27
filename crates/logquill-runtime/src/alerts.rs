@@ -147,7 +147,7 @@ pub struct EmailOptions {
     pub to_addrs: Vec<String>,
     pub username: Option<String>,
     pub password: Option<String>,
-    /// STARTTLS (the default). Turn off only for a local relay.
+    /// STARTTLS (the default). Turn off only for a local relay; credentials are refused without it.
     pub use_tls: bool,
     pub timeout: Duration,
 }
@@ -185,6 +185,9 @@ impl EmailSender {
 impl AlertSender for EmailSender {
     fn send(&mut self, record: &Value, occurrences: u64) -> Result<(), String> {
         let o = &self.options;
+        if !o.use_tls && o.username.is_some() && o.password.is_some() {
+            return Err("EmailAlertPlugin: refusing to send the SMTP username and password without TLS \u{2014} set use_tls to true, or drop the credentials for a local relay that needs none".to_string());
+        }
         let (subject, body) = EmailSender::compose(record, occurrences);
         let fail = |e: &dyn std::fmt::Display| {
             format!("EmailAlertPlugin: couldn't send the alert \u{2014} {e}")
@@ -301,16 +304,17 @@ impl Alerting {
 
     /// Cancels pending summaries, sends what is queued, and stops the threads.
     pub fn close(&self) {
-        self.shared
-            .dedupe
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-            .close();
-        *self
-            .shared
-            .stopped
-            .lock()
-            .unwrap_or_else(|p| p.into_inner()) = true;
+        {
+            // `stopped` is set while holding the dedupe lock the timer waits on, so the timer either
+            // sees it before waiting or is woken by the notification below; it cannot miss both.
+            let mut dedupe = self.shared.dedupe.lock().unwrap_or_else(|p| p.into_inner());
+            dedupe.close();
+            *self
+                .shared
+                .stopped
+                .lock()
+                .unwrap_or_else(|p| p.into_inner()) = true;
+        }
         self.shared.wake.notify_all();
         if let Some(handle) = self.ticker.lock().unwrap_or_else(|p| p.into_inner()).take() {
             let _ = handle.join();
@@ -326,26 +330,24 @@ impl Drop for Alerting {
 }
 
 fn tick(shared: &Arc<Shared>, pool: &Worker) {
+    // The lock is held from reading the clock to waiting, and `wait_timeout` releases it
+    // atomically, so an `observe` or a `close` can never slip in between and go unnoticed.
+    let mut dedupe = shared.dedupe.lock().unwrap_or_else(|p| p.into_inner());
     loop {
         if *shared.stopped.lock().unwrap_or_else(|p| p.into_inner()) {
             return;
         }
-        let (alerts, wait) = {
-            let mut dedupe = shared.dedupe.lock().unwrap_or_else(|p| p.into_inner());
-            let now = shared.now();
-            let alerts = dedupe.advance(now);
-            let wait = dedupe
-                .next_due()
-                .map_or(3600.0, |due| (due - now).max(0.001));
-            (alerts, wait)
-        };
+        let now = shared.now();
+        let alerts = dedupe.advance(now);
+        let wait = dedupe
+            .next_due()
+            .map_or(3600.0, |due| (due - now).max(0.001));
+        // Submitting never blocks (the pool drops when full), so this is safe under the lock.
         dispatch(shared, pool, alerts);
-        let guard = shared.dedupe.lock().unwrap_or_else(|p| p.into_inner());
-        if *shared.stopped.lock().unwrap_or_else(|p| p.into_inner()) {
-            return;
-        }
-        let _ = shared
+        dedupe = shared
             .wake
-            .wait_timeout(guard, Duration::from_secs_f64(wait.min(3600.0)));
+            .wait_timeout(dedupe, Duration::from_secs_f64(wait.min(3600.0)))
+            .unwrap_or_else(|p| p.into_inner())
+            .0;
     }
 }

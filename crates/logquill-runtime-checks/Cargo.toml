@@ -8,6 +8,7 @@ license-file.workspace = true
 publish.workspace = true
 
 [dependencies]
+logquill-cli = { path = "../logquill-cli" }
 logquill-runtime = { path = "../logquill-runtime" }
 serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
 

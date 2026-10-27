@@ -409,3 +409,94 @@ fn otlp_metrics_are_posted_as_cumulative_sums_and_histograms() {
     assert_eq!(metrics[1]["histogram"]["dataPoints"][0]["count"], "1");
     assert_eq!(metrics[1]["histogram"]["dataPoints"][0]["sum"], 4.0);
 }
+
+#[test]
+fn closing_an_idle_alerting_service_never_waits_for_the_timer() {
+    // The timer sleeps up to an hour when nothing is pending. A missed wake-up on close would make
+    // this loop hang, so a few hundred opens and closes shake it out.
+    let started = Instant::now();
+    for _ in 0..300 {
+        let alerting = Alerting::new(
+            AlertOptions::default(),
+            Box::new(Collect::default()),
+            quiet(),
+        )
+        .unwrap();
+        alerting.close();
+    }
+    assert!(
+        started.elapsed() < Duration::from_secs(20),
+        "close waited for the timer"
+    );
+}
+
+#[test]
+fn a_window_opened_while_the_timer_sleeps_still_sends_its_summary_on_time() {
+    let collect = Collect::default();
+    let options = AlertOptions {
+        window_seconds: 0.4,
+        ..AlertOptions::default()
+    };
+    let alerting = Alerting::new(options, Box::new(collect.clone()), quiet()).unwrap();
+    thread::sleep(Duration::from_millis(150)); // the timer is now waiting with nothing pending
+    for _ in 0..3 {
+        alerting.observe(&record("ERROR", "late burst"));
+    }
+    thread::sleep(Duration::from_millis(1200));
+    alerting.flush(Some(Duration::from_secs(5)));
+    assert_eq!(
+        *collect.sent.lock().unwrap(),
+        vec![("late burst".to_string(), 1), ("late burst".to_string(), 3)]
+    );
+}
+
+#[test]
+fn email_refuses_to_send_credentials_without_tls() {
+    let mut sender = EmailSender::new(EmailOptions {
+        smtp_host: "127.0.0.1".into(),
+        smtp_port: 1, // never reached: the refusal comes first
+        from_addr: "alerts@example.com".into(),
+        to_addrs: vec!["ops@example.com".into()],
+        username: Some("user".into()),
+        password: Some("secret".into()),
+        use_tls: false,
+        timeout: Duration::from_secs(1),
+    });
+    let error = sender.send(&record("ERROR", "boom"), 1).unwrap_err();
+    assert!(
+        error.contains("without TLS") && error.contains("use_tls"),
+        "{error}"
+    );
+}
+
+#[test]
+fn metrics_backends_stop_adding_series_at_their_cap_but_keep_counting_known_ones() {
+    let mut backend = PushgatewayBackend::new(
+        "http://127.0.0.1:1",
+        "j",
+        Duration::from_secs(1),
+        Box::new(UreqPost),
+    );
+    backend.max_series = 2;
+    for logger in ["a", "b", "c", "a"] {
+        backend.increment("m", &[("logger".into(), logger.into())]);
+    }
+    assert_eq!(backend.dropped_samples(), 1);
+    let body = backend.body().unwrap();
+    assert!(body.contains("logger=\"a\"} 2"), "{body}");
+    assert!(
+        body.contains("logger=\"b\"") && !body.contains("logger=\"c\""),
+        "{body}"
+    );
+
+    let mut otlp = OtlpMetricsBackend::new(
+        "http://localhost:4318/v1/metrics",
+        "svc",
+        Duration::from_secs(1),
+        Box::new(Recording::default()),
+    );
+    otlp.max_series = 1;
+    otlp.increment("first", &[]);
+    otlp.observe("second", 1.0, &[]);
+    assert_eq!(otlp.dropped_samples(), 1);
+}

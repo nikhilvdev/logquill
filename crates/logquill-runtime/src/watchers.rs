@@ -5,6 +5,7 @@
 //! a missing file as "no change", and never raises over a bad value: it reports it and carries on.
 
 use std::fs;
+use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::PathBuf;
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread::{self, JoinHandle};
@@ -110,14 +111,28 @@ impl LevelWatcher {
         }
         match parse_level_setting(&raw) {
             None => {}
-            Some(Ok(level)) => (self.apply)(level),
-            Some(Err(())) => (self.report)(&format!(
+            Some(Ok(level)) => {
+                // A panicking callback must not end the watcher thread: report it and carry on.
+                if catch_unwind(AssertUnwindSafe(|| (self.apply)(level))).is_err() {
+                    self.say(&format!(
+                        "logquill: the level callback for logger {} panicked while applying {} \u{2014} the level was not changed; the watcher keeps running",
+                        self.logger,
+                        raw.trim()
+                    ));
+                }
+            }
+            Some(Err(())) => self.say(&format!(
                 "logquill: ignoring {}={} for logger {} \u{2014} not a valid level name (TRACE, DEBUG, INFO, WARN, ERROR, FATAL) or number",
                 self.source.describe(),
                 raw.trim(),
                 self.logger
             )),
         }
+    }
+
+    /// Reports a complaint; a panicking `report` callback is ignored.
+    fn say(&self, message: &str) {
+        let _ = catch_unwind(AssertUnwindSafe(|| (self.report)(message)));
     }
 
     /// Starts polling on a background thread. Calling it again does nothing.

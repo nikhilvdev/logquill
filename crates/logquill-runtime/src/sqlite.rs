@@ -124,6 +124,11 @@ pub fn sqlite_transport(options: SqliteOptions) -> Result<Batching<Value>, Strin
             options.filename
         )
     })?;
+    if options.filename != ":memory:" {
+        // Write-ahead logging lets the viewer read the file while this transport writes to it.
+        // Best effort: some file systems cannot do it, and the transport works without.
+        let _ = connection.query_row("PRAGMA journal_mode=WAL", [], |_| Ok(()));
+    }
     let inserter = Inserter {
         connection,
         insert: format!(
