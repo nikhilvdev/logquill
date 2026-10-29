@@ -254,7 +254,7 @@ jobs:
           persist-credentials: false
       - run: cargo build -p logquill-ffi --release
         working-directory: .
-      - run: ruby --version && gem install ffi minitest --no-document
+      - run: ruby --version && gem install ffi minitest --no-document --user-install  # the runner's system Ruby is not writable
       - run: ruby -Ilib test/test_logquill.rb && ruby -Ilib test/test_readme.rb
       - run: ruby scripts/pack_smoke.rb
 
@@ -290,6 +290,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # the macOS runner image has no Go; the Ubuntu one does
+      - run: brew install go
+        if: runner.os == 'macOS'
       - run: go version
       - run: rustup target add wasm32-wasip1 && scripts/build-core.sh
       - run: test -z "$(gofmt -l .)" && go vet ./...
