@@ -55,7 +55,7 @@ Dir.mktmpdir("lq-ruby-pack") do |scratch|
     record = log.info("hello", password: "p", keep: 1)
     puts [record["meta"], Logquill.canonical_json('{"b":1,"a":2}')].to_json
   RUBY
-  env = { "GEM_HOME" => home, "GEM_PATH" => "#{home}:#{Gem.default_dir}", "LOGQUILL_LIB" => nil }
+  env = { "GEM_HOME" => home, "GEM_PATH" => [home, *Gem.path].join(File::PATH_SEPARATOR), "LOGQUILL_LIB" => nil }
   out = run("ruby", script, env: env, chdir: scratch).strip
   expected = [{ "password" => "***", "keep" => 1 }, '{"a": 2, "b": 1}'].to_json
   abort "pack_smoke: the installed gem printed #{out.inspect}, wanted #{expected.inspect}" unless out == expected
