@@ -30,7 +30,7 @@ pub use chain::{
     Chain, Verification, GENESIS_HASH,
 };
 pub use format::{format_json, format_logfmt, format_text, parse_logfmt};
-pub use jsonx::json_line;
+pub use jsonx::{json_line, lenient, parse_lenient};
 pub use level::{Level, LevelError};
 pub use llm::{build_llm_block, LlmBlock};
 pub use pipeline::{Call, Dropped, FnPlugin, Outcome, Pipeline, Plugin, SharedChain, Verdict};

@@ -1,0 +1,61 @@
+plugins {
+    `java-library`
+    `maven-publish`
+}
+
+group = "io.logquill" // a placeholder: the Maven group ID is not claimed yet (docs/publishing.md, section 8)
+version = "3.0.0-dev.0"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withSourcesJar()
+}
+
+// the native library, when a build places it here (scripts/pack-smoke.sh, CI): JNA loads it from the jar by <os>-<arch>/
+tasks.jar {
+    from(layout.projectDirectory.dir("native"))
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+        }
+    }
+    repositories {
+        // a local repository for the pack gate; a real release publishes to Maven Central instead (docs/publishing.md, section 8)
+        maven {
+            name = "local"
+            url = uri(layout.buildDirectory.dir("repo"))
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // the C ABI of the Rust core (crates/logquill-ffi), loaded at run time
+    api("net.java.dev.jna:jna:5.17.0")
+    // meta and records as JSON
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.19.0")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0")
+
+    testImplementation(platform("org.junit:junit-bom:5.12.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+    options.compilerArgs.addAll(listOf("-Xlint:all", "-Werror"))
+}
+
+tasks.test {
+    useJUnitPlatform()
+    // the native library built by `cargo build -p logquill-ffi --release` (a packaged jar carries it under darwin-aarch64/ etc.)
+    systemProperty("jna.library.path", rootProject.file("../../target/release").absolutePath)
+    testLogging { events("failed", "skipped"); showExceptions = true; exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+}

@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/*"]
 # Built by maturin / the napi CLI with their own lockfiles, so `cargo test --workspace` needs neither
 # a Python nor a Node installation, and the binding macros (which expand to `unsafe`) stay out.
-exclude = ["bindings/python", "bindings/node"]
+exclude = ["bindings/python", "bindings/node", "bindings/wasm"]
 
 [workspace.package]
 version = "3.0.0-dev.0"

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <AssemblyName>LogQuill</AssemblyName>
+    <RootNamespace>LogQuill</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- The NuGet package (see README): the managed assembly, plus runtimes/<rid>/native/ for each platform build -->
+    <PackageId>LogQuill</PackageId>
+    <Version>3.0.0-dev.0</Version>
+    <Authors>Nikhil Arora</Authors>
+    <Description>Structured, agent-aware logging for .NET on a Rust core: the same record shape, redaction and tamper-evident hash chain as the other LogQuill bindings.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/nikhilvdev/logquill</RepositoryUrl>
+    <!-- No licence is declared yet: the licence is an open decision (docs/rust-core-plan.md, section 8). -->
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <!-- Native libraries placed by `scripts/pack-smoke.sh` (or CI) before `dotnet pack`; the runtime picks the one for its RID. -->
+    <None Include="runtimes/**" Pack="true" PackagePath="runtimes" Condition="Exists('runtimes')" />
+  </ItemGroup>
+
+</Project>

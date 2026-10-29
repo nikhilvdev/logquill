@@ -15,10 +15,10 @@ exercised here. Check them against the registry's current docs when you reach th
 |---|---|---|---|---|
 | 1 | Rust | crates.io | `logquill-core`, `logquill-runtime`, `logquill-ffi`, `logquill-cli` | `cargo` |
 | 2 | Python | PyPI | `logquill` (wheels + sdist) | maturin |
-| 3 | Node / TypeScript | npm | `logquill`, `@logquill/native-<platform>` (one per target), `@logquill/wasm` | napi-rs, wasm-bindgen |
-| 4 | Browser, Deno, Bun, Workers | npm | `@logquill/wasm` | wasm-bindgen |
-| 5 | JVM, Android | Maven Central | `logquill` (JAR; AAR for Android) | Gradle + UniFFI |
-| 6 | Swift | Swift Package Manager | `LogQuill` (binary XCFramework + Swift sources) | `xcodebuild`, UniFFI |
+| 3 | Node / TypeScript | npm | `logquill`, `@logquill/native-<platform>` (one per target) | napi-rs |
+| 4 | Browser, Deno, Bun, Workers | npm | `@logquill/wasm` | wasm-bindgen + tsup (`bindings/wasm`) |
+| 5 | JVM, Android | Maven Central | `logquill` (JAR; AAR for Android) | Gradle + JNA over `logquill-ffi` |
+| 6 | Swift | Swift Package Manager | `LogQuill` (binary XCFramework + Swift sources) | `xcodebuild` over `logquill-ffi` |
 | 7 | Go | Go module proxy | `…/bindings/go/v3` | `go` |
 | 8 | C# / .NET | NuGet | `LogQuill` | `dotnet pack` |
 | 9 | Ruby | RubyGems | `logquill` (platform gems + source gem) | `gem build` |
@@ -185,7 +185,8 @@ never be re-uploaded under the same name.
 **Packages:** `logquill` (JS loader + types, `optionalDependencies` on every platform package),
 `@logquill/native-<platform>` for each build target (`linux-x64-gnu`, `linux-x64-musl`,
 `linux-arm64-gnu`, `linux-arm64-musl`, `darwin-x64`, `darwin-arm64`, `win32-x64-msvc`,
-`win32-arm64-msvc`), and `@logquill/wasm` (also the automatic fallback).
+`win32-arm64-msvc`). The WebAssembly fallback for platforms with no native build ships inside `logquill`
+itself (the `logquill.wasi-*` files), not as a separate package; `@logquill/wasm` is the browser package, section 7b.
 
 **One-time**
 1. Create the npm organisation `logquill` (the scope) and add the owners.
@@ -197,7 +198,7 @@ never be re-uploaded under the same name.
 3. Scoped public packages need `--access public` (or `publishConfig.access`).
 
 **Build:** `napi build --platform --release` per target in a matrix, uploading each `.node`
-binary; `wasm-bindgen` for the WASM package.
+binary.
 
 **Publish** (order matters; the napi-rs publish is *not atomic*: platform packages can reach
 npm before the root package does, and a failure partway leaves them published)
@@ -205,9 +206,8 @@ npm before the root package does, and a failure partway leaves them published)
    creates the per-target package directories.
 2. `napi prepublish` (check the flags of the CLI version you use) stamps the root version and
    publishes the platform packages; or publish them in a loop yourself.
-3. Publish `@logquill/wasm`.
-4. Publish `logquill` last, so it never points at a platform package that does not exist.
-5. Release candidates: `npm publish --tag next` so `latest` is untouched.
+3. Publish `logquill` last, so it never points at a platform package that does not exist.
+4. Release candidates: `npm publish --tag next` so `latest` is untouched.
 ```yaml
 publish-npm:
   environment: npm
@@ -216,7 +216,7 @@ publish-npm:
     - uses: actions/setup-node@<pin>
       with: { node-version: "22", registry-url: "https://registry.npmjs.org" }
     - run: npm install -g npm@latest        # needs >= 11.5.1 for OIDC
-    - run: ./scripts/publish-npm.sh         # platform pkgs → wasm → main; provenance is automatic
+    - run: ./scripts/publish-npm.sh         # platform pkgs → main; provenance is automatic
 ```
 **Gate before publishing:** the package-contents check from the JS repo, generalised: allowed
 files only, every `exports` target present, no secret-looking files, size limits.
@@ -226,7 +226,44 @@ fallback by installing with `--omit=optional`.
 **Undo:** `npm deprecate logquill@3.0.0 "message"`. Unpublishing is restricted to a short
 window and only without dependants — **verify** the current rule.
 
+## 7b. Browser, Deno, Bun and Workers — npm (`@logquill/wasm`)
+
+**Package:** `@logquill/wasm`, built from `bindings/wasm` (private until the licence is settled; README there). One
+package, no platform variants: the `.wasm` is the same everywhere. It exports the browser SDK at `.`, the raw core at
+`./core` and the module itself at `./logquill_wasm_bg.wasm`.
+
+**One-time:** as section 7 (the `logquill` scope, a trusted publisher for `@logquill/wasm`, `--access public`).
+
+**Build** (the `wasm` job in `.github/workflows/ci.yml` does exactly this on Linux and macOS):
+```sh
+rustup target add wasm32-unknown-unknown
+# the CLI must be the version bindings/wasm/Cargo.toml pins; the CI job downloads the release and checks its SHA-256
+cargo install wasm-bindgen-cli --version 0.2.129 --locked
+cd bindings/wasm && npm ci --ignore-scripts && npm rebuild bun
+npm run build && npm run build:sdk      # pkg/ (module + glue), dist/ (SDK bundle, types, module copy)
+```
+**Gate before publishing:** `npm test` (the whole corpus in Node, Deno, Bun, headless Chrome and a Worker; the examples;
+`npm run pack-smoke`; the size and speed budget). `pack-smoke` packs the tarball, fails on any file outside the allowed
+list or an `exports` target that is missing, installs it into an empty project and uses it by name.
+**Publish:** `npm publish --access public --provenance` from `bindings/wasm` once `"private": true` is removed
+(release candidates with `--tag next`). Publish it before `logquill` only if `logquill` ever depends on it; it does not
+today.
+**Verify:** `npm view @logquill/wasm version`; in a clean directory `npm i @logquill/wasm`, then the README's Deno or
+Bun example with the import left as written. For the page example, serve `node_modules/@logquill/wasm/dist` and check
+the page's console shows `"password":"***"`.
+**Undo:** `npm deprecate @logquill/wasm@3.0.0 "message"`; unpublishing has the limits in section 7.
+
+**Known wart:** the tarball carries the module twice (`pkg/` for `./core`, `dist/` for the SDK), about 320 KB gzipped
+each. Fold them into one before the first publish if install size matters.
+
 ## 8. JVM and Android — Maven Central
+
+**Built and verified in Stage 8 (`bindings/jvm`):** a Gradle `java-library` using **JNA over the C ABI** (`logquill-ffi`), not
+UniFFI (see `docs/stages/stage-8.md`, "Deviations"). `scripts/pack-smoke.sh` builds the jar carrying the native library under
+JNA's `<os>-<arch>/` resource path (`darwin-aarch64/`, `linux-x86-64/`, ...), publishes it with `maven-publish` to a throwaway
+local repository, checks the jar's contents and POM, and has a fresh Gradle app depend on `io.logquill:logquill` by coordinates
+and run. **Not built:** the signed Central bundle (Javadoc jar, GPG, portal upload), the per-OS native matrix (one platform is
+packed locally; CI packs each runner's), the Android AAR, and a claimed group ID: `io.logquill` is a placeholder.
 
 **One-time**
 1. Create an account at the Central Portal and **register and verify a namespace**
@@ -259,6 +296,12 @@ docs and the POM description.
 
 ## 9. Swift — Swift Package Manager
 
+**Built and verified in Stage 8 (`bindings/swift`):** a Swift package over the C ABI. `scripts/build-xcframework.sh` makes
+`CLogQuill.xcframework` (with `xcodebuild -create-xcframework` when full Xcode is present, otherwise the same directory layout by
+hand, which is what was exercised locally, macOS arm64 only); `scripts/smoke.sh` runs the README example and builds a fresh
+package that depends on this one by path. **Not built:** the multi-platform XCFramework (the iOS and Intel slices), the zip and
+checksum, the mirror repository and tag flow below, and the `xcodebuild` path itself (needs Xcode; CI's macOS runner has it).
+
 SwiftPM resolves versions from **git tags on a repository whose root holds `Package.swift`**,
 and a `binaryTarget` needs the download URL and the zip's checksum written *in that tagged
 `Package.swift`*. The checksum is only known after the XCFramework is built, so the lockstep
@@ -275,8 +318,8 @@ tag cannot contain it. Two workable routes:
 **Build:** compile the static library for `aarch64-apple-darwin`, `x86_64-apple-darwin`,
 `aarch64-apple-ios`, `aarch64-apple-ios-sim`, `x86_64-apple-ios`; combine with `xcodebuild
 -create-xcframework`; zip it (`zip -r -X` with the `.xcframework` at the archive root);
-`swift package compute-checksum LogQuill.xcframework.zip`. The generated UniFFI Swift file and
-the SDK layer are normal sources in the package. Binary targets need swift-tools-version 5.3+.
+`swift package compute-checksum LogQuill.xcframework.zip`. The SDK layer is normal Swift over the C header
+(`logquill-ffi`); there is no UniFFI-generated file. Binary targets need swift-tools-version 5.3+.
 **Publish:** push the tag to the mirror. Optionally submit the repository to the Swift Package
 Index. Keep the asset repository **public**: private release assets fail to resolve.
 **Verify:** in a new Xcode or `swift package init` project add the URL, resolve and build for
@@ -285,6 +328,12 @@ macOS and an iOS simulator.
 instead.
 
 ## 10. Go — module proxy
+
+**Built and verified in Stage 8 (`bindings/go`):** the module embeds `core.wasm` (`logquill-ffi` built for `wasm32-wasip1` with no
+runtime, by `scripts/build-core.sh`) and runs it with wazero, no cgo. `scripts/consumer-smoke.sh` has a fresh module require this
+one by import path (through a `replace`, since nothing is published) and run. **The tagged tree must contain `core.wasm`** (it is
+untracked day to day), so the release job commits it before tagging; a module-proxy fetch of a tag without it fails to build.
+**Not built:** the real proxy fetch (needs a tag), the `/v3` subdirectory-tag layout check.
 
 A Go module is just a git tag, but two rules shape it:
 
@@ -305,6 +354,12 @@ pkg.go.dev shows the docs (needs a recognised licence — §3).
 the proxy cache for ever.
 
 ## 11. .NET — NuGet
+
+**Built and verified in Stage 8 (`bindings/dotnet`):** `P/Invoke` over the C ABI (source-generated `LibraryImport`).
+`scripts/pack-smoke.sh` packs `LogQuill.nupkg` (assemblies for `net8.0` and `net10.0`, the native library under
+`runtimes/<rid>/native/`), checks its contents, and installs it from a local feed into a new console app that runs with
+`LOGQUILL_LIB` unset. **Not built:** the other RIDs (CI packs each runner's own), Windows, signing, and a `nuget.org` push.
+The tests ran on `net10.0` only (the only runtime installed); `net8.0` is compile-checked here and run in CI.
 
 **One-time**
 1. Sign in to nuget.org; optionally request a package ID prefix reservation for `LogQuill.*`.
@@ -334,6 +389,12 @@ A staging site (`int.nugettest.org`) exists for rehearsals — **verify**.
 **Undo:** unlist the version in the UI (it stays restorable and resolvable by exact version).
 
 ## 12. Ruby — RubyGems
+
+**Built and verified in Stage 8 (`bindings/ruby`):** the `ffi` gem over the C ABI. `scripts/pack_smoke.rb` builds a **platform
+gem** carrying the release library (`LOGQUILL_PLATFORM` set, e.g. `arm64-darwin-27` as `Gem::Platform.local` spells it here;
+publish with the generic `arm64-darwin` / `x86_64-linux` names), checks its contents, installs it into an empty gem home and
+uses it by name with `LOGQUILL_LIB` unset. **Not built:** the platform matrix, Windows, the source gem's behaviour on a
+machine with no library (it raises with every place it looked), and a RubyGems push.
 
 The binding uses the `ffi` gem over `logquill-ffi`, so no compiler is needed on the user's
 machine: ship **platform gems** each containing the prebuilt shared library, plus a pure-Ruby

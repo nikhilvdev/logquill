@@ -1,0 +1,5 @@
+# Only for the Workers test: `npm run test:worker` runs tests/hosts/worker.mjs locally under workerd.
+# Nothing here is deployed.
+name = "logquill-wasm-corpus"
+main = "tests/hosts/worker.mjs"
+compatibility_date = "2026-10-01"

@@ -310,8 +310,8 @@ New adapters (Pydantic AI, Claude Agent SDK) stay "scoped, not built".
 | Easy | Python ≥ 3.10 | PyO3 + maturin | PyPI `logquill` | `abi3` wheels for 3.10–3.14; free-threaded 3.13t / 3.14t need separate wheels |
 | Easy | Node ≥ 20, TypeScript | napi-rs | npm `logquill` + `@logquill/native-<platform>` | automatic WASM fallback |
 | Easy | Browser, Deno, Bun, Workers | wasm-bindgen | npm `@logquill/wasm` | core only; SDK supplies transports |
-| Medium | JVM, Android | UniFFI Kotlin | Maven Central | native libraries per OS |
-| Medium | Swift | UniFFI Swift | SwiftPM binary target | XCFramework + checksum |
+| Medium | JVM, Android | JNA over `logquill-ffi` (UniFFI Kotlin was planned; see stage-8) | Maven Central | native libraries per OS |
+| Medium | Swift | C ABI as an XCFramework (UniFFI Swift was planned; see stage-8) | SwiftPM binary target | XCFramework + checksum |
 | Medium | Go | wazero + `core.wasm` | Go module proxy | no cgo; measure call cost first |
 | Medium | C# / .NET | P/Invoke over `logquill-ffi` | NuGet | RID-specific native assets |
 | Medium | Ruby | `ffi` gem over `logquill-ffi` | RubyGems | precompiled platform gems |
@@ -391,7 +391,7 @@ stage tags 3.0.0. The first two stages are broken down into ordered work package
 - Exit: a ~1 GB file is traced and tailed with bounded memory; output matches the old
   CLI on the fixture files; `tail -f` follows across rotation.
 
-**Stage 5 — Python binding and SDK** — started, see `docs/stages/stage-5.md`
+**Stage 5 — Python binding and SDK** — done, see `docs/stages/stage-5.md`
 - Extension module, then the SDK layer from section 5, then adapters, patching,
   host transports, bridges.
 - Also adds what Python gains from JS (spec 09, section B): `OtelSpanProcessor` equivalent,
@@ -401,7 +401,7 @@ stage tags 3.0.0. The first two stages are broken down into ordered work package
   adversarial `meta` tests pass; per-call latency and allocations are at least as good
   as 2.0.0; free-threaded CI green; install-and-run smoke test from a built wheel.
 
-**Stage 6 — Node binding and SDK** — started, see `docs/stages/stage-6.md`
+**Stage 6 — Node binding and SDK** — done, see `docs/stages/stage-6.md`
 - napi-rs module with WASM fallback; SDK layer; pino / winston bridges; LangChain and
   LangGraph adapters; patching; `OtelSpanProcessor`; host transports.
 - Also closes the gap to Python (spec 09, section A): every Python plugin, the CLI, the
@@ -410,12 +410,12 @@ stage tags 3.0.0. The first two stages are broken down into ordered work package
 - Exit: ported JS suite passes on Node LTS lines; corpus passes; pack and consumer
   smoke tests pass for ESM and CJS; the parity acceptance test (spec 09, section D) passes.
 
-**Stage 7 — WASM and browser**
+**Stage 7 — WASM and browser** — done, see `docs/stages/stage-7.md`
 - wasm-bindgen module, browser SDK (beacon, console, stack-based span).
 - Exit: corpus passes in headless browser, Deno and Workers; the "no Node built-ins"
   test is kept.
 
-**Stage 8 — Medium tier, in expected order of demand**
+**Stage 8 — Medium tier, in expected order of demand** — done locally (CI unrun), see `docs/stages/stage-8.md`
 - `logquill-ffi`, then Go, JVM, Swift, .NET, Ruby.
 - Exit per language: corpus green on every OS the platform supports; install from the
   registry into a clean project works; the README example is run in CI.
