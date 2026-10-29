@@ -941,6 +941,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "logquill-ffi"
+version = "3.0.0-dev.0"
+dependencies = [
+ "base64",
+ "logquill-core",
+ "logquill-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "logquill-runtime"
 version = "3.0.0-dev.0"
 dependencies = [

@@ -3,7 +3,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import * as logquill from "../index.js";
+// The module under test: the native addon, or another binding's build of the same API (`bindings/wasm` sets this).
+const logquill = await import(process.env.LOGQUILL_TARGET ?? "../index.js");
 import { LOSSLESS, plain, readLossless, SCHEMA, toText } from "./lossless.mjs";
 
 const golden = readLossless(`${SCHEMA}golden_records.json`);

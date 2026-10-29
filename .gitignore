@@ -8,6 +8,10 @@
 
 # ── Rust and other build output ──────────────────────────────────────
 target/
+# wasm-bindgen output of bindings/wasm (rebuilt by `npm run build`)
+bindings/wasm/pkg/
+# fixtures packed from schema/ for the browser, Deno and Worker test hosts
+bindings/wasm/tests/hosts/fixtures.generated.mjs
 **/*.rs.bk
 *.profraw
 node_modules/
@@ -58,3 +62,23 @@ bindings/node/logquill.wasi*.cjs
 bindings/node/logquill.wasi-browser.js
 bindings/node/wasi-worker*.mjs
 bindings/node/dist/
+
+# ── Stage 8: build products of the medium-tier bindings ─────────────
+# .NET
+bindings/dotnet/**/bin/
+bindings/dotnet/**/obj/
+bindings/dotnet/src/LogQuill/runtimes/
+# JVM
+bindings/jvm/build/
+bindings/jvm/.gradle/
+bindings/jvm/native/
+# Swift
+bindings/swift/.build/
+bindings/swift/CLogQuill.xcframework/
+# Ruby
+bindings/ruby/*.gem
+bindings/ruby/lib/logquill/native/
+# Go: the core is built by scripts/build-core.sh; a release commits it before tagging (docs/publishing.md, section 10)
+bindings/go/core.wasm
+bindings/jvm/bin/
+bindings/wasm/.wrangler/

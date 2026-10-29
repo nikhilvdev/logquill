@@ -4,11 +4,13 @@ Goal: `pip install logquill` gives the Python API of 2.0.0 on the Rust core. Pla
 (sections 3 and 5, Stage 5). Code: `bindings/python/` (PyO3 + maturin, mixed layout: the Rust extension
 `logquill._native` plus the pure-Python SDK in `python/logquill/`).
 
-## Status: code complete, waiting on CI
+## Status: complete
 
 All seven slices are implemented and every exit criterion passes locally (ported suite and oracle, adversarial
-`meta`, benchmark against 2.0.0, free-threaded 3.14t, wheel smoke test). The new CI jobs in `ci.yml` have not
-run on GitHub yet; Stage 5 is done when they are green on the branch.
+`meta`, benchmark against 2.0.0, free-threaded 3.14t, wheel smoke test). The new CI jobs in `ci.yml` have run on
+GitHub and are green: on the PR (run 40495441108) and on `develop` after the merge (run 40496227591), and on every
+`develop` run since (latest 40586980453, 2026-10-27): the oracle `pytest` against published 2.0.0, the latency gate
+(`bench/compare.py`), the 3.14t job, and the wheel build and install smoke test, on Ubuntu and macOS.
 
 The old Python code is a specification, not a source: `docs/spec/` holds the behaviour and `docs/legacy/python/`
 the old README, changelog and migration notes. The old test suite
@@ -47,7 +49,7 @@ generated ids and timings) and `tests/test_oracle.py` compares the results. Set
 | 4 | Native syslog / SQLite / cloud HTTP sinks / OTLP; alerting service and senders; metrics backends; level watchers; semconv, ECS, SQL and graph rows from the core | **done** (all exposed from `_native` and used) |
 | 5 | Python-only layer: config with `class:` resolution, stdlib `logging` bridge (D24), serverless and exit hooks, `toggle` (D-rules), `AsyncWorker` on the native worker; flush before `fork` (`os.register_at_fork`) | **done** |
 | 6 | Gains from JS (spec 09 section B): `Logger(meta=...)`, `OtelSpanProcessor`, per-client SDK patching, `install_signal_handlers`, `structlog` and `loguru` bridges, LangChain fallback span name; adapters, instrumentation and MCP run against the new `Logger` | **done** (`tests/test_gains_from_js.py`) |
-| 7 | Tests for every area, adversarial `meta` tests, benchmark against 2.0.0, free-threaded CI, wheel build and install smoke test, README and migration guide | **partial**: oracle (24 scenarios) agrees with 2.0.0; adversarial `meta` test, wheel smoke test (3.10) and 3.14t run pass locally. CI jobs for the oracle, benchmark, 3.14t and wheel smoke are written (`ci.yml`, not yet run on GitHub); README has an "Upgrading to 3.0" section. Benchmark against 2.0.0: every caller-side row is at or below 2.0.0 (custom transport 0.78x, after Python-only transports on the synchronous path were handed the caller's dict directly when `is_json_safe`, falling back to the sanitising core path otherwise). **Open:** the CI jobs have not run on GitHub yet |
+| 7 | Tests for every area, adversarial `meta` tests, benchmark against 2.0.0, free-threaded CI, wheel build and install smoke test, README and migration guide | **done**: oracle (24 scenarios) agrees with 2.0.0; adversarial `meta` test, wheel smoke test (3.10) and 3.14t run pass locally. CI jobs for the oracle, benchmark, 3.14t and wheel smoke are written (`ci.yml`, not yet run on GitHub); README has an "Upgrading to 3.0" section. Benchmark against 2.0.0: every caller-side row is at or below 2.0.0 (custom transport 0.78x, after Python-only transports on the synchronous path were handed the caller's dict directly when `is_json_safe`, falling back to the sanitising core path otherwise). **CI:** green on GitHub (see Status). One flake on the way: on Stage 6's PR the `queued, file transport` row failed the 1.10 margin twice (1.48x, then 1.12x) with no Python change on that branch, because that row times a hand-off to a background thread and swings on a shared runner. The gate now compares the median of three alternating runs per interpreter (`bench/compare.py`); the row is 0.98x and green since |
 
 ## Differences from 2.0.0 that are deliberate
 

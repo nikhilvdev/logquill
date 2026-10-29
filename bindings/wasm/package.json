@@ -1,0 +1,49 @@
+{
+  "name": "@logquill/wasm",
+  "version": "3.0.0-dev.0",
+  "private": true,
+  "description": "LogQuill for the browser, Deno, Bun and Workers: the Rust core (wasm32-unknown-unknown) and a small SDK on top of it.",
+  "type": "module",
+  "main": "./dist/browser.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/browser.d.ts",
+      "default": "./dist/browser.mjs"
+    },
+    "./core": "./js/index.mjs",
+    "./logquill_wasm_bg.wasm": "./dist/logquill_wasm_bg.wasm"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:hosts": "node scripts/gen-fixtures.mjs",
+    "test:node": "node scripts/run-corpus.mjs && node --test tests/wasm.test.mjs tests/no-node-builtins.test.mjs tests/sdk.test.mjs",
+    "test:deno": "npm run build:hosts && deno run --allow-read tests/hosts/deno.mjs",
+    "test:chrome": "npm run build:hosts && node scripts/run-chrome.mjs",
+    "test:worker": "npm run build:hosts && node scripts/run-worker.mjs",
+    "test:hosts": "npm run test:deno && npm run test:bun && npm run test:chrome && npm run test:worker",
+    "test": "npm run build && npm run build:sdk && npm run test:node && npm run test:hosts && npm run test:examples && npm run pack-smoke && npm run check:budget",
+    "test:bun": "npm run build:hosts && bun run tests/hosts/bun.mjs",
+    "build:sdk": "tsup",
+    "bench": "node scripts/bench.mjs",
+    "check:budget": "node scripts/check-budget.mjs",
+    "test:examples": "node scripts/run-examples.mjs",
+    "pack-smoke": "node scripts/pack-smoke.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "bun": "^1.4.4",
+    "deno": "^2.9.6",
+    "esbuild": "^0.27.7",
+    "puppeteer-core": "^24.43.1",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.155.0"
+  },
+  "types": "./dist/browser.d.ts",
+  "files": [
+    "dist",
+    "js",
+    "pkg/logquill_wasm.js",
+    "pkg/logquill_wasm_bg.wasm"
+  ]
+}

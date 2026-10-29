@@ -170,3 +170,167 @@ jobs:
       # the library only: in the test-harness build napi's registration macros compile away and
       # every exported item looks unused
       - run: cargo clippy -- -D warnings
+
+  wasm:
+    name: wasm binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            sha256: 82d12bb940e2d4e72e0d5605387fc1b8ca179044e012b620f0ce4e7440e8320e
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            sha256: 81d4a23d56b3c3eb8187658329116d50e0b228a93b343825fb71f70179051cd1
+    defaults:
+      run:
+        working-directory: bindings/wasm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup target add wasm32-unknown-unknown
+      # the CLI has to be exactly the version Cargo.toml pins; the prebuilt release, checked against a pinned hash,
+      # saves compiling it (several minutes) on every run
+      - name: install wasm-bindgen 0.2.129
+        run: |
+          v=0.2.129
+          curl -fsSL -o "$RUNNER_TEMP/wbg.tgz" "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/$v/wasm-bindgen-$v-${{ matrix.target }}.tar.gz"
+          (cd "$RUNNER_TEMP" && echo "${{ matrix.sha256 }}  wbg.tgz" | shasum -a 256 -c - && tar -xzf wbg.tgz)
+          echo "$RUNNER_TEMP/wasm-bindgen-$v-${{ matrix.target }}" >> "$GITHUB_PATH"
+      - run: node --version && npm --version
+      - run: npm ci --ignore-scripts
+      # Bun's launcher links its binary in a postinstall script, the one install script this job needs
+      - run: npm rebuild bun
+      # build the module and the SDK, then the corpus in Node, Deno, Bun, headless Chrome and a Worker (workerd),
+      # then the size and speed budget
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: cargo fmt --check
+      - run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
+
+  # ---- Stage 8: the C ABI and the medium-tier bindings built on it ----------------------------------------------------
+  ffi:
+    name: C ABI (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: cargo build -p logquill-ffi
+      # the header is generated; the committed copy must be what cbindgen produces now, and a C program must build against it
+      - run: cargo install cbindgen --locked
+      - run: crates/logquill-ffi/tests/c/run.sh
+      # the shared corpus through the C ABI (Deno's FFI): every stateless group, 815 checks
+      - run: npm ci --ignore-scripts && npm run build:hosts
+        working-directory: bindings/wasm
+      - run: bindings/wasm/node_modules/.bin/deno run --allow-ffi --allow-read --allow-env crates/logquill-ffi/tests/deno/run.mjs
+      # the build with no runtime, for WebAssembly hosts (Go)
+      - run: rustup target add wasm32-wasip1
+      - run: cargo clippy -p logquill-ffi --target wasm32-wasip1 --no-default-features -- -D warnings
+
+  ruby:
+    name: ruby binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: bindings/ruby
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: cargo build -p logquill-ffi --release
+        working-directory: .
+      - run: ruby --version && gem install ffi minitest --no-document --user-install  # the runner's system Ruby is not writable
+      - run: ruby -Ilib test/test_logquill.rb && ruby -Ilib test/test_readme.rb
+      - run: ruby scripts/pack_smoke.rb
+
+  dotnet:
+    name: dotnet binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: dotnet --list-sdks
+      - run: cargo build -p logquill-ffi --release
+      - run: dotnet test bindings/dotnet/tests/LogQuill.Tests
+      - run: bindings/dotnet/scripts/pack-smoke.sh
+
+  go:
+    name: go binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: bindings/go
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # the macOS runner image has no Go; the Ubuntu one does
+      - run: brew install go
+        if: runner.os == 'macOS'
+      - run: go version
+      - run: rustup target add wasm32-wasip1 && scripts/build-core.sh
+      - run: test -z "$(gofmt -l .)" && go vet ./...
+      - run: go test -race ./...
+      - run: go test -run '^$' -bench . -benchtime 1s
+      - run: scripts/consumer-smoke.sh
+
+  swift:
+    name: swift binding (macos-latest)
+    runs-on: macos-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: bindings/swift
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: swift --version && xcodebuild -version
+      # with full Xcode on the runner this goes through `xcodebuild -create-xcframework`, the path not exercised locally
+      - run: scripts/build-xcframework.sh
+      - run: swift build && swift run LogQuillChecks
+      - run: scripts/smoke.sh
+
+  jvm:
+    name: jvm binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: java -version && gradle --version
+      - run: cargo build -p logquill-ffi --release
+      - run: gradle --no-daemon test
+        working-directory: bindings/jvm
+      - run: bindings/jvm/scripts/pack-smoke.sh

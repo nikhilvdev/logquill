@@ -1,0 +1,17 @@
+{
+  "_about": "Limits checked by scripts/check-budget.mjs (npm run check:budget). Measured 2026-10-29 on an M-series Mac, Node 26: module 839887 B raw / 319441 B gzip, SDK bundle ~122 KB / 26.6 KB gzip, formatJson 2.1 us, KeyRedactor.redactMeta 2.5 us, PiiRedactor.redactMeta 4.6 us, PiiRedactor.redactText(4 KB) 32-44 us, cold compile 0.8 ms. Size limits leave ~8% headroom. Speed limits leave 7-10x so a slow CI runner does not fail the build, and still catch the failure that matters: without the regex DFA, scanning 4 KB for PII takes 1.7 ms and a small record 112 us.",
+  "size": {
+    "moduleGzipBytes": 345000,
+    "moduleRawBytes": 910000,
+    "sdkBundleGzipBytes": 32000
+  },
+  "speed": {
+    "coldCompileMs": 50,
+    "nsPerCall": {
+      "formatJson (one record)": 25000,
+      "KeyRedactor.redactMeta": 25000,
+      "PiiRedactor.redactMeta (3 strings, 2 hits)": 40000,
+      "PiiRedactor.redactText (4 KB, no hits)": 300000
+    }
+  }
+}

@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>logquill wasm corpus</title>
+<!-- Loads the module the way a page does (async init, the .wasm fetched by URL), runs the shared harness and the SDK
+     checks, and leaves the result on window.__result for scripts/run-chrome.mjs to read. The SDK is given no .wasm
+     location, so `initWasm()` fetches it from beside the bundle: the default a page gets. -->
+<script type="module">
+  import * as sdk from "../../dist/browser.mjs";
+  import * as q from "../../js/index.mjs";
+  import { merge, report, runAll } from "./harness.mjs";
+  import { runSdk } from "./sdk-harness.mjs";
+  try {
+    await q.init(new URL("../../pkg/logquill_wasm_bg.wasm", import.meta.url));
+    const result = merge(runAll(q), await runSdk(sdk, undefined));
+    window.__result = { ...result, report: report(result) };
+  } catch (error) {
+    const text = String(error?.stack ?? error);
+    window.__result = { total: 1, passed: 0, failures: [{ name: "load", error: text }], report: `load failed: ${text}` };
+  }
+</script>

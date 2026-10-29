@@ -3,7 +3,7 @@
 Goal: `npm install logquill` gives the JavaScript API on the Rust core, at parity with Python (spec 09).
 Plan: `docs/rust-core-plan.md` (sections 3 and 5, Stage 6). Code: `bindings/node/` (napi-rs addon plus the TypeScript SDK; see its README). Legacy-test traceability: `docs/stages/stage-6-traceability.md`.
 
-## Status: in progress (all seven slices done except the pieces listed under "Not done")
+## Status: complete (all seven slices; the pieces left are listed under "Not done")
 
 Branch `feat/stage-6-node`, cut from `develop` after Stage 5 (PR #32) merged. Nothing here is committed or
 pushed yet.
@@ -94,7 +94,8 @@ Only three tests needed edits, to find `schema/` at its monorepo location.
   file-transport tests, so the two implementations agree.
 - `cargo fmt --check` and `cargo clippy -D warnings` (library target) are clean; `tsc --noEmit` is clean.
 - A `node` job in `.github/workflows/ci.yml` builds the addon, runs both test suites twice (native and fallback)
-  and lints. It has not run on GitHub yet, and it uses the runner's Node (no LTS matrix yet).
+  and lints. It has since run on GitHub and is green (PR #33, run 40585402308; `develop`, run 40586980453) on Ubuntu
+  and macOS, with the Node 22 and 24 runs, the WebAssembly build and the pack smoke test added later in this stage.
 
 ## Results since slice 2
 
@@ -187,8 +188,8 @@ Only three tests needed edits, to find `schema/` at its monorepo location.
   packages for the other five targets were never built (only the build machine's was exercised). Node 20 is unsupported.
 - **Benchmarks** against the JavaScript package cover only the file path (about 17x faster end to end, 3.5x more
   caller-side time per call).
-- **CI** (`node` job) is written, including the WebAssembly build and the pack test, but has never run on GitHub, and
-  cannot until the branch is pushed.
+- **CI** (`node` job, including the WebAssembly build, the Node 22 / 24 runs and the pack test) ran on GitHub once the
+  branch was pushed and is green on Ubuntu and macOS (runs above). Windows is not in the matrix.
 
 ## Open points for later slices
 
@@ -199,7 +200,7 @@ Only three tests needed edits, to find `schema/` at its monorepo location.
 - **Hash chain and floats.** Chain input must reach the core as text; slice 2's native conversion has to keep an
   integer-valued JS number an integer and decide how a float with an integral value (`2.0`) is spelled, since
   JavaScript cannot tell them apart.
-- **CI.** The `node` job exists but has not run on GitHub, and has no Node LTS matrix or ESM/CJS consumer smoke
-  test yet (slice 7).
+- **CI.** Resolved: the `node` job ran green on GitHub and has the Node LTS runs and the ESM / CJS consumer smoke
+  test (slice 7).
 - **Binding names.** The package is private `logquill-node` for now; the registry names (`logquill`,
   `@logquill/native-<platform>`) are set when the SDK exists.
