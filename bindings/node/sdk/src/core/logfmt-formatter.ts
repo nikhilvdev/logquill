@@ -62,7 +62,8 @@ function scalar(value: unknown): string {
   if (typeof value === "boolean" || typeof value === "number" || typeof value === "bigint")
     return String(value);
   if (typeof value === "string") return quote(value);
-  if (value instanceof Date) return quote(value.toISOString());
+  // toISOString throws a RangeError on an invalid date; a log line must never fail on a value the caller handed in
+  if (value instanceof Date) return quote(Number.isNaN(value.getTime()) ? "Invalid Date" : value.toISOString());
   if (typeof value === "object") return quote(json(value));
   return quote(safeStr(value));
 }

@@ -43,7 +43,6 @@
   "files": [
     "dist",
     "js",
-    "pkg/logquill_wasm.js",
-    "pkg/logquill_wasm_bg.wasm"
+    "pkg/logquill_wasm.js"
   ]
 }

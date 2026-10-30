@@ -27,9 +27,12 @@ function loaded() {
   CAPTURE_ENV = raw.captureEnv();
 }
 
-/** Loads the module. `source` is a URL, a `Response`, bytes, or a `WebAssembly.Module`; omit it to fetch the file beside this one. */
+/**
+ * Loads the module. `source` is a URL, a `Response`, bytes, or a `WebAssembly.Module`; omit it to fetch `dist/logquill_wasm_bg.wasm`,
+ * the one copy the package ships (the SDK in `dist/` loads the same file).
+ */
 export async function init(source) {
-  await wasmInit(source === undefined ? undefined : { module_or_path: source });
+  await wasmInit({ module_or_path: source === undefined ? new URL("../dist/logquill_wasm_bg.wasm", import.meta.url) : source });
   loaded();
 }
 

@@ -32,8 +32,11 @@ ID, the Go module path. Claim the free names early with a placeholder release.
 
 ## 2. One version, many spellings
 
-One lockstep version, written in `Cargo.toml` (`[workspace.package] version`) and copied by a
-bump script into every manifest. A tag `vX.Y.Z` triggers the release.
+One lockstep version, written in `Cargo.toml` (`[workspace.package] version`) and copied into every manifest by hand: there
+is no bump script yet. `scripts/check-versions.py [vX.Y.Z]` fails if any of the ten manifests disagrees (it reads the Cargo,
+PyPI, npm, RubyGems, NuGet and Gradle spellings of the same version) and, given a tag, if the tag differs; CI runs it on every
+push, and a release job must run it with the tag first. Go and Swift take their version from the tag alone. A tag `vX.Y.Z`
+triggers the release.
 
 | Registry | Final | Release candidate | Notes |
 |---|---|---|---|
@@ -253,8 +256,8 @@ Bun example with the import left as written. For the page example, serve `node_m
 the page's console shows `"password":"***"`.
 **Undo:** `npm deprecate @logquill/wasm@3.0.0 "message"`; unpublishing has the limits in section 7.
 
-**Known wart:** the tarball carries the module twice (`pkg/` for `./core`, `dist/` for the SDK), about 320 KB gzipped
-each. Fold them into one before the first publish if install size matters.
+The tarball carries the module once (`dist/logquill_wasm_bg.wasm`); `./core` loads it from there by default, and `pack-smoke`
+fails if a second copy ships.
 
 ## 8. JVM and Android — Maven Central
 

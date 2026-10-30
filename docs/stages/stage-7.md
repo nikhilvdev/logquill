@@ -6,7 +6,7 @@ plus a small SDK for the parts a browser can do (console, beacon, stack-based sp
 Plan: `docs/rust-core-plan.md` (sections 3 and 5, Stage 7). Spec: `docs/spec/07-adapters-instrumentation-bridges.md`
 ("Browser build"). Code: `bindings/wasm/`.
 
-## Status: complete (all five slices); CI job written, not yet run on GitHub
+## Status: complete (all five slices); the `wasm` CI job is green on GitHub (Ubuntu and macOS)
 
 Branch `feat/stage-7-wasm`, cut from `develop` after Stage 6 (PR #33) merged. Nothing here is committed or pushed.
 
@@ -164,9 +164,9 @@ Corpus passes in headless browser, Deno and Workers; the "no Node built-ins" tes
 
 ## Open points
 
-- **The module ships twice in the tarball** (`pkg/` for `./core`, `dist/` for the SDK), about 320 KB gzipped each. Fold
-  into one before the first publish.
-- **CI has not run on GitHub.** The Linux `wasm-bindgen` binary and Chrome's sandbox under CI are the untested parts.
+- **The module ships once** (fixed in Stage 9): `./core` now defaults to `dist/logquill_wasm_bg.wasm`, the file the SDK loads, and
+  `pkg/logquill_wasm_bg.wasm` is no longer in the tarball; `pack-smoke` fails if two `.wasm` files ship.
+- **CI** ran on GitHub with the Stage 8 pull request (PRs #34, #35): the `wasm` job passed on Ubuntu and macOS, including the pinned `wasm-bindgen` download and headless Chrome. Windows is not in the matrix.
 - **Not tested:** Firefox and Safari; a deployed Worker (workerd locally is the same engine).
 - **The glue is written twice** (napi in `bindings/node`, wasm-bindgen here); the shared corpus catches drift, but it
   is a cost every new core function pays.

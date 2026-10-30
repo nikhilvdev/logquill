@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -197,6 +198,65 @@ func TestRedactionHappensBeforeAnythingIsWritten(t *testing.T) {
 	}
 	if meta := s.records(t)[0]["meta"].(map[string]any); meta["password"] != "***" {
 		t.Fatalf("meta = %v", meta)
+	}
+}
+
+func TestARotatingFileTransportKeepsBackupCountFilesAndLosesNoRecentLine(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "app.log")
+	file, err := logquill.NewRotatingFileTransport(path, 100, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 12; i++ { // 12 lines of 29 bytes each: rotates every 4th line
+		if err := file.Write(logquill.Info, []byte(fmt.Sprintf(`{"message":"line-%02d-xxxxxxxxxxx"}`, i))); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := file.Close(); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{path, path + ".1", path + ".2"} {
+		if _, err := os.Stat(name); err != nil {
+			t.Errorf("%s is missing: %v", name, err)
+		}
+	}
+	if _, err := os.Stat(path + ".3"); err == nil {
+		t.Error("a third backup was kept with backupCount 2")
+	}
+	last, _ := os.ReadFile(path + ".1")
+	if !strings.Contains(string(last), "line-11-") {
+		t.Errorf("the newest rotated file does not end with the newest line: %q", last)
+	}
+	if _, err := logquill.NewRotatingFileTransport(path, -1, 0); err == nil || !strings.Contains(err.Error(), "at least 0") {
+		t.Errorf("a negative size was accepted or its error is not actionable: %v", err)
+	}
+}
+
+func TestSamplingRateLimitAndAdaptiveSamplingRunInTheCore(t *testing.T) {
+	kept := func(plugin logquill.Plugin, message string, n int, level func(*logquill.Logger, string) bool) int {
+		log := newLogger(t, logquill.WithPlugins(plugin))
+		count := 0
+		for i := 0; i < n; i++ {
+			if level(log, message) {
+				count++
+			}
+		}
+		return count
+	}
+	info := func(l *logquill.Logger, m string) bool { return l.Info(m) }
+	errorLevel := func(l *logquill.Logger, m string) bool { return l.Error(m) }
+	if n := kept(logquill.Sampling(0), "m", 200, info); n != 0 {
+		t.Errorf("rate 0 kept %d", n)
+	}
+	if n := kept(logquill.Sampling(1), "m", 200, info); n != 200 {
+		t.Errorf("rate 1 kept %d", n)
+	}
+	if n := kept(logquill.RateLimit(3, 60, "message"), "m", 10, info); n != 3 {
+		t.Errorf("rate limit kept %d, want 3", n)
+	}
+	adaptive := logquill.AdaptiveSampling(logquill.AdaptiveOptions{BaseRate: 0.0001, MinRate: 0.0001, MaxRate: 0.0001})
+	if n := kept(adaptive, "m", 200, errorLevel); n != 200 {
+		t.Errorf("adaptive sampling dropped errors: kept %d", n)
 	}
 }
 

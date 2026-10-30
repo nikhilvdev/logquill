@@ -119,6 +119,24 @@ class LoggerTest < Minitest::Test
     end
   end
 
+  def test_sampling_rate_limit_and_adaptive_sampling_run_in_the_core
+    kept = ->(plugin, message = "m", n: 200, level: :info) do
+      log = Logquill::Logger.new(plugins: [plugin])
+      Array.new(n) { log.public_send(level, message) }.count(true)
+    end
+    assert_equal 0, kept.call(Logquill::Plugins.sampling(rate: 0))
+    assert_equal 200, kept.call(Logquill::Plugins.sampling(rate: 1))
+    assert_equal 3, kept.call(Logquill::Plugins.rate_limit(max_records: 3, per_seconds: 60, key: "message"), n: 10)
+    adaptive = Logquill::Plugins.adaptive_sampling(base_rate: 0, min_rate: 0, max_rate: 0)
+    assert_equal 0, kept.call(adaptive)
+    assert_equal 200, kept.call(adaptive, level: :error)
+  end
+
+  def test_a_misspelt_plugin_option_is_rejected_with_the_cores_message
+    error = assert_raises(Logquill::Error) { Logquill::Logger.new(plugins: [{ type: "sampling", rte: 0.5 }]) }
+    assert_match(/unknown option 'rte'/, error.message)
+  end
+
   def test_the_level_filters_and_a_child_shares_it
     with_log(level: :warn) do |log, _|
       refute log.info("below")

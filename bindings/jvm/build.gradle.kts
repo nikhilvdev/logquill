@@ -59,3 +59,12 @@ tasks.test {
     systemProperty("jna.library.path", rootProject.file("../../target/release").absolutePath)
     testLogging { events("failed", "skipped"); showExceptions = true; exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }
+
+// per-call cost of the JNA layer: `cargo build -p logquill-ffi --release && gradle bench`
+tasks.register<JavaExec>("bench") {
+    group = "verification"
+    description = "Times a log call, a filtered call and a helper call through JNA."
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("examples.Bench")
+    systemProperty("jna.library.path", rootProject.file("../../target/release").absolutePath)
+}

@@ -4,7 +4,7 @@ Goal: LogQuill from Go, the JVM, Swift, .NET and Ruby, on the Rust core, through
 `docs/rust-core-plan.md` (section 5 "Language tiers", Stage 8). Code: `crates/logquill-ffi/` and `bindings/<language>/`.
 Publishing: `docs/publishing.md` sections 8 to 12.
 
-## Status: complete locally (all seven slices); CI jobs written, not yet run on GitHub
+## Status: complete (slices 1 to 7 done, slice 8 partly); the CI jobs ran on GitHub and are green on Ubuntu and macOS
 
 Branch `feat/stage-8-ffi`, cut from the Stage 7 work. Nothing here is committed or pushed.
 
@@ -21,7 +21,7 @@ supports*, *install from the registry into a clean project works* and *the READM
   substitute used for every language is the one Stages 6 and 7 used: pack the real artefact (gem, NuGet package, jar, XCFramework
   package, Go module), install it into an empty project from a local source, use it by name with `LOGQUILL_LIB` unset.
 - **README example run in CI:** every README example is a real file that is run, and each test suite checks the README contains
-  it verbatim. The CI jobs for them are written and have never run on GitHub (needs a push).
+  it verbatim. The CI jobs for them ran on GitHub with PRs #34 and #35 and passed on Ubuntu and macOS (after two fixes to the workflow: a user-install for gems, and Go on macOS).
 - **Every OS the platform supports:** only macOS arm64 was run. The CI matrix adds Linux; Windows is untried.
 
 ## Slices
@@ -85,7 +85,8 @@ supports*, *install from the registry into a clean project works* and *the READM
 ## Found along the way
 
 - A shared-core gap: the lenient JSON reader (`NaN` / `Infinity`) existed only as copies in the Node and WASM glue. It is now in
-  `logquill-core` (`parse_lenient`, with tests) and used by the FFI; the two older copies are left alone.
+  `logquill-core` (`parse_lenient`, with tests) and used by the FFI, the Node addon and the WASM module (the two older copies
+  were removed in Stage 9; both corpora still pass 913 / 913).
 - Ruby, .NET, Go, Swift and the JVM each had a "never raises" bug the test for it caught: Ruby binary strings in `meta`; Swift's
   `JSONSerialization` raising an uncatchable Objective-C exception; .NET getters that throw and lone surrogates.
 - `wasm-opt` (Stage 7) and XCTest (here) are both unavailable or unusable in this environment; each decision is recorded where it
@@ -93,8 +94,8 @@ supports*, *install from the registry into a clean project works* and *the READM
 
 ## Open points
 
-- **CI has not run on GitHub.** The Linux runs, Windows, `net8.0`, `xcodebuild -create-xcframework` and every other runner's native
-  library are untested here.
+- **CI** ran on Ubuntu and macOS and passed (`ffi`, `ruby`, `dotnet`, `go`, `swift`, `jvm`), which covers Linux and
+  `xcodebuild -create-xcframework`. `net8.0` is still compile-checked only (the tests run on `net10.0`). **Windows** is not in the matrix and has never run.
 - **No registry publishing.** The licence is undecided; Maven's group ID `io.logquill` is a placeholder; the Go module needs
   `core.wasm` committed at the tag (untracked day to day); the Swift binary target needs a zipped multi-platform XCFramework and
   checksum.
@@ -106,5 +107,14 @@ supports*, *install from the registry into a clean project works* and *the READM
   `Plugins.*` helpers in the five language wrappers (the config JSON can carry them already), and docs in each README.
 - **Not in any medium-tier binding:** HTTP, cloud and database transports, standard logging bridges (`log/slog`, SLF4J, `swift-log`,
   `Microsoft.Extensions.Logging`, Ruby's `Logger`), framework adapters and SDK patching, Android, iOS and Windows builds.
-- **Go's file transport does not rotate**; the Rust file transport (the other bindings) does.
-- **The JNA call overhead** and the other bindings' per-call costs were not benchmarked; only Go's was (the plan asked to measure it first).
+- **Go's file transport** rotates by size (`NewRotatingFileTransport`, Stage 9) but does not compress rotated files; the Rust file
+  transport used by the other bindings also offers `gz` / `zip`.
+- **Per-call cost** was measured for Go (`go test -bench`) and the JVM (`gradle bench`, Stage 9), on the build machine:
+
+  | | log call (redact + PII) | call below the level | stateless helper |
+  |---|---|---|---|
+  | Go (wazero) | 6.0 µs | 1.3 µs | 1.6 µs |
+  | JVM (JNA, Jackson) | 7.0 µs | 4.9 µs | 3.4 µs |
+
+  The JVM filtered call is slow because the wrapper serialises `meta` to JSON before the call, so the level filter in Rust cannot
+  save that work. A check of the level in Java first would fix it; it is not done. Ruby, .NET and Swift were not benchmarked.

@@ -152,6 +152,23 @@ public class LoggerTests : IDisposable
     }
 
     [Fact]
+    public void Sampling_rate_limit_and_adaptive_sampling_run_in_the_core()
+    {
+        static int Kept(object plugin, string message, int n, Func<Logger, string, bool> call)
+        {
+            using var log = new Logger(new LoggerOptions { Plugins = { plugin } });
+            return Enumerable.Range(0, n).Count(_ => call(log, message));
+        }
+
+        Assert.Equal(0, Kept(PluginConfig.Sampling(0), "m", 200, (l, m) => l.Info(m)));
+        Assert.Equal(200, Kept(PluginConfig.Sampling(1), "m", 200, (l, m) => l.Info(m)));
+        Assert.Equal(3, Kept(PluginConfig.RateLimit(3, 60, "message"), "m", 10, (l, m) => l.Info(m)));
+        var adaptive = PluginConfig.AdaptiveSampling(baseRate: 0, minRate: 0, maxRate: 0);
+        Assert.Equal(0, Kept(adaptive, "m", 200, (l, m) => l.Info(m)));
+        Assert.Equal(200, Kept(adaptive, "m", 200, (l, m) => l.Error(m)));
+    }
+
+    [Fact]
     public void The_level_filters_and_a_child_shares_it()
     {
         using var log = new Logger(new LoggerOptions { Level = Level.Warn });

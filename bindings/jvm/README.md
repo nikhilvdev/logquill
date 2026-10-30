@@ -53,7 +53,8 @@ records are written on a background thread, and `close()` is what waits for them
   cycle, a bean whose getter throws or an `Instant` is turned into JSON or text, and a failure is written to standard error.
 - `log.child("db", Map.of("component", "pg"))` is a logger named `web.db` with that meta on every record, sharing the level and
   transports. `log.setLevel(Level.ERROR)` changes it for the logger, its parent and its children.
-- `Plugins.redact()` / `Plugins.redact(keys, classes, replacement)` and `Plugins.pii()` run in Rust, in order.
+- `Plugins.redact()` / `Plugins.redact(keys, classes, replacement)`, `Plugins.pii()`, `Plugins.sampling(rate)`,
+  `Plugins.rateLimit(maxRecords, perSeconds, key)` and `Plugins.adaptiveSampling(options)` run in Rust, in order.
   `contentPolicy` is `off` (the default: prompt, completion and tool content is withheld), `hash`, `truncate` or `full`.
   `tamperEvident(true)` chains each record as it is written; check a log file with `Core.verifyChain`.
 - `Transports.console(...)` and `Transports.file(path, ...)` are written by Rust on a background thread. A `HostTransport` is
@@ -89,8 +90,7 @@ try (Chain chain = new Chain()) {
 
 The medium-tier bindings ship the facade, context, console / file transports and Java transports. Not here: HTTP, cloud and
 database transports (write a `HostTransport`), SLF4J / Log4j / `java.util.logging` bridges, Kotlin extensions, framework
-adapters, and the stateful plugins (sampling, rate limiting, adaptive sampling, the flight recorder, the run summary): the C ABI's
-first logger config does not carry them. Host-language *plugins* that change a record are not possible either: the Rust
+adapters, and tail sampling, the flight recorder and the run summary (the C ABI does not carry them yet). Host-language *plugins* that change a record are not possible either: the Rust
 transports have written it by the time Java sees it; use a `HostTransport` to act on a record.
 
 ## Build and test

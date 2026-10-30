@@ -28,3 +28,30 @@ earlier releases is kept in `docs/legacy/python/CHANGELOG.md` (Python 0.3.0–2.
   the trace-tree builder, the sampling, rate-limit, adaptive-sampling, flight-recorder,
   run-summary and alert-dedupe state machines, and the log-call pipeline, which withholds a
   record when a redactor fails. All of it passes the shared corpus.
+- Added: `logquill-runtime`, the threads, files and sockets around the core: a bounded queue and one worker thread with
+  `drop_oldest`, `drop_newest` and `block`, restart after `fork`, the console and rotating file transports (size rotation,
+  `gz` / `zip` compression, Fernet encryption), batched HTTP, Datadog, New Relic, Elasticsearch and Application Insights
+  sinks, syslog, SQLite, OTLP traces and logs, Slack / PagerDuty / email alerting, StatsD / pushgateway / OTLP metrics, and
+  level file and environment watchers.
+- Added: the `logquill` command with `tail`, `trace`, `dev`, `serve` and `verify`, and the embedded local trace viewer.
+- Added: the Python binding (`bindings/python`), a compiled `abi3` wheel on the Rust core. It keeps the 2.0.0 Python API and
+  differs from 2.0.0 only where a decision says so; see `docs/migrating/python-2-to-3.md`. Per-call latency is lower than 2.0.0.
+- Added: the Node binding and TypeScript SDK (`bindings/node`), a napi-rs addon with a WebAssembly fallback, at parity with the
+  Python package; see `docs/migrating/js-1-to-3.md`. Node 22 or later.
+- Added: the browser and edge build (`bindings/wasm`): the core as a WebAssembly module (320 KB gzipped), with the SDK built for
+  browsers. The shared corpus passes in Node, Deno, Bun, headless Chrome and Cloudflare Workers.
+- Added: a stable C ABI (`crates/logquill-ffi`, header `include/logquill.h`) and bindings built on it for Ruby (`ffi` gem), .NET
+  (P/Invoke), Go (WebAssembly through wazero, no cgo), Swift (an XCFramework) and the JVM (JNA). Each has a README example that
+  is run by its tests. The logger config accepts the `redact`, `pii`, `sampling`, `rate_limit` and `adaptive_sampling` plugins.
+- Added: `parse_lenient` in `logquill-core`, the reader that accepts `NaN` and `Infinity`.
+- Changed: the core's `regex` dependency no longer enables its default features; the `regex-perf` feature (on by default) and
+  `regex-perf-web` choose how much speed to trade for module size.
+- Changed (against Python 2.0.0): dispatch is queued by default, the tamper chain is made at write time, a failing redaction
+  plugin drops the record, `RedactPlugin` matches keys at every depth, and JSON lines are UTF-8. The full list is in
+  `docs/migrating/python-2-to-3.md`.
+- Fixed: `LogfmtFormatter` in the Node SDK threw a `RangeError` when `meta` held an invalid `Date`; it now writes `Invalid Date`.
+- Added: `Plugins` / `PluginConfig` builders for `sampling`, `rate_limit` and `adaptive_sampling` in the Ruby, .NET, Go, Swift and
+  JVM bindings; `NewRotatingFileTransport` in Go; `scripts/check-versions.py`; and migration guides for Python 2.x and JS 1.x.
+- Changed: the browser package ships its WebAssembly module once instead of twice.
+- Not yet: tail sampling, the flight recorder, the run summary and alert de-duplication are not available through the C ABI.
+  Nothing is published to any registry, and the licence is undecided.

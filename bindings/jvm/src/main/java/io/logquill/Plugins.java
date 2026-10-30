@@ -46,4 +46,40 @@ public final class Plugins {
         }
         return plugin;
     }
+
+    /** Keeps about {@code rate} (0 to 1) of the records, chosen at random. */
+    public static Map<String, Object> sampling(double rate) {
+        Map<String, Object> plugin = new LinkedHashMap<>();
+        plugin.put("type", "sampling");
+        plugin.put("rate", rate);
+        return plugin;
+    }
+
+    /**
+     * Drops records once more than {@code maxRecords} share a key inside {@code perSeconds}. {@code key} is
+     * {@code logger_level} (null: the default), {@code logger} or {@code message}.
+     */
+    public static Map<String, Object> rateLimit(int maxRecords, double perSeconds, String key) {
+        Map<String, Object> plugin = new LinkedHashMap<>();
+        plugin.put("type", "rate_limit");
+        plugin.put("max_records", maxRecords);
+        plugin.put("per_seconds", perSeconds);
+        if (key != null) {
+            plugin.put("key", key);
+        }
+        return plugin;
+    }
+
+    /**
+     * Keeps errors and slow spans, samples the rest at a rate that follows demand, and caps the bytes written per window.
+     * {@code options} holds any of {@code base_rate}, {@code min_rate}, {@code max_rate}, {@code keep_at}, {@code slow_ms},
+     * {@code max_bytes_per_second} and {@code window_seconds}; what is left out keeps the core's default, and a misspelt name is
+     * rejected when the logger is built.
+     */
+    public static Map<String, Object> adaptiveSampling(Map<String, Object> options) {
+        Map<String, Object> plugin = new LinkedHashMap<>();
+        plugin.put("type", "adaptive_sampling");
+        plugin.putAll(options);
+        return plugin;
+    }
 }

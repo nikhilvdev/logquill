@@ -55,9 +55,12 @@ This prints two JSON lines. In the first, `password` is `"***"` and the address 
 - `Redact(keys, classes, replacement)` and `PII(replacement)` run in the core, in order. `WithContentPolicy` is `off` (the
   default: prompt, completion and tool content is withheld), `hash`, `truncate` or `full`. `WithTamperEvident()` chains each
   record as it is written; check a log with `logquill.VerifyChain`.
-- A `Transport` is `Write(level Level, line []byte) error` (and optionally `Flush`/`Close`). `NewConsoleTransport` and
-  `NewFileTransport` are included; the file one appends and does not rotate (use `logrotate` and `Reopen`). Records reach a
+- A `Transport` is `Write(level Level, line []byte) error` (and optionally `Flush`/`Close`). `NewConsoleTransport`,
+  `NewFileTransport` (appends; use `logrotate` and `Reopen`) and `NewRotatingFileTransport(path, maxBytes, backupCount)` (rotates by
+  size to `path.1`, `path.2`, ...; no compression) are included. Records reach a
   transport one at a time, in chain order, after the host plugins.
+- `Redact`, `PII`, `Sampling(rate)`, `RateLimit(maxRecords, perSeconds, key)` and `AdaptiveSampling(AdaptiveOptions)` are `Plugin`s that run
+  in the core, in order.
 - A `HostPlugin` is `func(record map[string]any) map[string]any`: it sees the record after the core's pipeline (after
   redaction), may change it, and returns `nil` to drop it. Numbers arrive as `json.Number`, keeping their spelling.
 - Close a logger when done; a logger's children keep its resources alive until they are closed too. A `Logger` is safe for
@@ -81,9 +84,7 @@ instance (its own memory, its own lock), so loggers do not wait on each other; c
 ## Not in this module (yet)
 
 The medium-tier bindings ship the facade, console / file transports and host plugins. Not here: HTTP, cloud and database
-transports (write a `Transport`), `log/slog` and `context.Context` integration, rotation in the file transport, and the
-stateful plugins (sampling, rate limiting, adaptive sampling, the flight recorder, the run summary): the C ABI's first logger
-config does not carry them.
+transports (write a `Transport`), `log/slog` and `context.Context` integration, compression of rotated files, and tail sampling, the flight recorder and the run summary (the C ABI does not carry them yet).
 
 ## Build and test
 

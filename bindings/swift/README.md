@@ -39,7 +39,8 @@ written on a background thread.
   `JSONSerialization` would raise an Objective-C exception that Swift cannot catch.
 - `log.child("db", ["component": "pg"])` is a logger named `web.db` with that meta on every record, sharing the level and
   transports. `log.setLevel(.error)` changes it for the logger, its parent and its children.
-- `Plugins.redact(keys:classes:replacement:)` and `Plugins.pii(replacement:)` run in Rust, in order. `contentPolicy` is `off`
+- `Plugins.redact(keys:classes:replacement:)`, `pii(replacement:)`, `sampling(rate:)`, `rateLimit(maxRecords:perSeconds:key:)` and
+  `adaptiveSampling(...)` run in Rust, in order. `contentPolicy` is `off`
   (the default: prompt, completion and tool content is withheld), `hash`, `truncate` or `full`. `tamperEvident = true` chains each
   record as it is written; check a log file with `LogQuillCore.verifyChain`.
 - `transports` (`Transports.console(...)`, `Transports.file(path:...)`) are written by Rust on a background thread.
@@ -75,9 +76,7 @@ try LogQuillCore.verifySignedChain(json, key: key, signature: try chain.signHead
 ## Not in this package (yet)
 
 The medium-tier bindings ship the facade, context, console / file transports and Swift transports. Not here: HTTP, cloud and
-database transports (write a `HostTransport`), `swift-log` and `OSLog` integration, framework adapters, and the stateful
-plugins (sampling, rate limiting, adaptive sampling, the flight recorder, the run summary): the C ABI's first logger config does
-not carry them. Host-language *plugins* that change a record are not possible either: the Rust transports have written it by
+database transports (write a `HostTransport`), `swift-log` and `OSLog` integration, framework adapters, and tail sampling, the flight recorder and the run summary (the C ABI does not carry them yet). Host-language *plugins* that change a record are not possible either: the Rust transports have written it by
 the time Swift sees it; use a `HostTransport` to act on a record. The XCFramework built here is for the machine's own
 architecture on macOS; a release builds the other Apple platforms and architectures.
 

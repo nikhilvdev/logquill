@@ -334,3 +334,14 @@ jobs:
       - run: gradle --no-daemon test
         working-directory: bindings/jvm
       - run: bindings/jvm/scripts/pack-smoke.sh
+
+  # one lockstep version in every manifest (docs/rust-core-plan.md, section 7); a release job runs it again with the tag
+  versions:
+    name: manifest versions agree
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 scripts/check-versions.py

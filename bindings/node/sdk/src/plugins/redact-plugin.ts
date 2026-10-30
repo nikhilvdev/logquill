@@ -1,13 +1,14 @@
 import { nativeAddon } from "#native";
 import type { KeyRedactor as NativeKeyRedactor } from "../../../index.js";
 import type { Plugin } from "../core/plugin.js";
+import type { FieldClass } from "../core/privacy.js";
+
+export type { FieldClass };
 import type { LogRecord } from "../core/records.js";
 
 /** `meta` keys (case-insensitive) `RedactPlugin` replaces by default. */
 export const DEFAULT_REDACTED_KEYS: readonly string[] = ["password", "token", "secret", "api_key", "authorization"];
 
-/** A class of sensitive field: its well-known keys can be redacted by class instead of listed one by one. */
-export type FieldClass = "secret" | "pii" | "content";
 
 /** Options for {@link RedactPlugin}. */
 export interface RedactPluginOptions {

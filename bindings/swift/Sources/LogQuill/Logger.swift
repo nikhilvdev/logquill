@@ -39,6 +39,35 @@ public enum Plugins {
         if let replacement { plugin["replacement"] = replacement }
         return plugin
     }
+
+    /// Keeps about `rate` (0 to 1) of the records, chosen at random.
+    public static func sampling(rate: Double) -> [String: Any] {
+        ["type": "sampling", "rate": rate]
+    }
+
+    /// Drops records once more than `maxRecords` share a key inside `perSeconds`. `key` is "logger_level" (the default), "logger" or "message".
+    public static func rateLimit(maxRecords: Int, perSeconds: Double, key: String? = nil) -> [String: Any] {
+        var plugin: [String: Any] = ["type": "rate_limit", "max_records": maxRecords, "per_seconds": perSeconds]
+        if let key { plugin["key"] = key }
+        return plugin
+    }
+
+    /// Keeps errors and slow spans, samples the rest at a rate that follows demand, and caps the bytes written per window.
+    /// An option left nil keeps the core's default.
+    public static func adaptiveSampling(
+        baseRate: Double? = nil, minRate: Double? = nil, maxRate: Double? = nil, keepAt: String? = nil,
+        slowMs: Double? = nil, maxBytesPerSecond: Int? = nil, windowSeconds: Double? = nil
+    ) -> [String: Any] {
+        var plugin: [String: Any] = ["type": "adaptive_sampling"]
+        if let baseRate { plugin["base_rate"] = baseRate }
+        if let minRate { plugin["min_rate"] = minRate }
+        if let maxRate { plugin["max_rate"] = maxRate }
+        if let keepAt { plugin["keep_at"] = keepAt }
+        if let slowMs { plugin["slow_ms"] = slowMs }
+        if let maxBytesPerSecond { plugin["max_bytes_per_second"] = maxBytesPerSecond }
+        if let windowSeconds { plugin["window_seconds"] = windowSeconds }
+        return plugin
+    }
 }
 
 /// Builders for ``LoggerOptions/transports``: transports written by Rust on a background thread.

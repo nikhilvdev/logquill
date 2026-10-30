@@ -20,9 +20,10 @@ const [packed] = JSON.parse(run("npm", ["pack", "--json", "--pack-destination", 
 const files = packed.files.map((f) => f.path);
 const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 
-const allowed = [/^package\.json$/, /^README\.md$/, /^dist\//, /^js\/index\.mjs$/, /^pkg\/logquill_wasm(_bg)?\.(js|wasm)$/];
+const allowed = [/^package\.json$/, /^README\.md$/, /^dist\//, /^js\/index\.mjs$/, /^pkg\/logquill_wasm\.js$/];
 const stray = files.filter((f) => !allowed.some((pattern) => pattern.test(f)));
 if (stray.length > 0) fail(`files that should not ship: ${stray.join(", ")}`);
+if (files.filter((f) => f.endsWith(".wasm")).length !== 1) fail(`the module must ship exactly once, found: ${files.filter((f) => f.endsWith(".wasm")).join(", ")}`);
 
 const targets = (value) => (typeof value === "string" ? [value] : Object.values(value).flatMap(targets));
 for (const target of targets(manifest.exports)) {

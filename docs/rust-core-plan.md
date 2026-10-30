@@ -415,12 +415,12 @@ stage tags 3.0.0. The first two stages are broken down into ordered work package
 - Exit: corpus passes in headless browser, Deno and Workers; the "no Node built-ins"
   test is kept.
 
-**Stage 8 — Medium tier, in expected order of demand** — done locally (CI unrun), see `docs/stages/stage-8.md`
+**Stage 8 — Medium tier, in expected order of demand** — done, CI green on Ubuntu and macOS, see `docs/stages/stage-8.md`
 - `logquill-ffi`, then Go, JVM, Swift, .NET, Ruby.
 - Exit per language: corpus green on every OS the platform supports; install from the
   registry into a clean project works; the README example is run in CI.
 
-**Stage 9 — Docs and 3.0.0**
+**Stage 9 — Docs and 3.0.0** — documentation done, release waiting on decisions; see `docs/stages/stage-9.md`
 - Migration guides (Python 2.x → 3.0, JS 1.x → 3.0), docs regenerated, one changelog,
   contract-table version bumped everywhere together, release checklist below.
 

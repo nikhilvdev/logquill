@@ -78,6 +78,20 @@ public static class PluginConfig
     /// <summary>Masks emails, card numbers, phone numbers, SSNs and API keys inside any string of the record's meta.</summary>
     public static object Pii(string? replacement = null) => Build("pii", ("replacement", replacement));
 
+    /// <summary>Keeps about <paramref name="rate"/> (0 to 1) of the records, chosen at random.</summary>
+    public static object Sampling(double rate) => Build("sampling", ("rate", rate));
+
+    /// <summary>Drops records once more than <paramref name="maxRecords"/> share a key inside <paramref name="perSeconds"/>. <paramref name="key"/> is "logger_level" (the default), "logger" or "message".</summary>
+    public static object RateLimit(int maxRecords, double perSeconds, string? key = null) =>
+        Build("rate_limit", ("max_records", maxRecords), ("per_seconds", perSeconds), ("key", key));
+
+    /// <summary>Keeps errors and slow spans, samples the rest at a rate that follows demand, and caps the bytes written per window. An option left null keeps the core's default.</summary>
+    public static object AdaptiveSampling(
+        double? baseRate = null, double? minRate = null, double? maxRate = null, string? keepAt = null,
+        double? slowMs = null, long? maxBytesPerSecond = null, double? windowSeconds = null) =>
+        Build("adaptive_sampling", ("base_rate", baseRate), ("min_rate", minRate), ("max_rate", maxRate), ("keep_at", keepAt),
+            ("slow_ms", slowMs), ("max_bytes_per_second", maxBytesPerSecond), ("window_seconds", windowSeconds));
+
     internal static Dictionary<string, object?> Build(string type, params (string Key, object? Value)[] options)
     {
         var map = new Dictionary<string, object?> { ["type"] = type };

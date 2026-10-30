@@ -82,3 +82,4 @@ bindings/ruby/lib/logquill/native/
 bindings/go/core.wasm
 bindings/jvm/bin/
 bindings/wasm/.wrangler/
+docs-out/

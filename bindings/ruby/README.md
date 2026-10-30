@@ -40,7 +40,9 @@ written on a background thread.
   reported with `Kernel#warn`.
 - `log.child("db", component: "pg")` is a logger named `web.db` with that meta on every record, sharing the level and
   transports. `log.set_level(:error)` changes the level for the logger, its parent and its children.
-- `plugins:` are `{ type: "redact", keys:, classes:, replacement: }` and `{ type: "pii", replacement: }`, run in order in
+- `plugins:` are `{ type: "redact", keys:, classes:, replacement: }`, `{ type: "pii", replacement: }`, `{ type: "sampling", rate: }`,
+  `{ type: "rate_limit", max_records:, per_seconds:, key: }` and `{ type: "adaptive_sampling", ... }` (or build them with
+  `Logquill::Plugins.redact`, `.pii`, `.sampling(rate:)`, `.rate_limit(...)`, `.adaptive_sampling(...)`), run in order in
   Rust. `content_policy:` is `off` (the default: prompt, completion and tool content is withheld), `hash`, `truncate` or
   `full`. `tamper_evident: true` chains each record as it is written; check a log file with `Logquill.verify_chain`.
 - `transports:` takes Hashes for Rust transports (`{ type: "console", format: "json", colour: false }` or
@@ -76,8 +78,7 @@ Logquill.verify_signed_chain(records, "key", chain.sign_head("key"))   # also ca
 
 The medium-tier bindings ship the facade, context, console / file transports and Ruby transports. Not here: HTTP, cloud and
 database transports (write a Ruby transport), framework adapters and SDK patching, the standard-library `Logger` bridge,
-and the stateful plugins (sampling, rate limiting, adaptive sampling, the flight recorder, the run summary): the C ABI's
-first logger config does not carry them. Host-language *plugins* that change a record are not possible either: the Rust
+and tail sampling, the flight recorder and the run summary (the C ABI does not carry them yet). Host-language *plugins* that change a record are not possible either: the Rust
 transports have written it by the time Ruby sees it; use a Ruby transport to act on a record.
 
 ## Build and test

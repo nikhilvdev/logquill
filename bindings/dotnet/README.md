@@ -40,7 +40,8 @@ spells them. Call `Close()` (or `Flush()`) before the process ends: records are 
   text, and a failure is written to standard error.
 - `log.Child("db", new { Component = "pg" })` is a logger named `web.db` with that meta on every record, sharing the level
   and transports. `log.SetLevel(Level.Error)` changes it for the logger, its parent and its children.
-- `PluginConfig.Redact(keys, classes, replacement)` and `PluginConfig.Pii(replacement)` run in Rust, in order.
+- `PluginConfig.Redact(keys, classes, replacement)`, `Pii(replacement)`, `Sampling(rate)`, `RateLimit(maxRecords, perSeconds, key)` and
+  `AdaptiveSampling(...)` run in Rust, in order.
   `ContentPolicy` is `off` (the default: prompt, completion and tool content is withheld), `hash`, `truncate` or `full`.
   `TamperEvident = true` chains each record as it is written; check a log file with `Core.VerifyChain`.
 - `Transports` (`TransportConfig.Console(...)`, `TransportConfig.File(path, ...)`) are written by Rust on a background
@@ -75,9 +76,7 @@ Core.VerifySignedChain(json, key, chain.SignHead(key));                      // 
 ## Not in this package (yet)
 
 The medium-tier bindings ship the facade, context, console / file transports and .NET transports. Not here: HTTP, cloud and
-database transports (write an `ITransport`), `Microsoft.Extensions.Logging` integration, framework adapters, and the
-stateful plugins (sampling, rate limiting, adaptive sampling, the flight recorder, the run summary): the C ABI's first
-logger config does not carry them. Host-language *plugins* that change a record are not possible either: the Rust
+database transports (write an `ITransport`), `Microsoft.Extensions.Logging` integration, framework adapters, and tail sampling, the flight recorder and the run summary (the C ABI does not carry them yet). Host-language *plugins* that change a record are not possible either: the Rust
 transports have written it by the time .NET sees it; use an `ITransport` to act on a record.
 
 ## Build and test

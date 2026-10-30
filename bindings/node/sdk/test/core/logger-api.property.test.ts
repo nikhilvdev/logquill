@@ -65,6 +65,12 @@ describe("formatters", () => {
     );
   });
 
+  it("LogfmtFormatter writes an invalid Date as text instead of throwing (CI counterexample, seed 900422219)", () => {
+    const line = new LogfmtFormatter().format(record({ when: new Date(NaN), ok: new Date(0) }));
+    expect(line).toContain('when="Invalid Date"');
+    expect(line).toContain("ok=1970-01-01T00:00:00.000Z");
+  });
+
   it("a logfmt line is always exactly one line", () => {
     fc.assert(
       fc.property(fc.string(), adversarial, (message, meta) => {

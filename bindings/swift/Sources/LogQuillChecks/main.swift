@@ -149,6 +149,21 @@ test("redaction happens before the file is written") {
     equal((first?["meta"] as? [String: Any])?["password"] as? String, "***")
 }
 
+test("sampling, rate limit and adaptive sampling run in the core") {
+    func kept(_ plugin: [String: Any], _ n: Int = 200, error: Bool = false) throws -> Int {
+        var options = LoggerOptions()
+        options.plugins = [plugin]
+        let log = try Logger(options)
+        return (0..<n).filter { _ in error ? log.error("m") : log.info("m") }.count
+    }
+    equal(try kept(Plugins.sampling(rate: 0)), 0)
+    equal(try kept(Plugins.sampling(rate: 1)), 200)
+    equal(try kept(Plugins.rateLimit(maxRecords: 3, perSeconds: 60, key: "message"), 10), 3)
+    let adaptive = Plugins.adaptiveSampling(baseRate: 0, minRate: 0, maxRate: 0)
+    equal(try kept(adaptive), 0)
+    equal(try kept(adaptive, error: true), 200)
+}
+
 test("the level filters and a child shares it") {
     var options = LoggerOptions()
     options.level = .warn

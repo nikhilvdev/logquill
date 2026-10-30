@@ -138,6 +138,28 @@ class LogQuillTest {
         assertEquals("***", JSON.readTree(text.lines().findFirst().orElseThrow()).get("meta").get("password").asText());
     }
 
+    private static long kept(Map<String, Object> plugin, int n, boolean error) {
+        try (Logger log = new Logger(LoggerOptions.builder().plugin(plugin).build())) {
+            long count = 0;
+            for (int i = 0; i < n; i++) {
+                if (error ? log.error("m") : log.info("m")) {
+                    count++;
+                }
+            }
+            return count;
+        }
+    }
+
+    @Test
+    void samplingRateLimitAndAdaptiveSamplingRunInTheCore() {
+        assertEquals(0, kept(Plugins.sampling(0), 200, false));
+        assertEquals(200, kept(Plugins.sampling(1), 200, false));
+        assertEquals(3, kept(Plugins.rateLimit(3, 60, "message"), 10, false));
+        Map<String, Object> adaptive = Plugins.adaptiveSampling(Map.of("base_rate", 0, "min_rate", 0, "max_rate", 0));
+        assertEquals(0, kept(adaptive, 200, false));
+        assertEquals(200, kept(adaptive, 200, true));
+    }
+
     @Test
     void theLevelFiltersAndAChildSharesIt() {
         try (Logger log = new Logger(LoggerOptions.builder().level(Level.WARN).build())) {

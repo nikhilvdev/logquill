@@ -25,48 +25,9 @@ use napi::{Error, Result};
 use napi_derive::napi;
 use serde_json::Value;
 
-/// Rewrites the bare words `NaN`, `Infinity` and `-Infinity` (which Python's `json` writes and
-/// `serde_json` refuses) to the overflowing literals `1e999` / `-1e999`, which read as the same
-/// non-finite value. Words inside string literals are left alone. `JSON.stringify` never writes
-/// these words; this is for text produced by Python or by the shared corpus.
-fn lenient(text: &str) -> std::borrow::Cow<'_, str> {
-    if !text.contains("NaN") && !text.contains("Infinity") {
-        return std::borrow::Cow::Borrowed(text);
-    }
-    let mut out = String::with_capacity(text.len());
-    let (mut in_string, mut escaped) = (false, false);
-    let mut rest = text;
-    while let Some(c) = rest.chars().next() {
-        if in_string {
-            out.push(c);
-            (in_string, escaped) = match (escaped, c) {
-                (true, _) => (true, false),
-                (false, '\\') => (true, true),
-                (false, '"') => (false, false),
-                _ => (true, false),
-            };
-            rest = &rest[c.len_utf8()..];
-        } else if c == '"' {
-            in_string = true;
-            out.push(c);
-            rest = &rest[1..];
-        } else if let Some(tail) = rest.strip_prefix("-Infinity") {
-            out.push_str("-1e999");
-            rest = tail;
-        } else if let Some(tail) = rest.strip_prefix("Infinity").or(rest.strip_prefix("NaN")) {
-            out.push_str("1e999");
-            rest = tail;
-        } else {
-            out.push(c);
-            rest = &rest[c.len_utf8()..];
-        }
-    }
-    std::borrow::Cow::Owned(out)
-}
-
 /// Parses `text` as JSON, keeping every number's own spelling.
 pub(crate) fn parse(text: &str, what: &str) -> Result<Value> {
-    serde_json::from_str(&lenient(text)).map_err(|e| {
+    core::parse_lenient(text).map_err(|e| {
         Error::from_reason(format!(
             "{what} is not valid JSON ({e}) — pass the output of JSON.stringify"
         ))

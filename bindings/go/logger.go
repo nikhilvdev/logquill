@@ -75,6 +75,48 @@ func PII(replacement string) Plugin {
 	return p
 }
 
+// Sampling keeps about rate (0 to 1) of the records, chosen at random. Tail sampling is not available through the core's C ABI yet.
+func Sampling(rate float64) Plugin {
+	return Plugin{"type": "sampling", "rate": rate}
+}
+
+// RateLimit drops records once more than maxRecords share a key inside perSeconds. key is "logger_level" (the default, also
+// used for ""), "logger" or "message".
+func RateLimit(maxRecords int, perSeconds float64, key string) Plugin {
+	p := Plugin{"type": "rate_limit", "max_records": maxRecords, "per_seconds": perSeconds}
+	if key != "" {
+		p["key"] = key
+	}
+	return p
+}
+
+// AdaptiveOptions are the settings of AdaptiveSampling; a zero field keeps the core's default (base rate 0.1, minimum 0.01,
+// maximum 1, keep at ERROR, slow at 1000 ms, 100000 bytes per second, a 1 second window).
+type AdaptiveOptions struct {
+	BaseRate, MinRate, MaxRate float64
+	KeepAt                     string
+	SlowMs, WindowSeconds      float64
+	MaxBytesPerSecond          uint64
+}
+
+// AdaptiveSampling keeps errors and slow spans, samples the rest at a rate that follows demand, and caps the bytes written per
+// window.
+func AdaptiveSampling(o AdaptiveOptions) Plugin {
+	p := Plugin{"type": "adaptive_sampling"}
+	for k, v := range map[string]float64{"base_rate": o.BaseRate, "min_rate": o.MinRate, "max_rate": o.MaxRate, "slow_ms": o.SlowMs, "window_seconds": o.WindowSeconds} {
+		if v != 0 {
+			p[k] = v
+		}
+	}
+	if o.KeepAt != "" {
+		p["keep_at"] = o.KeepAt
+	}
+	if o.MaxBytesPerSecond != 0 {
+		p["max_bytes_per_second"] = o.MaxBytesPerSecond
+	}
+	return p
+}
+
 // HostPlugin is a plugin written in Go. It sees the record after the core's pipeline (so after redaction), may change it, and
 // returns nil to drop it. It runs before the Go transports. Because the record is re-encoded, its keys come out sorted.
 type HostPlugin func(record map[string]any) map[string]any
