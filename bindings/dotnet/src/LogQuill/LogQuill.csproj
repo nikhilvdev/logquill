@@ -12,12 +12,12 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- The NuGet package (see README): the managed assembly, plus runtimes/<rid>/native/ for each platform build -->
     <PackageId>LogQuill</PackageId>
-    <Version>3.0.0-dev.0</Version>
+    <Version>3.0.0-rc.1</Version>
     <Authors>Nikhil Arora</Authors>
     <Description>Structured, agent-aware logging for .NET on a Rust core: the same record shape, redaction and tamper-evident hash chain as the other LogQuill bindings.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/nikhilvdev/logquill</RepositoryUrl>
-    <!-- No licence is declared yet: the licence is an open decision (docs/rust-core-plan.md, section 8). -->
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 

@@ -1,7 +1,9 @@
 {
   "name": "@logquill/wasm",
-  "version": "3.0.0-dev.0",
-  "private": true,
+  "version": "3.0.0-rc.1",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/nikhilvdev/logquill.git", "directory": "bindings/wasm" },
+  "publishConfig": { "access": "public", "provenance": true },
   "description": "LogQuill for the browser, Deno, Bun and Workers: the Rust core (wasm32-unknown-unknown) and a small SDK on top of it.",
   "type": "module",
   "main": "./dist/browser.mjs",

@@ -5,9 +5,8 @@ and contract changes that 2.0 made (the same ones the Python package made in its
 guide lists both. Application code that only calls `logger.info(...)` and friends needs no change; what changes is what is on
 disk and on the wire, the Node version, and how the package is installed.
 
-> **Not released yet.** The 3.0 Node package (`bindings/node`) is built from the `develop` branch, is marked `private`, and
-> nothing is on npm. The platform packages for targets other than the build machine's have not been built. The licence of the
-> 3.0 line is undecided (`docs/rust-core-plan.md`, section 8). The 1.x package stays as it is in the `logquill-js` repository.
+> **Not released yet.** The 3.0 Node package (`bindings/node`) is built from the `develop` branch, is MIT licensed, and
+> nothing is on npm yet. The platform packages for targets other than the build machine's have not been built. The 1.x package stays as it is in the `logquill-js` repository.
 
 ## 1. Install and runtime
 

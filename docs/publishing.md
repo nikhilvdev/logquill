@@ -36,7 +36,10 @@ One lockstep version, written in `Cargo.toml` (`[workspace.package] version`) an
 is no bump script yet. `scripts/check-versions.py [vX.Y.Z]` fails if any of the ten manifests disagrees (it reads the Cargo,
 PyPI, npm, RubyGems, NuGet and Gradle spellings of the same version) and, given a tag, if the tag differs; CI runs it on every
 push, and a release job must run it with the tag first. Go and Swift take their version from the tag alone. A tag `vX.Y.Z`
-triggers the release.
+triggers `.github/workflows/release.yml`, which builds and publishes to every registry below (Maven Central as a bundle held for a
+manual release in the portal); `docs/stages/stage-9.md` lists the accounts, trusted publishers, secrets and variables it needs.
+The per-registry sections say what each step does and how to undo or verify it by hand. The one-time setup outside the repository
+(GitHub environments, trusted publishers, secrets) is `docs/release-setup.md`.
 
 | Registry | Final | Release candidate | Notes |
 |---|---|---|---|
@@ -231,7 +234,7 @@ window and only without dependants — **verify** the current rule.
 
 ## 7b. Browser, Deno, Bun and Workers — npm (`@logquill/wasm`)
 
-**Package:** `@logquill/wasm`, built from `bindings/wasm` (private until the licence is settled; README there). One
+**Package:** `@logquill/wasm`, built from `bindings/wasm` (README there). One
 package, no platform variants: the `.wasm` is the same everywhere. It exports the browser SDK at `.`, the raw core at
 `./core` and the module itself at `./logquill_wasm_bg.wasm`.
 
@@ -334,8 +337,9 @@ instead.
 
 **Built and verified in Stage 8 (`bindings/go`):** the module embeds `core.wasm` (`logquill-ffi` built for `wasm32-wasip1` with no
 runtime, by `scripts/build-core.sh`) and runs it with wazero, no cgo. `scripts/consumer-smoke.sh` has a fresh module require this
-one by import path (through a `replace`, since nothing is published) and run. **The tagged tree must contain `core.wasm`** (it is
-untracked day to day), so the release job commits it before tagging; a module-proxy fetch of a tag without it fails to build.
+one by import path (through a `replace`, since nothing is published) and run. **The tagged tree must contain `core.wasm`**, so it is
+committed (rebuild it with `scripts/build-core.sh` whenever the core changes; a test fails if its version is stale); a
+module-proxy fetch of a tag without it fails to build. The release workflow tags `bindings/go/<version>` itself.
 **Not built:** the real proxy fetch (needs a tag), the `/v3` subdirectory-tag layout check.
 
 A Go module is just a git tag, but two rules shape it:

@@ -6,13 +6,12 @@ members = ["crates/*"]
 exclude = ["bindings/python", "bindings/node", "bindings/wasm"]
 
 [workspace.package]
-version = "3.0.0-dev.0"
+version = "3.0.0-rc.1"
 edition = "2021"
 rust-version = "1.80"
-# The licence for the shared core is an open decision (docs/rust-core-plan.md, section 8);
-# until it is settled the crates point at the repository's LICENSE file.
-license-file = "LICENSE"
-publish = false # nothing is published until the release stage
+license = "MIT"
+repository = "https://github.com/nikhilvdev/logquill"
+readme = "README.md"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

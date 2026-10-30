@@ -4,12 +4,12 @@ build-backend = "maturin"
 
 [project]
 name = "logquill"
-version = "3.0.0.dev0"
+version = "3.0.0rc1"
 description = "Structured, agent-aware logging with pluggable transports and a plugin pipeline, on a Rust core."
 readme = "README.md"
 requires-python = ">=3.10"
-# No licence field yet: the licence is an open decision (docs/rust-core-plan.md, section 8), and
-# maturin refuses a file outside this directory. Add it, and copy LICENSE here, when it is settled.
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = [
     "async-logging",
     "json-logging",

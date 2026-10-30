@@ -4,12 +4,13 @@ plugins {
 }
 
 group = "io.logquill" // a placeholder: the Maven group ID is not claimed yet (docs/publishing.md, section 8)
-version = "3.0.0-dev.0"
+version = "3.0.0-rc.1"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
     withSourcesJar()
+    withJavadocJar()
 }
 
 // the native library, when a build places it here (scripts/pack-smoke.sh, CI): JNA loads it from the jar by <os>-<arch>/
@@ -21,6 +22,19 @@ publishing {
     publications {
         create<MavenPublication>("maven") {
             from(components["java"])
+            pom {
+                name.set("LogQuill")
+                description.set("Structured, agent-aware logging for the JVM on a Rust core.")
+                url.set("https://github.com/nikhilvdev/logquill")
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
+                    }
+                }
+                developers { developer { name.set("Nikhil Arora") } }
+                scm { url.set("https://github.com/nikhilvdev/logquill") }
+            }
         }
     }
     repositories {

@@ -477,9 +477,9 @@ before Stage 5.
 
 ## 8. Risks and open decisions
 
-1. **Licence.** The core under FSL-1.1-MIT (current Python) or MIT (JS and all 1.x)?
-   Relicensing the JS code is the author's call, and the licence text has had no legal
-   review.
+1. **Licence.** *Settled: MIT* for the 3.0 line (JS and all 1.x are MIT; Python 2.0.0 stays
+   FSL-1.1-MIT as published, and Python 1.x stays MIT). Every package carries the licence
+   field and a `LICENSE` copy. The licence text has had no legal review.
 2. **JS 2.0.** It is unreleased on a branch. Finish and ship it on the old line, or
    skip to 3.0 and avoid a third contract generation? Recommendation: skip unless it
    is nearly done.

@@ -39,7 +39,7 @@ Dir.mktmpdir("lq-ruby-pack") do |scratch|
   # what is inside: the library, the platform, and nothing that should not ship
   listing = run("sh", "-c", "tar -xOf #{packed} data.tar.gz | tar -tzf -")
   abort "pack_smoke: the gem does not carry lib/logquill/native/#{library}" unless listing.include?("lib/logquill/native/#{library}")
-  stray = listing.lines.map(&:strip).reject { |f| f.start_with?("lib/") || f == "README.md" || f.empty? }
+  stray = listing.lines.map(&:strip).reject { |f| f.start_with?("lib/") || %w[README.md LICENSE].include?(f) || f.empty? }
   abort "pack_smoke: files that should not ship: #{stray.join(', ')}" unless stray.empty?
   metadata = run("sh", "-c", "tar -xOf #{packed} metadata.gz | gunzip -c")
   abort "pack_smoke: the gem is not a #{platform} platform gem" unless metadata.include?("platform: #{platform}")

@@ -196,7 +196,7 @@ Only three tests needed edits, to find `schema/` at its monorepo location.
 - **Oracle.** The JS 2.0 line is unreleased, so the oracle is the `logquill-js` working tree copied into
   `sdk/` (it carries uncommitted instrumentation work there as of 2026-10-28). Re-sync or pin a commit before
   the parity test in slice 7.
-- **Licence.** The addon's manifests carry no licence field, as in the Python binding (plan, section 8).
+- **Licence.** Settled in Stage 9: MIT, in `package.json`, `Cargo.toml` and a `LICENSE` copy.
 - **Hash chain and floats.** Chain input must reach the core as text; slice 2's native conversion has to keep an
   integer-valued JS number an integer and decide how a float with an integral value (`2.0`) is spelled, since
   JavaScript cannot tell them apart.

@@ -58,7 +58,7 @@ type instance struct {
 }
 
 var exported = []string{
-	"lq_abi_version", "lq_string_free", "lq_buffer_alloc", "lq_buffer_free", "lq_call",
+	"lq_version", "lq_abi_version", "lq_string_free", "lq_buffer_alloc", "lq_buffer_free", "lq_call",
 	"lq_chain_new", "lq_chain_stamp", "lq_chain_head", "lq_chain_sign_head", "lq_chain_free",
 	"lq_logger_new", "lq_logger_child", "lq_log", "lq_logger_name", "lq_logger_set_level", "lq_logger_flush", "lq_logger_close",
 	"lq_logger_free",
@@ -215,4 +215,29 @@ func (s *scratch) release() {
 		_, _ = s.in.call("lq_buffer_free", uint64(b[0]), uint64(b[1]))
 	}
 	s.bufs = nil
+}
+
+// CoreVersion is the version of the Rust core embedded in this module (core.wasm), for example "3.0.0-rc.1". A release checks it
+// against the module's own version, so a core.wasm built from older sources cannot be tagged by mistake.
+func CoreVersion() (string, error) {
+	in, err := newInstance(context.Background())
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = in.close() }()
+	ptr, err := in.call("lq_version")
+	if err != nil {
+		return "", err
+	}
+	var version []byte
+	for offset := uint32(ptr); ; offset++ {
+		b, ok := in.mem.ReadByte(offset)
+		if !ok {
+			return "", errors.New("logquill: the core's version string runs past the end of its memory")
+		}
+		if b == 0 {
+			return string(version), nil
+		}
+		version = append(version, b)
+	}
 }

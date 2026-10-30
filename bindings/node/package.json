@@ -1,7 +1,9 @@
 {
   "name": "logquill",
-  "version": "3.0.0-dev.0",
-  "private": true,
+  "version": "3.0.0-rc.1",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/nikhilvdev/logquill.git", "directory": "bindings/node" },
+  "publishConfig": { "access": "public", "provenance": true },
   "description": "A logging framework with one JSON log shape across Python and Node/TypeScript, on a shared Rust core.",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -76,7 +78,6 @@
       "x86_64-apple-darwin",
       "x86_64-unknown-linux-gnu",
       "aarch64-unknown-linux-gnu",
-      "x86_64-unknown-linux-musl",
       "x86_64-pc-windows-msvc"
     ],
     "packageName": "@logquill/native"

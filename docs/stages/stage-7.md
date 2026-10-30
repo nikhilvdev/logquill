@@ -171,4 +171,4 @@ Corpus passes in headless browser, Deno and Workers; the "no Node built-ins" tes
 - **The glue is written twice** (napi in `bindings/node`, wasm-bindgen here); the shared corpus catches drift, but it
   is a cost every new core function pays.
 - **Concurrent spans** share a stack in a browser (spec trade-off, documented in the README).
-- Licence and publishing: same open decision as the other bindings (plan section 8); package stays private.
+- Licence and publishing: MIT (Stage 9); the package is no longer `private`, but nothing is published.

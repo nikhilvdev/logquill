@@ -4,8 +4,7 @@ description = "LogQuill core: records, levels, privacy, integrity and pipeline l
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license-file.workspace = true
-publish.workspace = true
+license.workspace = true
 
 [dependencies]
 # `preserve_order` keeps a record's keys in the order the contract fixes; `arbitrary_precision`

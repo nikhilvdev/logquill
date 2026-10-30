@@ -17,7 +17,7 @@ supports*, *install from the registry into a clean project works* and *the READM
   through the C ABI, because the ABI's first logger config does not expose those plugins; they remain covered by the Rust core
   tests and the Node, Python and WASM bindings. The harness lists skipped groups by name, and they account for exactly the 98
   missing checks (913 total).
-- **Install from the registry:** impossible until something is published (the licence is still undecided, plan section 8). The
+- **Install from the registry:** impossible until something is published (nothing is published yet). The
   substitute used for every language is the one Stages 6 and 7 used: pack the real artefact (gem, NuGet package, jar, XCFramework
   package, Go module), install it into an empty project from a local source, use it by name with `LOGQUILL_LIB` unset.
 - **README example run in CI:** every README example is a real file that is run, and each test suite checks the README contains
@@ -96,8 +96,7 @@ supports*, *install from the registry into a clean project works* and *the READM
 
 - **CI** ran on Ubuntu and macOS and passed (`ffi`, `ruby`, `dotnet`, `go`, `swift`, `jvm`), which covers Linux and
   `xcodebuild -create-xcframework`. `net8.0` is still compile-checked only (the tests run on `net10.0`). **Windows** is not in the matrix and has never run.
-- **No registry publishing.** The licence is undecided; Maven's group ID `io.logquill` is a placeholder; the Go module needs
-  `core.wasm` committed at the tag (untracked day to day); the Swift binary target needs a zipped multi-platform XCFramework and
+- **No registry publishing.** Maven's group ID `io.logquill` is a placeholder; the Go module's `core.wasm` is now committed (Stage 9); the Swift binary target needs a zipped multi-platform XCFramework and
   checksum.
 - **Slice 8, what is left.** The logger config now takes `sampling` (`rate`), `rate_limit` (`max_records`, `per_seconds`, `key`,
   `max_keys`) and `adaptive_sampling`; the logger supplies the clock and a clock-seeded xorshift random source (3 new ABI tests;

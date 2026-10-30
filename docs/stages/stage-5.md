@@ -86,8 +86,8 @@ Each is a settled decision in `docs/spec/00-decisions.md`; the oracle masks them
 
 ## Open points for later slices
 
-- **Licence.** The binding's manifests carry no licence field: maturin refuses a file outside the directory, and the
-  licence is still an open decision (plan, section 8). Copy `LICENSE` in when it is settled.
+- **Licence.** Settled in Stage 9: MIT. `pyproject.toml` has `license = "MIT"` and `license-files`, with `LICENSE` copied into
+  the binding's directory (maturin refuses a file outside it).
 - **Version spelling.** `logquill.__version__` is `3.0.0-dev.0` (Cargo); the wheel metadata is `3.0.0.dev0` (PEP 440).
   Unify before the first release.
 - `verify_chain` collects its records before checking, so memory is the log's size; the CLI's `verify` streams.

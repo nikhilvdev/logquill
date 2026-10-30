@@ -1,0 +1,458 @@
+name: Release
+
+# Pushing a tag vX.Y.Z (or vX.Y.Z-rc.N) is the only way a release starts; nothing is published from a laptop
+# (docs/publishing.md). The tag must equal every manifest, the full CI must pass on the tagged commit, and each registry
+# publishes from its own GitHub environment, which holds the reviewers that must approve the first release.
+#
+# Registries and what each needs outside the repository (docs/stages/stage-9.md lists it in full):
+#   crates.io, PyPI, npm (@logquill/wasm, logquill + @logquill/native-*), RubyGems, NuGet: a trusted publisher registered on
+#     the registry for this repository, this workflow and the environment named on the job; NuGet also needs the repository
+#     variable NUGET_USER (the nuget.org account that owns the package).
+#   Maven Central: a verified namespace, and the environment secrets GPG_PRIVATE_KEY, GPG_PASSPHRASE and
+#     CENTRAL_PORTAL_TOKEN. The bundle is uploaded for a manual release in the portal, never published automatically.
+#   Go: nothing; the job tags bindings/go/<version>, which is what the module proxy serves.
+#   Swift: a mirror repository (github.com/nikhilvdev/logquill-swift) and the environment secret SWIFT_MIRROR_TOKEN, a
+#     fine-grained token with contents write on that repository.
+on:
+  push:
+    tags: ["v*"]
+
+# Least privilege: jobs that need more ask for it themselves.
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: tag equals every manifest
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 scripts/check-versions.py "$GITHUB_REF_NAME"
+
+  ci:
+    name: full CI on the tagged commit
+    needs: verify
+    uses: ./.github/workflows/ci.yml
+
+  # ---- crates.io: core first, then the crates that depend on it (cargo waits for the index between them) ----------------
+  publish-crates:
+    name: publish to crates.io
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: crates-io
+    permissions:
+      contents: read
+      id-token: write # trusted publishing: a short-lived token, no secret stored
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1
+        id: auth
+      - run: |
+          for crate in logquill-core logquill-runtime logquill-ffi logquill-cli; do
+            cargo publish -p "$crate"
+          done
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+  # ---- PyPI: wheels for each platform plus the source distribution -------------------------------------------------------
+  python-wheels:
+    name: python wheel (${{ matrix.name }})
+    needs: ci
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { name: linux-x86_64, os: ubuntu-latest, target: x86_64-unknown-linux-gnu, manylinux: auto }
+          - { name: linux-aarch64, os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu, manylinux: auto }
+          - { name: musllinux-x86_64, os: ubuntu-latest, target: x86_64-unknown-linux-musl, manylinux: musllinux_1_2 }
+          - { name: macos-arm64, os: macos-latest, target: aarch64-apple-darwin, manylinux: "off" }
+          - { name: macos-x86_64, os: macos-latest, target: x86_64-apple-darwin, manylinux: "off" }
+          - { name: windows-x64, os: windows-latest, target: x86_64-pc-windows-msvc, manylinux: "off" }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
+        with:
+          command: build
+          args: --release --out dist
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          working-directory: bindings/python
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: wheels-${{ matrix.name }}
+          path: bindings/python/dist/*.whl
+          if-no-files-found: error
+
+  python-sdist:
+    name: python source distribution
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
+        with:
+          command: sdist
+          args: --out dist
+          working-directory: bindings/python
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: wheels-sdist
+          path: bindings/python/dist/*.tar.gz
+          if-no-files-found: error
+
+  publish-pypi:
+    name: publish to PyPI
+    needs: [python-wheels, python-sdist]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: pypi
+      url: https://pypi.org/p/logquill
+    permissions:
+      contents: read
+      id-token: write # trusted publishing and attestations
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
+        with:
+          packages-dir: dist/
+
+  # ---- npm: the browser and edge package -----------------------------------------------------------------------------------
+  publish-npm-wasm:
+    name: publish @logquill/wasm to npm
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/@logquill/wasm
+    permissions:
+      contents: read
+      id-token: write # trusted publishing and provenance
+    defaults:
+      run:
+        working-directory: bindings/wasm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: rustup target add wasm32-unknown-unknown
+      # same pinned wasm-bindgen CLI and hash as the CI job
+      - name: install wasm-bindgen 0.2.129
+        run: |
+          v=0.2.129
+          t=x86_64-unknown-linux-musl
+          curl -fsSL -o "$RUNNER_TEMP/wbg.tgz" "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/$v/wasm-bindgen-$v-$t.tar.gz"
+          (cd "$RUNNER_TEMP" && echo "82d12bb940e2d4e72e0d5605387fc1b8ca179044e012b620f0ce4e7440e8320e  wbg.tgz" | sha256sum -c - && tar -xzf wbg.tgz)
+          echo "$RUNNER_TEMP/wasm-bindgen-$v-$t" >> "$GITHUB_PATH"
+      - run: npm ci --ignore-scripts
+      - run: npm run build && npm run build:sdk
+      # packs the tarball, installs it into a clean project and uses it by name, before anything is published
+      - run: npm run pack-smoke
+      # a release candidate goes to the "next" tag, so `npm install @logquill/wasm` never picks it up
+      - run: |
+          case "$GITHUB_REF_NAME" in
+            *-*) npm publish --tag next ;;
+            *) npm publish ;;
+          esac
+
+  # ---- native libraries for the bindings that load the C ABI (Ruby, .NET, JVM) ------------------------------------------
+  native-libs:
+    name: native library (${{ matrix.id }})
+    needs: ci
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          # the Linux builds run on the oldest image available, so the library links against an older glibc
+          - { id: linux-x64, os: ubuntu-22.04, target: x86_64-unknown-linux-gnu, file: liblogquill_ffi.so }
+          - { id: linux-arm64, os: ubuntu-22.04-arm, target: aarch64-unknown-linux-gnu, file: liblogquill_ffi.so }
+          - { id: macos-arm64, os: macos-latest, target: aarch64-apple-darwin, file: liblogquill_ffi.dylib }
+          - { id: macos-x64, os: macos-latest, target: x86_64-apple-darwin, file: liblogquill_ffi.dylib }
+          - { id: windows-x64, os: windows-latest, target: x86_64-pc-windows-msvc, file: logquill_ffi.dll }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup target add ${{ matrix.target }}
+      - run: cargo build -p logquill-ffi --release --target ${{ matrix.target }}
+      - shell: bash
+        run: |
+          mkdir -p "libs/${{ matrix.id }}"
+          cp "target/${{ matrix.target }}/release/${{ matrix.file }}" "libs/${{ matrix.id }}/"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-${{ matrix.id }}
+          path: libs/
+          if-no-files-found: error
+
+  # ---- npm: the Node addon, one package per platform plus the main package that depends on them --------------------------
+  node-addons:
+    name: node addon (${{ matrix.target }})
+    needs: ci
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-22.04 }
+          - { target: aarch64-unknown-linux-gnu, os: ubuntu-22.04-arm }
+          - { target: aarch64-apple-darwin, os: macos-latest }
+          - { target: x86_64-apple-darwin, os: macos-latest }
+          - { target: x86_64-pc-windows-msvc, os: windows-latest }
+    defaults:
+      run:
+        working-directory: bindings/node
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+      - run: rustup target add ${{ matrix.target }}
+      - run: npm ci --ignore-scripts
+      - run: npx napi build --platform --release --target ${{ matrix.target }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: node-${{ matrix.target }}
+          path: bindings/node/*.node
+          if-no-files-found: error
+
+  publish-npm-node:
+    name: publish logquill and @logquill/native-* to npm
+    needs: node-addons
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/logquill
+    permissions:
+      contents: read
+      id-token: write # trusted publishing and provenance
+    defaults:
+      run:
+        working-directory: bindings/node
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: node-*
+          merge-multiple: true
+          path: bindings/node/artifacts
+      - run: npm ci --ignore-scripts
+      - run: npm run build:sdk
+      # one package per platform, each holding its .node file; the main package then lists them as optionalDependencies
+      - run: npx napi create-npm-dirs && npx napi artifacts -d artifacts
+      - run: node scripts/link-platform-packages.mjs
+      # a release candidate goes to the "next" tag, so `npm install logquill` never picks it up
+      - run: |
+          case "$GITHUB_REF_NAME" in *-*) tag="--tag next" ;; *) tag="" ;; esac
+          for dir in npm/*/; do
+            (cd "$dir" && npm publish --provenance --access public $tag)
+          done
+          npm publish --provenance --access public $tag
+
+  # ---- RubyGems: one platform gem per native library -----------------------------------------------------------------------
+  publish-rubygems:
+    name: publish to RubyGems
+    needs: native-libs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: rubygems
+      url: https://rubygems.org/gems/logquill
+    permissions:
+      contents: read
+      id-token: write # trusted publishing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: native-*
+          merge-multiple: true
+          path: libs
+      - run: |
+          test "$(ls libs | wc -l)" -eq 5 || { echo "expected 5 platform builds, found $(ls libs)"; exit 1; }
+      - run: ruby bindings/ruby/scripts/build_platform_gems.rb libs gems
+      - uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
+      - run: for gem in gems/*.gem; do gem push "$gem"; done
+
+  # ---- NuGet: one package carrying every runtime ----------------------------------------------------------------------------
+  publish-nuget:
+    name: publish to NuGet
+    needs: native-libs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: nuget
+      url: https://www.nuget.org/packages/LogQuill
+    permissions:
+      contents: read
+      id-token: write # trusted publishing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: native-*
+          merge-multiple: true
+          path: libs
+      - run: |
+          test "$(ls libs | wc -l)" -eq 5 || { echo "expected 5 platform builds, found $(ls libs)"; exit 1; }
+      - run: bindings/dotnet/scripts/pack-release.sh libs nupkg
+      - uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
+        id: login
+        with:
+          user: ${{ vars.NUGET_USER }}
+      - run: dotnet nuget push "nupkg/LogQuill.*.nupkg" --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json
+
+  # ---- Maven Central: a signed bundle, uploaded for a manual release in the portal ------------------------------------------
+  publish-maven:
+    name: upload the Maven Central bundle
+    needs: native-libs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: maven-central
+      url: https://central.sonatype.com/namespace/io.logquill
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: native-*
+          merge-multiple: true
+          path: libs
+      - run: |
+          test "$(ls libs | wc -l)" -eq 5 || { echo "expected 5 platform builds, found $(ls libs)"; exit 1; }
+      - name: sign and bundle
+        run: |
+          printf '%s' "$GPG_PRIVATE_KEY" | gpg --batch --import
+          bindings/jvm/scripts/central-bundle.sh libs bundle
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      # USER_MANAGED: the portal validates the bundle and waits; someone presses "Publish" there. A published version can never
+      # be changed or deleted, so the last step stays a person's.
+      - name: upload to the Central Portal
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          curl --fail-with-body --silent --show-error --request POST \
+            --header "Authorization: Bearer $CENTRAL_PORTAL_TOKEN" \
+            --form "bundle=@bundle/logquill-$version-bundle.zip" \
+            "https://central.sonatype.com/api/v1/publisher/upload?publishingType=USER_MANAGED&name=logquill-$version"
+        env:
+          CENTRAL_PORTAL_TOKEN: ${{ secrets.CENTRAL_PORTAL_TOKEN }}
+
+  # ---- Go: the tag is the release; the module lives in bindings/go, so the tag carries that prefix --------------------------
+  tag-go:
+    name: tag the Go module
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # pushes the tag bindings/go/<version>; the module proxy serves it
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # a proxy fetch of a tag has no build step: core.wasm must be in the tagged tree, and be this version's core
+      - run: git ls-files --error-unmatch bindings/go/core.wasm
+      - run: go test -run TestTheEmbeddedCoreIsTheWorkspaceVersion ./...
+        working-directory: bindings/go
+      - run: |
+          git tag "bindings/go/$GITHUB_REF_NAME" "$GITHUB_SHA"
+          git push origin "refs/tags/bindings/go/$GITHUB_REF_NAME"
+
+  # ---- Swift: the XCFramework, then the mirror repository SwiftPM resolves -------------------------------------------------
+  swift-xcframework:
+    name: Swift XCFramework
+    needs: ci
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup target add aarch64-apple-darwin x86_64-apple-darwin aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
+      - run: bindings/swift/scripts/release-xcframework.sh xcframework
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: swift-xcframework
+          path: xcframework/
+          if-no-files-found: error
+
+  publish-swift:
+    name: publish the Swift mirror
+    needs: swift-xcframework
+    runs-on: macos-latest
+    timeout-minutes: 20
+    environment:
+      name: swift-mirror
+      url: https://github.com/nikhilvdev/logquill-swift
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: swift-xcframework
+          path: xcframework
+      - name: write the mirror, commit it, tag it and attach the zip
+        env:
+          GH_TOKEN: ${{ secrets.SWIFT_MIRROR_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mirror=nikhilvdev/logquill-swift
+          url="https://github.com/$mirror/releases/download/$version/CLogQuill.xcframework.zip"
+          bindings/swift/scripts/prepare-mirror.sh tree "$url" "$(cat xcframework/CLogQuill.xcframework.zip.checksum)"
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/$mirror.git" mirror
+          # the mirror's contents become exactly the generated tree: drop what it tracks, copy the tree in
+          git -C mirror rm -r -q --ignore-unmatch .
+          cp -R tree/. mirror/
+          cd mirror
+          git config user.name "logquill release"
+          git config user.email "release@users.noreply.github.com"
+          git add -A
+          git commit -m "LogQuill $version" --allow-empty
+          git tag "$version"
+          git push origin HEAD "refs/tags/$version"
+          case "$version" in *-*) prerelease="--prerelease" ;; *) prerelease="" ;; esac
+          gh release create "$version" ../xcframework/CLogQuill.xcframework.zip --repo "$mirror" --title "LogQuill $version" --notes "Release $version of github.com/nikhilvdev/logquill (bindings/swift)." $prerelease

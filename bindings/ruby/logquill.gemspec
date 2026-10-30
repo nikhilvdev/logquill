@@ -14,11 +14,11 @@ Gem::Specification.new do |spec|
                      "Python, Node, browser and other bindings, through a C ABI. Redaction runs before anything is written."
   spec.authors = ["Nikhil Arora"]
   spec.homepage = "https://github.com/nikhilvdev/logquill"
-  # No licence is declared yet: the licence is an open decision (docs/rust-core-plan.md, section 8).
+  spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1"
   spec.metadata = { "source_code_uri" => spec.homepage, "rubygems_mfa_required" => "true" }
 
-  spec.files = Dir["lib/**/*.rb", "lib/logquill/native/*", "README.md"]
+  spec.files = Dir["lib/**/*.rb", "lib/logquill/native/*", "README.md", "LICENSE"]
   spec.require_paths = ["lib"]
   spec.add_dependency "ffi", "~> 1.15"
 

@@ -4,8 +4,8 @@ Structured logging for Swift on LogQuill's Rust core, through its C ABI (`crates
 an XCFramework. The same record shape, the same redaction and the same tamper-evident hash chain as the Python, Node, browser
 and other bindings: redaction and the level filter run in Rust before anything is written.
 
-> **Not published yet.** The package is unreleased until the licence and release plan are settled
-> (`docs/rust-core-plan.md`, section 8). See [Build and test](#build-and-test) to use it from this repository.
+> **Not published yet.** The package is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.1) is prepared but not published
+> (`docs/stages/stage-9.md`). See [Build and test](#build-and-test) to use it from this repository.
 
 ## Use it
 

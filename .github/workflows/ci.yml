@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main, develop]
+  workflow_call: # the release workflow requires this whole workflow to pass on the tagged commit
 
 # Least privilege: nothing here writes to the repository.
 permissions:
@@ -345,3 +346,31 @@ jobs:
         with:
           persist-credentials: false
       - run: python3 scripts/check-versions.py
+
+  # the packaging scripts the release workflow runs, exercised here with the one platform's library this runner builds, so a
+  # break shows up on a pull request and not on release day (signing is skipped: the bundle's layout is what is checked)
+  release-scripts:
+    name: release packaging scripts (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, id: linux-x64, file: liblogquill_ffi.so }
+          - { os: macos-latest, id: macos-arm64, file: liblogquill_ffi.dylib }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: cargo build -p logquill-ffi --release
+      - run: |
+          mkdir -p "libs/${{ matrix.id }}"
+          cp "target/release/${{ matrix.file }}" "libs/${{ matrix.id }}/"
+      - run: ruby bindings/ruby/scripts/build_platform_gems.rb libs gems
+      - run: bindings/dotnet/scripts/pack-release.sh libs nupkg
+      - run: LQ_ALLOW_UNSIGNED=1 bindings/jvm/scripts/central-bundle.sh libs bundle
+      - if: runner.os == 'macOS'
+        run: LQ_HOST_ONLY=1 bindings/swift/scripts/release-xcframework.sh xcframework
+      - if: runner.os == 'macOS'
+        run: bindings/swift/scripts/prepare-mirror.sh mirror https://example.invalid/CLogQuill.xcframework.zip "$(cat xcframework/CLogQuill.xcframework.zip.checksum)"

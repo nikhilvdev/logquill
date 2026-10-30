@@ -45,7 +45,7 @@ mkdir -p "$app"
 cat > "$app/app.csproj" <<EOF
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
-  <ItemGroup><PackageReference Include="LogQuill" Version="3.0.0-dev.0" /></ItemGroup>
+  <ItemGroup><PackageReference Include="LogQuill" Version="3.0.0-rc.1" /></ItemGroup>
 </Project>
 EOF
 cat > "$app/NuGet.config" <<EOF

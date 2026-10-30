@@ -5,7 +5,7 @@ SDK for each language, so a team running several languages gets one mental model
 JSON log format.
 
 **Status: 3.0.0 is feature-complete on the `develop` branch and unreleased. Nothing from
-this line is published to any registry, and the licence is undecided.** The current releases are `logquill` 2.x for Python (PyPI, `main` branch)
+this line is published to any registry, and a first release candidate (3.0.0-rc.1) is prepared but not published.** The current releases are `logquill` 2.x for Python (PyPI, `main` branch)
 and `logquill` 1.x for Node (the separate `logquill-js` repository).
 
 ## Layout
@@ -45,4 +45,4 @@ stage built, how it was checked, and what is left.
 
 ## Licence
 
-See `LICENSE`. The licence for the 3.0 line is still being decided.
+The 3.0 line is MIT licensed (see `LICENSE`). Python 2.0.0 stays FSL-1.1-MIT and every earlier release stays MIT, as published.

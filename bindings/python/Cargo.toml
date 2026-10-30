@@ -1,11 +1,12 @@
 [package]
 name = "logquill-python"
 description = "LogQuill for Python: the Rust extension module behind the `logquill` package."
-version = "3.0.0-dev.0"
+version = "3.0.0-rc.1"
 edition = "2021"
 rust-version = "1.80"
 # No licence field yet: the licence is an open decision (docs/rust-core-plan.md, section 8), and maturin
 # refuses a file outside this directory. Copy LICENSE here when it is settled.
+license = "MIT"
 publish = false
 
 [lib]

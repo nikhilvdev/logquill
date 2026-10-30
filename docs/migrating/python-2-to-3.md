@@ -6,8 +6,8 @@ changes is a short list of deliberate behaviours, how the package is installed, 
 is a settled decision in `docs/spec/00-decisions.md`; the number is given so you can read the reasoning.
 
 > **Not released yet.** 3.0 is built from the `develop` branch and nothing is on PyPI. Until a release, install from a
-> checkout (`maturin develop --release` in `bindings/python`). The licence of the 3.0 line is undecided
-> (`docs/rust-core-plan.md`, section 8); 2.0.0 stays FSL-1.1-MIT and 1.x and earlier stay MIT.
+> checkout (`maturin develop --release` in `bindings/python`). The 3.0 line is MIT licensed;
+> 2.0.0 stays FSL-1.1-MIT as published, and 1.x and earlier stay MIT.
 
 ## 1. Install
 

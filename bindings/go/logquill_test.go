@@ -55,6 +55,27 @@ func newLogger(t *testing.T, opts ...logquill.Option) *logquill.Logger {
 	return log
 }
 
+func TestTheEmbeddedCoreIsTheWorkspaceVersion(t *testing.T) {
+	cargo, err := os.ReadFile(filepath.Join("..", "..", "Cargo.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var want string
+	for _, line := range strings.Split(string(cargo), "\n") {
+		if strings.HasPrefix(line, "version = ") {
+			want = strings.Trim(strings.TrimPrefix(line, "version = "), `"`)
+			break
+		}
+	}
+	got, err := logquill.CoreVersion()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != want {
+		t.Errorf("core.wasm is version %q but the workspace is %q; run scripts/build-core.sh and commit core.wasm", got, want)
+	}
+}
+
 func TestTextHelpersReturnStringsAndKeepNumberSpelling(t *testing.T) {
 	got, err := logquill.CanonicalJSON(`{"b":1,"a":2}`)
 	if err != nil || got != `{"a": 2, "b": 1}` {

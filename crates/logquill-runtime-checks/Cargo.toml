@@ -4,8 +4,8 @@ description = "Runtime checks that need `unsafe` (a real fork, a counting alloca
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license-file.workspace = true
-publish.workspace = true
+license.workspace = true
+publish = false
 
 [dependencies]
 logquill-cli = { path = "../logquill-cli" }

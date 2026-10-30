@@ -4,8 +4,7 @@ description = "LogQuill's stable C ABI: a Logger handle and the core's helpers, 
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-license-file.workspace = true
-publish.workspace = true
+license.workspace = true
 
 [lib]
 name = "logquill_ffi"
@@ -13,10 +12,10 @@ name = "logquill_ffi"
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
-logquill-core = { path = "../logquill-core" }
+logquill-core = { version = "3.0.0-rc.1", path = "../logquill-core" }
 # Optional: the worker thread and the console / file transports. A WebAssembly build (`wasm32-wasip1`, for Go) leaves
 # it out: no threads or sockets there, so the logger is the pipeline only and the host writes the records.
-logquill-runtime = { path = "../logquill-runtime", optional = true }
+logquill-runtime = { version = "3.0.0-rc.1", path = "../logquill-runtime", optional = true }
 base64 = "0.23.1"
 serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
 

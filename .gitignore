@@ -78,8 +78,8 @@ bindings/swift/CLogQuill.xcframework/
 # Ruby
 bindings/ruby/*.gem
 bindings/ruby/lib/logquill/native/
-# Go: the core is built by scripts/build-core.sh; a release commits it before tagging (docs/publishing.md, section 10)
-bindings/go/core.wasm
+# Go: bindings/go/core.wasm is committed on purpose (a module-proxy fetch of a tag has no build step); rebuild it with
+# bindings/go/scripts/build-core.sh whenever the core changes. A Go test fails if its version differs from the workspace's.
 bindings/jvm/bin/
 bindings/wasm/.wrangler/
 docs-out/

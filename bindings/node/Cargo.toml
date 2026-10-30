@@ -1,10 +1,11 @@
 [package]
 name = "logquill-node"
 description = "LogQuill for Node: the native addon behind the `logquill` npm package."
-version = "3.0.0-dev.0"
+version = "3.0.0-rc.1"
 edition = "2021"
 rust-version = "1.80"
 # No licence field yet: the licence is an open decision (docs/rust-core-plan.md, section 8).
+license = "MIT"
 publish = false
 
 [lib]

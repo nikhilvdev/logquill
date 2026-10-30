@@ -53,5 +53,12 @@ earlier releases is kept in `docs/legacy/python/CHANGELOG.md` (Python 0.3.0–2.
 - Added: `Plugins` / `PluginConfig` builders for `sampling`, `rate_limit` and `adaptive_sampling` in the Ruby, .NET, Go, Swift and
   JVM bindings; `NewRotatingFileTransport` in Go; `scripts/check-versions.py`; and migration guides for Python 2.x and JS 1.x.
 - Changed: the browser package ships its WebAssembly module once instead of twice.
+- Changed: the 3.0 line is MIT licensed (`LICENSE`, and a licence field in every package); Python 2.0.0 stays FSL-1.1-MIT as published.
+  All manifests are at 3.0.0-rc.1 and `scripts/check-versions.py` keeps them in step.
+- Added: `.github/workflows/release.yml`, which on a version tag checks the manifests, runs the full CI, and publishes to crates.io,
+  PyPI and npm (`@logquill/wasm`, and `logquill` with its `@logquill/native-*` platform packages), RubyGems, NuGet and Maven Central
+  (a signed bundle, held in the portal for a manual release), tags the Go module, and publishes the Swift mirror. Nothing has been
+  released with it yet.
+- Changed: the Go module commits its `core.wasm` and exposes `CoreVersion()`; `NewRotatingFileTransport` is new.
 - Not yet: tail sampling, the flight recorder, the run summary and alert de-duplication are not available through the C ABI.
-  Nothing is published to any registry, and the licence is undecided.
+  Nothing is published to any registry yet. The 3.0 line is MIT licensed (Python 2.0.0 stays FSL-1.1-MIT), and the manifests are at 3.0.0-rc.1.
