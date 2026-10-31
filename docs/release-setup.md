@@ -26,7 +26,7 @@ registry's own "trusted publishing" documentation is the authority for the exact
 | NuGet `LogQuill` | free | |
 | GitHub `nikhilvdev/logquill-swift` | does not exist | create it (section 4) |
 | GitHub environments | `pypi` already exists with **no** protection rules; `github-pages` also exists (unrelated) | section 1 updates `pypi` in place; it never touches `github-pages` |
-| Maven group `io.logquill` | not verified | needs the domain `logquill.io`; otherwise use `io.github.nikhilvdev` (section 3) |
+| Maven group `io.github.nikhilvdev` | not verified | `io.logquill` was dropped: the domain `logquill.io` is not ours (section 3) |
 
 ## 1. The seven GitHub environments
 

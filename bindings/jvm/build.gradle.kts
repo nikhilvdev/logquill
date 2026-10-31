@@ -3,7 +3,7 @@ plugins {
     `maven-publish`
 }
 
-group = "io.logquill" // a placeholder: the Maven group ID is not claimed yet (docs/publishing.md, section 8)
+group = "io.github.nikhilvdev" // the Maven group ID; the Java package stays io.logquill (docs/release-setup.md, section 3)
 version = "3.0.0-rc.1"
 
 java {

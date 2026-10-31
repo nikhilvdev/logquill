@@ -267,9 +267,9 @@ fails if a second copy ships.
 **Built and verified in Stage 8 (`bindings/jvm`):** a Gradle `java-library` using **JNA over the C ABI** (`logquill-ffi`), not
 UniFFI (see `docs/stages/stage-8.md`, "Deviations"). `scripts/pack-smoke.sh` builds the jar carrying the native library under
 JNA's `<os>-<arch>/` resource path (`darwin-aarch64/`, `linux-x86-64/`, ...), publishes it with `maven-publish` to a throwaway
-local repository, checks the jar's contents and POM, and has a fresh Gradle app depend on `io.logquill:logquill` by coordinates
+local repository, checks the jar's contents and POM, and has a fresh Gradle app depend on `io.github.nikhilvdev:logquill` by coordinates
 and run. **Not built:** the signed Central bundle (Javadoc jar, GPG, portal upload), the per-OS native matrix (one platform is
-packed locally; CI packs each runner's), the Android AAR, and a claimed group ID: `io.logquill` is a placeholder.
+packed locally; CI packs each runner's), the Android AAR, and a claimed group ID: `io.github.nikhilvdev` must be verified on Central.
 
 **One-time**
 1. Create an account at the Central Portal and **register and verify a namespace**

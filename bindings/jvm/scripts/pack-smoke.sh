@@ -53,7 +53,7 @@ repositories {
     maven { url = uri("$scratch/jvm/build/repo") }
     mavenCentral()
 }
-dependencies { implementation("io.logquill:logquill:3.0.0-rc.1") }
+dependencies { implementation("io.github.nikhilvdev:logquill:3.0.0-rc.1") }
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 application { mainClass.set("App") }
 EOF
