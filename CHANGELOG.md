@@ -6,6 +6,7 @@ earlier releases is kept in `docs/legacy/python/CHANGELOG.md` (Python 0.3.0–2.
 
 ## Unreleased
 
+- Changed: the release candidate is now 3.0.0-rc.3. rc.2 reached only crates.io: the Go module's committed `core.wasm` was still rc.1, and the other registries still needed their trusted publishers, tokens and secrets. CI now checks that the committed `core.wasm` matches the workspace version, so a stale one fails on the pull request.
 - Changed: the release candidate is now 3.0.0-rc.2. rc.1 reached npm by hand (`@logquill/wasm` and the macOS native packages), so those versions could not be published again by the release workflow. The Maven group ID is now `io.github.nikhilvdev`, because the `logquill.io` domain behind `io.logquill` is not ours; the Java package stays `io.logquill`.
 - Changed: the `develop` branch is now the 3.0 line. The Python library source was removed
   from it and replaced by a small Rust workspace (`logquill-core`, `logquill-cli`), the

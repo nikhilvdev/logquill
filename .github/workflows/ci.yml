@@ -346,6 +346,9 @@ jobs:
         with:
           persist-credentials: false
       - run: python3 scripts/check-versions.py
+      # the committed core.wasm is what the Go module proxy serves; the go job rebuilds it, so only this step sees a stale one
+      - run: go test -run TestTheEmbeddedCoreIsTheWorkspaceVersion ./...
+        working-directory: bindings/go
 
   # the packaging scripts the release workflow runs, exercised here with the one platform's library this runner builds, so a
   # break shows up on a pull request and not on release day (signing is skipped: the bundle's layout is what is checked)
