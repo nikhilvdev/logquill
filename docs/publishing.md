@@ -27,7 +27,7 @@ exercised here. Check them against the registry's current docs when you reach th
 **Names checked on 2026-10-26** (HTTP 404 = free): crates.io `logquill`, `logquill-core`,
 `logquill-runtime`, `logquill-ffi`, `logquill-cli`; RubyGems `logquill`; NuGet `logquill`;
 npm `@logquill/wasm`, `@logquill/cli`, `@logquill/core`. Already ours: PyPI `logquill`, npm
-`logquill`. Not checkable from here: the npm scope `@logquill` (create it), the Maven group
+`logquill`. Not checkable from here: the npm scope `@logquill` (the org `logquill` already exists under your npm account), the Maven group
 ID, the Go module path. Claim the free names early with a placeholder release.
 
 ## 2. One version, many spellings
@@ -195,7 +195,7 @@ never be re-uploaded under the same name.
 itself (the `logquill.wasi-*` files), not as a separate package; `@logquill/wasm` is the browser package, section 7b.
 
 **One-time**
-1. Create the npm organisation `logquill` (the scope) and add the owners.
+1. The npm organisation `logquill` (the scope) already exists under your account; add any other owners.
 2. For each package configure a **trusted publisher** (repository, workflow `release.yml`,
    environment `npm`). npm's trusted publishing was announced as generally available in July
    2025 and needs npm CLI ≥ 11.5.1; whether a package must already exist before its publisher
@@ -238,7 +238,7 @@ window and only without dependants — **verify** the current rule.
 package, no platform variants: the `.wasm` is the same everywhere. It exports the browser SDK at `.`, the raw core at
 `./core` and the module itself at `./logquill_wasm_bg.wasm`.
 
-**One-time:** as section 7 (the `logquill` scope, a trusted publisher for `@logquill/wasm`, `--access public`).
+**One-time:** as section 7 (the `@logquill` scope, a trusted publisher for `@logquill/wasm`, `--access public`).
 
 **Build** (the `wasm` job in `.github/workflows/ci.yml` does exactly this on Linux and macOS):
 ```sh
@@ -267,9 +267,9 @@ fails if a second copy ships.
 **Built and verified in Stage 8 (`bindings/jvm`):** a Gradle `java-library` using **JNA over the C ABI** (`logquill-ffi`), not
 UniFFI (see `docs/stages/stage-8.md`, "Deviations"). `scripts/pack-smoke.sh` builds the jar carrying the native library under
 JNA's `<os>-<arch>/` resource path (`darwin-aarch64/`, `linux-x86-64/`, ...), publishes it with `maven-publish` to a throwaway
-local repository, checks the jar's contents and POM, and has a fresh Gradle app depend on `io.logquill:logquill` by coordinates
+local repository, checks the jar's contents and POM, and has a fresh Gradle app depend on `io.github.nikhilvdev:logquill` by coordinates
 and run. **Not built:** the signed Central bundle (Javadoc jar, GPG, portal upload), the per-OS native matrix (one platform is
-packed locally; CI packs each runner's), the Android AAR, and a claimed group ID: `io.logquill` is a placeholder.
+packed locally; CI packs each runner's), the Android AAR, and a claimed group ID: `io.github.nikhilvdev` must be verified on Central.
 
 **One-time**
 1. Create an account at the Central Portal and **register and verify a namespace**

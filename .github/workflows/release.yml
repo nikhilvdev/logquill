@@ -348,7 +348,7 @@ jobs:
     timeout-minutes: 30
     environment:
       name: maven-central
-      url: https://central.sonatype.com/namespace/io.logquill
+      url: https://central.sonatype.com/namespace/io.github.nikhilvdev
     permissions:
       contents: read
     steps:

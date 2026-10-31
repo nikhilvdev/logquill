@@ -21,12 +21,12 @@ registry's own "trusted publishing" documentation is the authority for the exact
 | crates.io `logquill-core`, `-runtime`, `-ffi`, `-cli` | all free | new crates: see the bootstrap note in section 2.1 |
 | PyPI `logquill` | exists, 2.0.0, yours | add a second trusted publisher to the existing project; the old one points at the retired `logquill-python` repository |
 | npm `logquill` | exists, 1.0.1, maintainer `n-dev-11` | add a trusted publisher to the existing package |
-| npm `@logquill/wasm`, `@logquill/native-*` | free | the `logquill` **organisation** (scope) must be created on npm first; the packages are new, see section 2.3 |
+| npm `@logquill/wasm`, `@logquill/native-*` | free | the `logquill` organisation (scope) already exists under your npm account; the packages are new, see section 2.3 |
 | RubyGems `logquill` | free | a *pending* trusted publisher can be registered before the gem exists |
 | NuGet `LogQuill` | free | |
 | GitHub `nikhilvdev/logquill-swift` | does not exist | create it (section 4) |
 | GitHub environments | `pypi` already exists with **no** protection rules; `github-pages` also exists (unrelated) | section 1 updates `pypi` in place; it never touches `github-pages` |
-| Maven group `io.logquill` | not verified | needs the domain `logquill.io`; otherwise use `io.github.nikhilvdev` (section 3) |
+| Maven group `io.github.nikhilvdev` | not verified | `io.logquill` was dropped: the domain `logquill.io` is not ours (section 3) |
 
 ## 1. The seven GitHub environments
 
@@ -124,8 +124,8 @@ publisher → GitHub**: owner `nikhilvdev`, repository `logquill`, workflow `rel
 
 ### 2.3 npm: environment `npm`
 
-1. Create the organisation that owns the scope: **npmjs.com → profile → Add Organization**, name `logquill` (the free plan is
-   enough for public packages). Without it `@logquill/wasm` cannot be published.
+1. The organisation that owns the scope, `logquill`, already exists under your npm account (it is why the name shows as taken);
+   check it under **npmjs.com → profile → Organizations** and that you are an owner. No new organisation is needed.
 2. Existing package `logquill`: **Package → Settings → Trusted Publisher → GitHub Actions**: organisation or user `nikhilvdev`,
    repository `logquill`, workflow `release.yml`, environment `npm`. There is no bootstrap for this one.
 3. The six new packages (`@logquill/wasm` and `@logquill/native-darwin-arm64`, `-darwin-x64`, `-linux-arm64-gnu`, `-linux-x64-gnu`,
@@ -221,7 +221,7 @@ The Go job needs nothing: it uses the workflow's own token to push the tag `bind
 |---|---|
 | A publish job fails with "token request failed" or "not a trusted publisher" | the workflow file name, repository owner, or the environment name differs from what was registered, character for character |
 | The job never starts | the environment's tag rule does not match the tag, or "prevent self-review" is on and you are the only reviewer |
-| npm: `404` or `E403` on `@logquill/...` | the `logquill` organisation does not exist, or the package's first publish has not been done (section 2.3) |
+| npm: `404` or `E403` on `@logquill/...` | you are not an owner of the `logquill` organisation, or the package's first publish has not been done (section 2.3) |
 | "version already exists" | that version was published by hand; bump to the next release candidate (section 6) |
 | NuGet login fails | `NUGET_USER` is unset or is the email address instead of the username |
 | Maven: bundle rejected in the portal | the namespace is not verified, or the group ID in the POM does not match it |

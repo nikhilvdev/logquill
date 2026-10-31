@@ -32,16 +32,16 @@ mkdir -p "$scratch/jvm/native/$platform"
 cp "$built" "$scratch/jvm/native/$platform/"
 gradle --no-daemon --console=plain -q -p "$scratch/jvm" publish >/dev/null
 
-group_dir="$scratch/jvm/build/repo/io/logquill/logquill/3.0.0-rc.1"
-jar="$group_dir/logquill-3.0.0-rc.1.jar"
+group_dir="$scratch/jvm/build/repo/io/logquill/logquill/3.0.0-rc.2"
+jar="$group_dir/logquill-3.0.0-rc.2.jar"
 [ -f "$jar" ] || { echo "pack-smoke: $jar was not published" >&2; exit 1; }
 contents=$(unzip -Z1 "$jar")
 echo "$contents" | grep -q "^$platform/$lib\$" || { echo "pack-smoke: the jar does not carry $platform/$lib" >&2; exit 1; }
 echo "$contents" | grep -q '^io/logquill/Logger.class$' || { echo "pack-smoke: the jar has no io/logquill/Logger.class" >&2; exit 1; }
 stray=$(echo "$contents" | grep -vE "^(io/logquill/|META-INF/|$platform/|io/$)" || true)
 [ -z "$stray" ] || { echo "pack-smoke: files that should not ship: $stray" >&2; exit 1; }
-grep -q '<artifactId>jna</artifactId>' "$group_dir/logquill-3.0.0-rc.1.pom" || { echo "pack-smoke: the POM does not declare jna" >&2; exit 1; }
-[ -f "$group_dir/logquill-3.0.0-rc.1-sources.jar" ] || { echo "pack-smoke: no sources jar" >&2; exit 1; }
+grep -q '<artifactId>jna</artifactId>' "$group_dir/logquill-3.0.0-rc.2.pom" || { echo "pack-smoke: the POM does not declare jna" >&2; exit 1; }
+[ -f "$group_dir/logquill-3.0.0-rc.2-sources.jar" ] || { echo "pack-smoke: no sources jar" >&2; exit 1; }
 
 # a fresh app that depends on it by coordinates
 app="$scratch/app"
@@ -53,7 +53,7 @@ repositories {
     maven { url = uri("$scratch/jvm/build/repo") }
     mavenCentral()
 }
-dependencies { implementation("io.logquill:logquill:3.0.0-rc.1") }
+dependencies { implementation("io.github.nikhilvdev:logquill:3.0.0-rc.2") }
 java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 application { mainClass.set("App") }
 EOF
@@ -78,4 +78,4 @@ EOF
 out=$(cd "$app" && env -u LOGQUILL_LIB gradle --no-daemon --console=plain -q run 2>&1) || { echo "$out" >&2; echo "pack-smoke: the app failed" >&2; exit 1; }
 [ "$out" = 'ok {"a": 2, "b": 1}' ] || { echo "pack-smoke: the app printed: $out" >&2; exit 1; }
 
-echo "pack-smoke ok: logquill-3.0.0-rc.1.jar ($(du -k "$jar" | cut -f1) KiB, $platform) published to a local Maven repository and used by coordinates from a fresh Gradle app"
+echo "pack-smoke ok: logquill-3.0.0-rc.2.jar ($(du -k "$jar" | cut -f1) KiB, $platform) published to a local Maven repository and used by coordinates from a fresh Gradle app"

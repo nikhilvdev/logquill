@@ -4,7 +4,7 @@ LogQuill for the browser, Deno, Bun and Cloudflare Workers: the Rust core compil
 top of it. One record shape and one set of redaction, sampling and integrity rules, the same as the Python and Node
 packages, in places where a native addon cannot load.
 
-> **Not published yet.** The package is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.1) is prepared but not published
+> **Not published yet.** The package is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.2) is prepared but not published
 > (`docs/stages/stage-9.md`). Build it from this repository as described under
 > [Build and test](#build-and-test).
 

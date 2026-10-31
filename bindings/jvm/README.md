@@ -4,8 +4,8 @@ Structured logging for Java (and Kotlin, Scala, ...) on LogQuill's Rust core, th
 with JNA. The same record shape, the same redaction and the same tamper-evident hash chain as the Python, Node, browser and
 other bindings: redaction and the level filter run in Rust before anything is written.
 
-> **Not published yet.** The library is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.1) is prepared but not published
-> (`docs/stages/stage-9.md`), and the Maven group ID `io.logquill` is a placeholder that has not been claimed. See
+> **Not published yet.** The library is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.2) is prepared but not published
+> (`docs/stages/stage-9.md`), and the Maven group ID is `io.github.nikhilvdev` (the Java package stays `io.logquill`), to be verified on Central before the first publish. See
 > [Build and test](#build-and-test) to use it from this repository.
 
 ## Use it

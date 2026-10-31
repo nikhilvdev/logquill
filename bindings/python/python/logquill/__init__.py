@@ -88,7 +88,7 @@ if TYPE_CHECKING:  # for type checkers and doc tools; the real import happens on
 
 from logquill import _native as _native  # the Rust extension
 
-__version__ = "3.0.0rc1"
+__version__ = "3.0.0rc2"
 
 generate_fernet_key = _native.generate_fernet_key
 
