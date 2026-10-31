@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "logquill"
-version = "3.0.0rc2"
+version = "3.0.0rc3"
 description = "Structured, agent-aware logging with pluggable transports and a plugin pipeline, on a Rust core."
 readme = "README.md"
 requires-python = ">=3.10"

@@ -5,7 +5,7 @@ SDK for each language, so a team running several languages gets one mental model
 JSON log format.
 
 **Status: 3.0.0 is feature-complete on the `develop` branch and unreleased. Nothing from
-this line is published to any registry, and a first release candidate (3.0.0-rc.2) is prepared but not published.** The current releases are `logquill` 2.x for Python (PyPI, `main` branch)
+this line is published to any registry, and a first release candidate (3.0.0-rc.3) is prepared but not published.** The current releases are `logquill` 2.x for Python (PyPI, `main` branch)
 and `logquill` 1.x for Node (the separate `logquill-js` repository).
 
 ## Layout
