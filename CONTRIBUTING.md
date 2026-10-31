@@ -1,54 +1,46 @@
 # Contributing
 
-Thanks for considering a contribution to `logquill`. This project also
-follows a [Code of Conduct](CODE_OF_CONDUCT.md) — participation in issues,
-PRs, and discussions means agreeing to abide by it.
+Thanks for considering a contribution to LogQuill. This project follows a
+[Code of Conduct](CODE_OF_CONDUCT.md); taking part in issues, PRs and discussions means
+agreeing to it.
 
 ## Setup
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev,http,hooks]"
-pre-commit install
+Install Rust with [rustup](https://rustup.rs); `rust-toolchain.toml` selects the right
+toolchain and components. Then:
 
-ruff check .
-mypy logquill
-pytest
-pytest benchmarks   # memory budgets for the logging hot path
+```bash
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
 ```
 
-`pytest benchmarks` measures how much memory a log call and a stalled-sink
-burst use, and fails if a change pushes either past its budget in
-`benchmarks/measure.py`. It's separate from `pytest` because coverage's line
-tracing distorts the numbers; CI runs it as its own job. If a change
-legitimately needs more memory, raise the budget in the same PR and say why.
+Bindings and extra crates arrive with their stage (`docs/rust-core-plan.md`); each brings its
+own build notes in its folder.
+
+## Before you change behaviour
+
+The behaviour of LogQuill is specified in `docs/spec/`. Change the spec and the code
+together, and if a change touches a decision in `docs/spec/00-decisions.md` or the parity
+rule in `docs/spec/09-parity-and-gap-closing.md`, say so in the pull request.
 
 ## Pull request strategy
 
-- **Branch from `main`**, name branches by intent: `feat/…`, `fix/…`,
-  `docs/…`, `chore/…` (e.g. `feat/rotating-file-transport`).
-- **Keep PRs scoped to one concern** where possible. A PR that mixes an
-  unrelated refactor with a feature is harder to review and harder to revert.
-- **Every PR must satisfy this definition of done** before it's ready for
-  review:
-  1. Type hints throughout, `mypy --strict` clean on the public API
-  2. Unit tests cover the new surface; existing tests still pass
-  3. Public API additions documented in the README with a runnable example
+- **Branch from `develop`** and name branches by intent: `feat/…`, `fix/…`, `docs/…`,
+  `chore/…`.
+- **Keep a PR to one concern.** A refactor mixed with a feature is harder to review and
+  to revert.
+- **Definition of done:**
+  1. `cargo fmt`, `cargo clippy -D warnings` and `cargo test` pass
+  2. New behaviour has a test, and shared behaviour has a fixture under `schema/`
+  3. Every binding that exposes the behaviour passes the shared fixtures
   4. `CHANGELOG.md` has an entry under `Unreleased`
-  5. Nothing in the cross-language contract table silently diverged from `logquill-js`
-     (open a tracking issue there if it changed)
-     — if you change the record shape, change `schema/record.schema.json` and
-     `schema/golden_records.json` together (see `schema/README.md`)
-- **CI must be green** (`ruff check`, `mypy logquill`, `pytest`, `pytest benchmarks`) and **at
-  least one review approval** is required before merge — enforced by branch
-  protection on `main`.
-- **Squash-merge** into `main` — keep the squash commit message a clear
-  summary of the change; per-commit history within a PR branch doesn't need
-  to be clean.
-- Commit messages and PR titles: imperative mood, e.g. "Add rotating file
-  transport" not "Added" or "Adds".
+  5. Public API additions are documented with an example that was actually run
+- **CI must be green** and **at least one review approval** is required before merge.
+- **Squash-merge**, with a commit message that summarises the change in the imperative
+  mood ("Add rotating file transport", not "Added").
 
 ## Reporting issues
 
-Bug reports and feature requests are welcome via GitHub issues.
+Bug reports and feature requests are welcome via GitHub issues. For a security problem,
+use the private reporting described in `.github/SECURITY.md`.

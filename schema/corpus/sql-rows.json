@@ -1,0 +1,856 @@
+{
+  "group": "sql-rows",
+  "description": "The row a record becomes in the SQL log table, and the table definition per dialect.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "row: an empty meta",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": "{}",
+          "llm": null,
+          "run_id": null,
+          "span_id": null,
+          "parent_span_id": null,
+          "trace_id": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "row: ids in meta",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "run_id": "r1",
+            "span_id": "s1",
+            "parent_span_id": "p1",
+            "trace_id": "t1",
+            "user": "u"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": "{\"run_id\":\"r1\",\"span_id\":\"s1\",\"parent_span_id\":\"p1\",\"trace_id\":\"t1\",\"user\":\"u\"}",
+          "llm": null,
+          "run_id": "r1",
+          "span_id": "s1",
+          "parent_span_id": "p1",
+          "trace_id": "t1"
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"run_id\":\"r1\",\"span_id\":\"s1\",\"parent_span_id\":\"p1\",\"trace_id\":\"t1\",\"user\":\"u\"}",
+            "run_id": "r1",
+            "span_id": "s1",
+            "parent_span_id": "p1",
+            "trace_id": "t1"
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"run_id\":\"r1\",\"span_id\":\"s1\",\"parent_span_id\":\"p1\",\"trace_id\":\"t1\",\"user\":\"u\"}",
+            "run_id": "r1",
+            "span_id": "s1",
+            "parent_span_id": "p1",
+            "trace_id": "t1"
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "row: empty-string ids are kept",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "run_id": "",
+            "span_id": ""
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": "{\"run_id\":\"\",\"span_id\":\"\"}",
+          "llm": null,
+          "run_id": "",
+          "span_id": "",
+          "parent_span_id": null,
+          "trace_id": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"run_id\":\"\",\"span_id\":\"\"}",
+            "run_id": "",
+            "span_id": "",
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"run_id\":\"\",\"span_id\":\"\"}",
+            "run_id": "",
+            "span_id": "",
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "row: non-string ids become null",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "run_id": 5,
+            "span_id": null,
+            "parent_span_id": [
+              "x"
+            ],
+            "trace_id": true
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": "{\"run_id\":5,\"span_id\":null,\"parent_span_id\":[\"x\"],\"trace_id\":true}",
+          "llm": null,
+          "run_id": null,
+          "span_id": null,
+          "parent_span_id": null,
+          "trace_id": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"run_id\":5,\"span_id\":null,\"parent_span_id\":[\"x\"],\"trace_id\":true}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"run_id\":5,\"span_id\":null,\"parent_span_id\":[\"x\"],\"trace_id\":true}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "row: floats and nesting in meta",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "a": 1.0,
+            "b": {
+              "c": [
+                1,
+                2.5,
+                null
+              ]
+            },
+            "d": 1e+16
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": "{\"a\":1.0,\"b\":{\"c\":[1,2.5,null]},\"d\":1e+16}",
+          "llm": null,
+          "run_id": null,
+          "span_id": null,
+          "parent_span_id": null,
+          "trace_id": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"a\":1.0,\"b\":{\"c\":[1,2.5,null]},\"d\":1e+16}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"a\":1,\"b\":{\"c\":[1,2.5,null]},\"d\":10000000000000000}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "row: non-ASCII",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "svc.\u00e9",
+          "message": "caf\u00e9",
+          "meta": {
+            "k\u00e9y": "v\u00e1l",
+            "emoji": "\ud834\udd1e"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "svc.\u00e9",
+          "message": "caf\u00e9",
+          "meta": "{\"k\u00e9y\":\"v\u00e1l\",\"emoji\":\"\ud834\udd1e\"}",
+          "llm": null,
+          "run_id": null,
+          "span_id": null,
+          "parent_span_id": null,
+          "trace_id": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "svc.\u00e9",
+            "message": "caf\u00e9",
+            "meta": "{\"k\\u00e9y\":\"v\\u00e1l\",\"emoji\":\"\\ud834\\udd1e\"}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "svc.\u00e9",
+            "message": "caf\u00e9",
+            "meta": "{\"k\u00e9y\":\"v\u00e1l\",\"emoji\":\"\ud834\udd1e\"}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "row: control characters",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "line1\nline2",
+          "meta": {
+            "s": "a\nb\tc\u0001"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "line1\nline2",
+          "meta": "{\"s\":\"a\\nb\\tc\\u0001\"}",
+          "llm": null,
+          "run_id": null,
+          "span_id": null,
+          "parent_span_id": null,
+          "trace_id": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "line1\nline2",
+            "meta": "{\"s\":\"a\\nb\\tc\\u0001\"}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "line1\nline2",
+            "meta": "{\"s\":\"a\\nb\\tc\\u0001\"}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "row: an llm block",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "run_id": "r"
+          },
+          "llm": {
+            "model": "m",
+            "tokens_in": 3,
+            "cost_usd": 0.5
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": "{\"run_id\":\"r\"}",
+          "llm": "{\"model\":\"m\",\"tokens_in\":3,\"cost_usd\":0.5}",
+          "run_id": "r",
+          "span_id": null,
+          "parent_span_id": null,
+          "trace_id": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"run_id\":\"r\"}",
+            "run_id": "r",
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"run_id\":\"r\"}",
+            "run_id": "r",
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "row: an empty llm block",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {},
+          "llm": {}
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": "{}",
+          "llm": null,
+          "run_id": null,
+          "span_id": null,
+          "parent_span_id": null,
+          "trace_id": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "row: big integers",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "big": 9007199254740993,
+            "huge": 123456789012345678901234567890
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": "{\"big\":9007199254740993,\"huge\":123456789012345678901234567890}",
+          "llm": null,
+          "run_id": null,
+          "span_id": null,
+          "parent_span_id": null,
+          "trace_id": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"big\":9007199254740993,\"huge\":123456789012345678901234567890}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"big\":9007199254740992,\"huge\":1.2345678901234568e+29}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "row: every level",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "FATAL",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {}
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "FATAL",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": "{}",
+          "llm": null,
+          "run_id": null,
+          "span_id": null,
+          "parent_span_id": null,
+          "trace_id": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "FATAL",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "FATAL",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "row: hash fields in meta",
+      "input": {
+        "op": "row",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": {
+            "prev_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        }
+      },
+      "expected": {
+        "row": {
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app.db",
+          "message": "saved",
+          "meta": "{\"prev_hash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"hash\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}",
+          "llm": null,
+          "run_id": null,
+          "span_id": null,
+          "parent_span_id": null,
+          "trace_id": null
+        }
+      },
+      "differs": {
+        "python": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"prev_hash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"hash\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        },
+        "js": {
+          "row": {
+            "timestamp": "2026-01-01T00:00:00.123Z",
+            "level": "INFO",
+            "logger": "app.db",
+            "message": "saved",
+            "meta": "{\"prev_hash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"hash\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}",
+            "run_id": null,
+            "span_id": null,
+            "parent_span_id": null,
+            "trace_id": null
+          }
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "ddl: sqlite",
+      "input": {
+        "op": "ddl",
+        "dialect": "sqlite"
+      },
+      "expected": {
+        "sql": "CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT NOT NULL, level TEXT NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta TEXT NOT NULL, llm TEXT, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+      },
+      "differs": {
+        "python": {
+          "sql": "CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT NOT NULL, level TEXT NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta TEXT NOT NULL, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+        },
+        "js": {
+          "sql": "CREATE TABLE IF NOT EXISTS logs (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  timestamp TEXT NOT NULL,\n  level TEXT NOT NULL,\n  logger TEXT NOT NULL,\n  message TEXT NOT NULL,\n  meta TEXT NOT NULL,\n  run_id TEXT,\n  span_id TEXT,\n  parent_span_id TEXT,\n  trace_id TEXT\n)"
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "ddl: sqlite with another table name",
+      "input": {
+        "op": "ddl",
+        "dialect": "sqlite",
+        "table_name": "app_logs"
+      },
+      "expected": {
+        "sql": "CREATE TABLE IF NOT EXISTS app_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT NOT NULL, level TEXT NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta TEXT NOT NULL, llm TEXT, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+      },
+      "differs": {
+        "python": {
+          "sql": "CREATE TABLE IF NOT EXISTS app_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT NOT NULL, level TEXT NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta TEXT NOT NULL, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+        },
+        "js": {
+          "sql": "CREATE TABLE IF NOT EXISTS app_logs (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  timestamp TEXT NOT NULL,\n  level TEXT NOT NULL,\n  logger TEXT NOT NULL,\n  message TEXT NOT NULL,\n  meta TEXT NOT NULL,\n  run_id TEXT,\n  span_id TEXT,\n  parent_span_id TEXT,\n  trace_id TEXT\n)"
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "ddl: postgres",
+      "input": {
+        "op": "ddl",
+        "dialect": "postgres"
+      },
+      "expected": {
+        "sql": "CREATE TABLE IF NOT EXISTS logs (id SERIAL PRIMARY KEY, timestamp TEXT NOT NULL, level TEXT NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta JSONB NOT NULL, llm JSONB, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+      },
+      "differs": {
+        "python": {
+          "sql": "CREATE TABLE IF NOT EXISTS logs (id SERIAL PRIMARY KEY, timestamp TEXT NOT NULL, level TEXT NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta JSONB NOT NULL, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+        },
+        "js": {
+          "sql": "CREATE TABLE IF NOT EXISTS logs (\n  id SERIAL PRIMARY KEY,\n  timestamp TEXT NOT NULL,\n  level TEXT NOT NULL,\n  logger TEXT NOT NULL,\n  message TEXT NOT NULL,\n  meta JSONB NOT NULL,\n  run_id TEXT,\n  span_id TEXT,\n  parent_span_id TEXT,\n  trace_id TEXT\n)"
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "ddl: postgres with another table name",
+      "input": {
+        "op": "ddl",
+        "dialect": "postgres",
+        "table_name": "app_logs"
+      },
+      "expected": {
+        "sql": "CREATE TABLE IF NOT EXISTS app_logs (id SERIAL PRIMARY KEY, timestamp TEXT NOT NULL, level TEXT NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta JSONB NOT NULL, llm JSONB, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+      },
+      "differs": {
+        "python": {
+          "sql": "CREATE TABLE IF NOT EXISTS app_logs (id SERIAL PRIMARY KEY, timestamp TEXT NOT NULL, level TEXT NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta JSONB NOT NULL, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+        },
+        "js": {
+          "sql": "CREATE TABLE IF NOT EXISTS app_logs (\n  id SERIAL PRIMARY KEY,\n  timestamp TEXT NOT NULL,\n  level TEXT NOT NULL,\n  logger TEXT NOT NULL,\n  message TEXT NOT NULL,\n  meta JSONB NOT NULL,\n  run_id TEXT,\n  span_id TEXT,\n  parent_span_id TEXT,\n  trace_id TEXT\n)"
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "ddl: mysql",
+      "input": {
+        "op": "ddl",
+        "dialect": "mysql"
+      },
+      "expected": {
+        "sql": "CREATE TABLE IF NOT EXISTS logs (id INT AUTO_INCREMENT PRIMARY KEY, timestamp TEXT NOT NULL, level VARCHAR(16) NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta JSON NOT NULL, llm JSON, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+      },
+      "differs": {
+        "python": {
+          "sql": "CREATE TABLE IF NOT EXISTS logs (id INT AUTO_INCREMENT PRIMARY KEY, timestamp TEXT NOT NULL, level VARCHAR(16) NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta JSON NOT NULL, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+        },
+        "js": {
+          "sql": "CREATE TABLE IF NOT EXISTS logs (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  timestamp VARCHAR(64) NOT NULL,\n  level VARCHAR(16) NOT NULL,\n  logger VARCHAR(255) NOT NULL,\n  message TEXT NOT NULL,\n  meta JSON NOT NULL,\n  run_id VARCHAR(255),\n  span_id VARCHAR(255),\n  parent_span_id VARCHAR(255),\n  trace_id VARCHAR(255)\n)"
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    },
+    {
+      "name": "ddl: mysql with another table name",
+      "input": {
+        "op": "ddl",
+        "dialect": "mysql",
+        "table_name": "app_logs"
+      },
+      "expected": {
+        "sql": "CREATE TABLE IF NOT EXISTS app_logs (id INT AUTO_INCREMENT PRIMARY KEY, timestamp TEXT NOT NULL, level VARCHAR(16) NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta JSON NOT NULL, llm JSON, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+      },
+      "differs": {
+        "python": {
+          "sql": "CREATE TABLE IF NOT EXISTS app_logs (id INT AUTO_INCREMENT PRIMARY KEY, timestamp TEXT NOT NULL, level VARCHAR(16) NOT NULL, logger TEXT NOT NULL, message TEXT NOT NULL, meta JSON NOT NULL, run_id TEXT, span_id TEXT, parent_span_id TEXT, trace_id TEXT)"
+        },
+        "js": {
+          "sql": "CREATE TABLE IF NOT EXISTS app_logs (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  timestamp VARCHAR(64) NOT NULL,\n  level VARCHAR(16) NOT NULL,\n  logger VARCHAR(255) NOT NULL,\n  message TEXT NOT NULL,\n  meta JSON NOT NULL,\n  run_id VARCHAR(255),\n  span_id VARCHAR(255),\n  parent_span_id VARCHAR(255),\n  trace_id VARCHAR(255)\n)"
+        }
+      },
+      "rule": "D33 \u2014 an llm column beside meta, so a stored record reads back whole; D32 \u2014 one UTF-8 JSON spelling for meta; one table definition per dialect"
+    }
+  ]
+}

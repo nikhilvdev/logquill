@@ -4,14 +4,14 @@
 
 ## Checklist
 
-- [ ] `ruff check .` passes
-- [ ] `mypy logquill` passes (`--strict` on the public API)
-- [ ] `pytest` passes, and new surface area has test coverage
-- [ ] Public API additions are documented in `README.md` with a runnable example
+- [ ] `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`
+      and `cargo test --workspace` pass
+- [ ] New behaviour has a test; shared behaviour has a fixture under `schema/`
+- [ ] Every binding that exposes the behaviour passes the shared fixtures
+- [ ] The spec in `docs/spec/` is updated if behaviour changed (and a decision in
+      `docs/spec/00-decisions.md` if a choice was made)
+- [ ] Public API additions are documented with an example that was actually run
 - [ ] `CHANGELOG.md` has an entry under `Unreleased`
-- [ ] If this touches the cross-language contract (levels, logger methods,
-      record shape, transport/plugin contracts, config shape) shared with
-      `logquill-js`, a matching tracking issue/PR is opened there
 
 ## Scope
 

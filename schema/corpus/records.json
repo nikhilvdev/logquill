@@ -1,0 +1,1722 @@
+{
+  "group": "records",
+  "description": "Timestamp formatting, the llm block builder with its warnings, and reading records back (current and 1.x).",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "timestamp for 0 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 0
+      },
+      "expected": {
+        "timestamp": "1970-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "timestamp for 1 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1
+      },
+      "expected": {
+        "timestamp": "1970-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "timestamp for 999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 999
+      },
+      "expected": {
+        "timestamp": "1970-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "timestamp for 1000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1000
+      },
+      "expected": {
+        "timestamp": "1970-01-01T00:00:00.001Z"
+      }
+    },
+    {
+      "name": "timestamp for 1001 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1001
+      },
+      "expected": {
+        "timestamp": "1970-01-01T00:00:00.001Z"
+      }
+    },
+    {
+      "name": "timestamp for 999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 999999
+      },
+      "expected": {
+        "timestamp": "1970-01-01T00:00:00.999Z"
+      }
+    },
+    {
+      "name": "timestamp for 1000000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1000000
+      },
+      "expected": {
+        "timestamp": "1970-01-01T00:00:01.000Z"
+      }
+    },
+    {
+      "name": "timestamp for 1999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1999999
+      },
+      "expected": {
+        "timestamp": "1970-01-01T00:00:01.999Z"
+      }
+    },
+    {
+      "name": "timestamp for 59999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 59999999
+      },
+      "expected": {
+        "timestamp": "1970-01-01T00:00:59.999Z"
+      }
+    },
+    {
+      "name": "timestamp for 86399999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 86399999999
+      },
+      "expected": {
+        "timestamp": "1970-01-01T23:59:59.999Z"
+      }
+    },
+    {
+      "name": "timestamp for 86400000000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 86400000000
+      },
+      "expected": {
+        "timestamp": "1970-01-02T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "timestamp for 951782400999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 951782400999999
+      },
+      "expected": {
+        "timestamp": "2000-02-29T00:00:00.999Z"
+      }
+    },
+    {
+      "name": "timestamp for 1000000000000000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1000000000000000
+      },
+      "expected": {
+        "timestamp": "2001-09-09T01:46:40.000Z"
+      }
+    },
+    {
+      "name": "timestamp for 1700000000123456 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1700000000123456
+      },
+      "expected": {
+        "timestamp": "2023-11-14T22:13:20.123Z"
+      }
+    },
+    {
+      "name": "timestamp for 1709164800000000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1709164800000000
+      },
+      "expected": {
+        "timestamp": "2024-02-29T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "timestamp for 1709251199999999 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1709251199999999
+      },
+      "expected": {
+        "timestamp": "2024-02-29T23:59:59.999Z"
+      }
+    },
+    {
+      "name": "timestamp for 1735689599999000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 1735689599999000
+      },
+      "expected": {
+        "timestamp": "2024-12-31T23:59:59.999Z"
+      }
+    },
+    {
+      "name": "timestamp for 4102444800000001 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 4102444800000001
+      },
+      "expected": {
+        "timestamp": "2100-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "timestamp for 253402300799000000 microseconds",
+      "input": {
+        "op": "timestamp",
+        "unix_micros": 253402300799000000
+      },
+      "expected": {
+        "timestamp": "9999-12-31T23:59:59.000Z"
+      }
+    },
+    {
+      "name": "llm block: every field",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": "gpt-4o",
+          "tokens_in": 10,
+          "tokens_out": 20,
+          "cost_usd": 0.5,
+          "latency_ms": 12,
+          "finish_reason": "stop"
+        }
+      },
+      "expected": {
+        "block": {
+          "model": "gpt-4o",
+          "tokens_in": 10,
+          "tokens_out": 20,
+          "cost_usd": 0.5,
+          "latency_ms": 12,
+          "finish_reason": "stop"
+        },
+        "warnings": []
+      }
+    },
+    {
+      "name": "llm block: no fields",
+      "input": {
+        "op": "llm_block",
+        "fields": {}
+      },
+      "expected": {
+        "block": null,
+        "warnings": []
+      }
+    },
+    {
+      "name": "llm block: zeros are valid",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": 0,
+          "latency_ms": 0.0
+        }
+      },
+      "expected": {
+        "block": {
+          "tokens_in": 0,
+          "tokens_out": 0,
+          "cost_usd": 0,
+          "latency_ms": 0.0
+        },
+        "warnings": []
+      },
+      "differs": {
+        "js": {
+          "block": {
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "cost_usd": 0,
+            "latency_ms": 0
+          },
+          "warnings": []
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: null fields are skipped",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": null,
+          "tokens_in": null,
+          "cost_usd": null
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": []
+      }
+    },
+    {
+      "name": "llm block: a negative count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": "m",
+          "tokens_in": -1
+        }
+      },
+      "expected": {
+        "block": {
+          "model": "m"
+        },
+        "warnings": [
+          "llm_call: ignoring tokens_in=-1 \u2014 expected a non-negative integer"
+        ]
+      },
+      "differs": {
+        "js": {
+          "block": {
+            "model": "m"
+          },
+          "warnings": [
+            "llmCall: ignoring tokensIn=-1 \u2014 expected a non-negative integer"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: a fractional count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": 1.5
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring tokens_in=1.5 \u2014 expected a non-negative integer"
+        ]
+      },
+      "differs": {
+        "js": {
+          "block": null,
+          "warnings": [
+            "llmCall: ignoring tokensIn=1.5 \u2014 expected a non-negative integer"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: a whole-number float count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": 10.0
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring tokens_in=10.0 \u2014 expected a non-negative integer"
+        ]
+      },
+      "differs": {
+        "js": {
+          "block": {
+            "tokens_in": 10
+          },
+          "warnings": []
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: a string count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_out": "7"
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring tokens_out=\"7\" \u2014 expected a non-negative integer"
+        ]
+      },
+      "differs": {
+        "python": {
+          "block": null,
+          "warnings": [
+            "llm_call: ignoring tokens_out='7' \u2014 expected a non-negative integer"
+          ]
+        },
+        "js": {
+          "block": null,
+          "warnings": [
+            "llmCall: ignoring tokensOut=\"7\" \u2014 expected a non-negative integer"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: a boolean count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": true
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring tokens_in=true \u2014 expected a non-negative integer"
+        ]
+      },
+      "differs": {
+        "python": {
+          "block": null,
+          "warnings": [
+            "llm_call: ignoring tokens_in=True \u2014 expected a non-negative integer"
+          ]
+        },
+        "js": {
+          "block": null,
+          "warnings": [
+            "llmCall: ignoring tokensIn=true \u2014 expected a non-negative integer"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: a negative cost",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "cost_usd": -0.01
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring cost_usd=-0.01 \u2014 expected a non-negative number"
+        ]
+      },
+      "differs": {
+        "js": {
+          "block": null,
+          "warnings": [
+            "llmCall: ignoring costUsd=-0.01 \u2014 expected a non-negative number"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: a string cost",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "cost_usd": "0.5"
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring cost_usd=\"0.5\" \u2014 expected a non-negative number"
+        ]
+      },
+      "differs": {
+        "python": {
+          "block": null,
+          "warnings": [
+            "llm_call: ignoring cost_usd='0.5' \u2014 expected a non-negative number"
+          ]
+        },
+        "js": {
+          "block": null,
+          "warnings": [
+            "llmCall: ignoring costUsd=\"0.5\" \u2014 expected a non-negative number"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: a boolean latency",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "latency_ms": true
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring latency_ms=true \u2014 expected a non-negative number"
+        ]
+      },
+      "differs": {
+        "python": {
+          "block": null,
+          "warnings": [
+            "llm_call: ignoring latency_ms=True \u2014 expected a non-negative number"
+          ]
+        },
+        "js": {
+          "block": null,
+          "warnings": [
+            "llmCall: ignoring latencyMs=true \u2014 expected a non-negative number"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: a negative latency",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "latency_ms": -1
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring latency_ms=-1 \u2014 expected a non-negative number"
+        ]
+      },
+      "differs": {
+        "js": {
+          "block": null,
+          "warnings": [
+            "llmCall: ignoring latencyMs=-1 \u2014 expected a non-negative number"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: a numeric model",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": 5
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring model=5 \u2014 expected a string"
+        ]
+      },
+      "differs": {
+        "js": {
+          "block": null,
+          "warnings": [
+            "llmCall: ignoring model=5 \u2014 expected a string"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: a list for finish_reason",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "finish_reason": [
+            "stop"
+          ]
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring finish_reason=[\"stop\"] \u2014 expected a string"
+        ]
+      },
+      "differs": {
+        "python": {
+          "block": null,
+          "warnings": [
+            "llm_call: ignoring finish_reason=['stop'] \u2014 expected a string"
+          ]
+        },
+        "js": {
+          "block": null,
+          "warnings": [
+            "llmCall: ignoring finishReason=[\"stop\"] \u2014 expected a string"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: an unknown field",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "temperature": 0.2
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring temperature=0.2 \u2014 expected one of model, tokens_in, tokens_out, cost_usd, latency_ms, finish_reason"
+        ]
+      },
+      "differs": {
+        "js": {
+          "block": null,
+          "warnings": [
+            "llmCall: ignoring temperature=0.2 \u2014 expected one of model, tokensIn, tokensOut, costUsd, latencyMs, finishReason"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: an unknown field beside a good one",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": "m",
+          "temperature": 0.2
+        }
+      },
+      "expected": {
+        "block": {
+          "model": "m"
+        },
+        "warnings": [
+          "llm_call: ignoring temperature=0.2 \u2014 expected one of model, tokens_in, tokens_out, cost_usd, latency_ms, finish_reason"
+        ]
+      },
+      "differs": {
+        "js": {
+          "block": {
+            "model": "m"
+          },
+          "warnings": [
+            "llmCall: ignoring temperature=0.2 \u2014 expected one of model, tokensIn, tokensOut, costUsd, latencyMs, finishReason"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: a huge count",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": 9007199254740993
+        }
+      },
+      "expected": {
+        "block": {
+          "tokens_in": 9007199254740993
+        },
+        "warnings": []
+      },
+      "differs": {
+        "js": {
+          "block": {
+            "tokens_in": 9007199254740992
+          },
+          "warnings": []
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: only invalid fields",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "tokens_in": -5,
+          "cost_usd": "x"
+        }
+      },
+      "expected": {
+        "block": null,
+        "warnings": [
+          "llm_call: ignoring tokens_in=-5 \u2014 expected a non-negative integer",
+          "llm_call: ignoring cost_usd=\"x\" \u2014 expected a non-negative number"
+        ]
+      },
+      "differs": {
+        "python": {
+          "block": null,
+          "warnings": [
+            "llm_call: ignoring tokens_in=-5 \u2014 expected a non-negative integer",
+            "llm_call: ignoring cost_usd='x' \u2014 expected a non-negative number"
+          ]
+        },
+        "js": {
+          "block": null,
+          "warnings": [
+            "llmCall: ignoring tokensIn=-5 \u2014 expected a non-negative integer",
+            "llmCall: ignoring costUsd=\"x\" \u2014 expected a non-negative number"
+          ]
+        }
+      },
+      "rule": "D36 \u2014 warnings read `llm_call:` plus the field's JSON value; D4 \u2014 a JSON 10.0 is a float, not an integer"
+    },
+    {
+      "name": "llm block: an empty model string",
+      "input": {
+        "op": "llm_block",
+        "fields": {
+          "model": ""
+        }
+      },
+      "expected": {
+        "block": {
+          "model": ""
+        },
+        "warnings": []
+      }
+    },
+    {
+      "name": "parse: a current record",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a current record with an llm block",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "llm": {
+            "model": "m",
+            "tokens_in": 1
+          }
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "llm": {
+            "model": "m",
+            "tokens_in": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a record with a null llm",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "llm": null
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "differs": {
+        "python": {
+          "record": {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "hi",
+            "meta": {
+              "a": 1
+            },
+            "llm": null
+          }
+        },
+        "js": {
+          "error": "record field 'llm' must be an object, got object"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a record with an unknown key",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "future": {
+            "x": 1
+          }
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "future": {
+            "x": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a newer minor version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.7",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "2.7",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: an older minor version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a 1.x record",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "1.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a 1.x record with camelCase meta",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "runId": "r",
+            "spanId": "s",
+            "parentSpanId": "p",
+            "traceId": "t",
+            "durationMs": 5,
+            "prevHash": "h",
+            "other": 1
+          }
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "1.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "run_id": "r",
+            "span_id": "s",
+            "parent_span_id": "p",
+            "trace_id": "t",
+            "duration_ms": 5,
+            "prev_hash": "h",
+            "other": 1
+          }
+        }
+      },
+      "differs": {
+        "python": {
+          "record": {
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "hi",
+            "meta": {
+              "runId": "r",
+              "spanId": "s",
+              "parentSpanId": "p",
+              "traceId": "t",
+              "durationMs": 5,
+              "prevHash": "h",
+              "other": 1
+            },
+            "schema_version": "1.0"
+          }
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a 2.x record keeps camelCase meta",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "runId": "r"
+          }
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "runId": "r"
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a 1.x record without meta",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi"
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "1.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "parse: a record without meta",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi"
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "parse: a version 1.0 record",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "1.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "record": {
+          "schema_version": "1.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "parse: a newer major version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "3.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "this record has schema_version \"3.0\", newer than the '2.0' this logquill understands \u2014 upgrade logquill to read it"
+      },
+      "differs": {
+        "python": {
+          "error": "this record has schema_version '3.0', newer than the '2.0' this logquill understands \u2014 upgrade logquill to read it"
+        },
+        "js": {
+          "error": "this record has schema_version \"3.0\", newer than the \"2.0\" this logquill understands \u2014 upgrade logquill to read it"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a far-newer major version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "99999999999999999999999.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "this record has schema_version \"99999999999999999999999.0\", newer than the '2.0' this logquill understands \u2014 upgrade logquill to read it"
+      },
+      "differs": {
+        "python": {
+          "error": "this record has schema_version '99999999999999999999999.0', newer than the '2.0' this logquill understands \u2014 upgrade logquill to read it"
+        },
+        "js": {
+          "error": "this record has schema_version \"99999999999999999999999.0\", newer than the \"2.0\" this logquill understands \u2014 upgrade logquill to read it"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a version without a dot",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "schema_version must be a string like '2.0', got \"2\" \u2014 is this a LogQuill record?"
+      },
+      "differs": {
+        "python": {
+          "error": "schema_version must be a string like '2.0', got '2' \u2014 is this a LogQuill record?"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a version with three parts",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0.1",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "schema_version must be a string like '2.0', got \"2.0.1\" \u2014 is this a LogQuill record?"
+      },
+      "differs": {
+        "python": {
+          "error": "schema_version must be a string like '2.0', got '2.0.1' \u2014 is this a LogQuill record?"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a version with a letter",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.x",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "schema_version must be a string like '2.0', got \"2.x\" \u2014 is this a LogQuill record?"
+      },
+      "differs": {
+        "python": {
+          "error": "schema_version must be a string like '2.0', got '2.x' \u2014 is this a LogQuill record?"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a version with a trailing newline",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0\n",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "schema_version must be a string like '2.0', got \"2.0\\n\" \u2014 is this a LogQuill record?"
+      },
+      "differs": {
+        "python": {
+          "record": {
+            "schema_version": "2.0\n",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "hi",
+            "meta": {
+              "a": 1
+            }
+          }
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a version in Arabic-Indic digits",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "\u0662.\u0660",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "schema_version must be a string like '2.0', got \"\u0662.\u0660\" \u2014 is this a LogQuill record?"
+      },
+      "differs": {
+        "python": {
+          "record": {
+            "schema_version": "\u0662.\u0660",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "hi",
+            "meta": {
+              "a": 1
+            }
+          }
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a version with an empty part",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "schema_version must be a string like '2.0', got \"2.\" \u2014 is this a LogQuill record?"
+      },
+      "differs": {
+        "python": {
+          "error": "schema_version must be a string like '2.0', got '2.' \u2014 is this a LogQuill record?"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a numeric version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": 2,
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "schema_version must be a string like '2.0', got 2 \u2014 is this a LogQuill record?"
+      }
+    },
+    {
+      "name": "parse: a null version",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": null,
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "schema_version must be a string like '2.0', got null \u2014 is this a LogQuill record?"
+      },
+      "differs": {
+        "python": {
+          "error": "schema_version must be a string like '2.0', got None \u2014 is this a LogQuill record?"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a lower-case level",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "info",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "record level \"info\" isn't one of TRACE, DEBUG, INFO, WARN, ERROR, FATAL (upper case)"
+      },
+      "differs": {
+        "python": {
+          "error": "record level 'info' isn't one of TRACE, DEBUG, INFO, WARN, ERROR, FATAL (upper case)"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: an unknown level",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "NOTICE",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "record level \"NOTICE\" isn't one of TRACE, DEBUG, INFO, WARN, ERROR, FATAL (upper case)"
+      },
+      "differs": {
+        "python": {
+          "error": "record level 'NOTICE' isn't one of TRACE, DEBUG, INFO, WARN, ERROR, FATAL (upper case)"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a numeric level",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": 20,
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "record field 'level' must be a string, got 20"
+      }
+    },
+    {
+      "name": "parse: a missing logger",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "record field 'logger' must be a string, got null"
+      },
+      "differs": {
+        "python": {
+          "error": "record field 'logger' must be a string, got None"
+        },
+        "js": {
+          "error": "record field 'logger' must be a string, got undefined"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: a numeric message",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": 5,
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "record field 'message' must be a string, got 5"
+      }
+    },
+    {
+      "name": "parse: a null timestamp",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": null,
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          }
+        }
+      },
+      "expected": {
+        "error": "record field 'timestamp' must be a string, got null"
+      },
+      "differs": {
+        "python": {
+          "error": "record field 'timestamp' must be a string, got None"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: meta as a string",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": "x"
+        }
+      },
+      "expected": {
+        "error": "record field 'meta' must be an object, got string"
+      },
+      "differs": {
+        "python": {
+          "error": "record field 'meta' must be an object, got str"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: meta as a list",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": [
+            1
+          ]
+        }
+      },
+      "expected": {
+        "error": "record field 'meta' must be an object, got array"
+      },
+      "differs": {
+        "python": {
+          "error": "record field 'meta' must be an object, got list"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: meta as null",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": null
+        }
+      },
+      "expected": {
+        "error": "record field 'meta' must be an object, got null"
+      },
+      "differs": {
+        "python": {
+          "error": "record field 'meta' must be an object, got NoneType"
+        },
+        "js": {
+          "error": "record field 'meta' must be an object, got object"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: llm as a string",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "llm": "x"
+        }
+      },
+      "expected": {
+        "error": "record field 'llm' must be an object, got string"
+      },
+      "differs": {
+        "python": {
+          "error": "record field 'llm' must be an object, got str"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: llm as a list",
+      "input": {
+        "op": "parse_record",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.000Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "hi",
+          "meta": {
+            "a": 1
+          },
+          "llm": [
+            1
+          ]
+        }
+      },
+      "expected": {
+        "error": "record field 'llm' must be an object, got array"
+      },
+      "differs": {
+        "python": {
+          "error": "record field 'llm' must be an object, got list"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: not an object: a list",
+      "input": {
+        "op": "parse_record",
+        "record": [
+          "a"
+        ]
+      },
+      "expected": {
+        "error": "a log record must be a JSON object, got array"
+      },
+      "differs": {
+        "python": {
+          "error": "a log record must be a JSON object, got list"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: not an object: a string",
+      "input": {
+        "op": "parse_record",
+        "record": "x"
+      },
+      "expected": {
+        "error": "a log record must be a JSON object, got string"
+      },
+      "differs": {
+        "python": {
+          "error": "a log record must be a JSON object, got str"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: not an object: null",
+      "input": {
+        "op": "parse_record",
+        "record": null
+      },
+      "expected": {
+        "error": "a log record must be a JSON object, got null"
+      },
+      "differs": {
+        "python": {
+          "error": "a log record must be a JSON object, got NoneType"
+        },
+        "js": {
+          "error": "a log record must be a JSON object, got object"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: not an object: a number",
+      "input": {
+        "op": "parse_record",
+        "record": 5
+      },
+      "expected": {
+        "error": "a log record must be a JSON object, got number"
+      },
+      "differs": {
+        "python": {
+          "error": "a log record must be a JSON object, got int"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    },
+    {
+      "name": "parse: not an object: a boolean",
+      "input": {
+        "op": "parse_record",
+        "record": true
+      },
+      "expected": {
+        "error": "a log record must be a JSON object, got boolean"
+      },
+      "differs": {
+        "python": {
+          "error": "a log record must be a JSON object, got bool"
+        }
+      },
+      "rule": "D36 \u2014 values in messages are JSON text; D38 \u2014 versions are ASCII digits; D39 \u2014 a null llm is absent; D18 \u2014 1.x camelCase meta keys are renamed"
+    }
+  ]
+}

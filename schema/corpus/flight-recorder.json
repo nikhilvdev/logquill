@@ -1,0 +1,1033 @@
+{
+  "group": "flight-recorder",
+  "description": "A per-run ring buffer of low-level records that ships only when the run errors.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "js_gaps": [
+    "no flight recorder in the JavaScript package"
+  ],
+  "cases": [
+    {
+      "name": "records at or above ship_at pass straight through",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "i",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "WARN",
+              "logger": "app",
+              "message": "w",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_runs": [],
+          "buffered_records": 0,
+          "flushed": []
+        }
+      }
+    },
+    {
+      "name": "a record with no run id passes through",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "d",
+              "meta": {}
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "TRACE",
+              "logger": "app",
+              "message": "t",
+              "meta": {
+                "run_id": null
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_runs": [],
+          "buffered_records": 0,
+          "flushed": []
+        }
+      }
+    },
+    {
+      "name": "an error flushes the run's buffered context",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "d1",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "TRACE",
+              "logger": "app",
+              "message": "t1",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "d2",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "d1",
+              "t1"
+            ]
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_runs": [],
+          "buffered_records": 0,
+          "flushed": [
+            "r1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "a passing run ships none of its debug records",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "d1",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "done",
+              "meta": {
+                "run_id": "r1"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_runs": [
+            "r1"
+          ],
+          "buffered_records": 1,
+          "flushed": []
+        }
+      }
+    },
+    {
+      "name": "runs are independent",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "a-d",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "b-d",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a-err",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "b-d2",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "a-d"
+            ]
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_runs": [
+            "b"
+          ],
+          "buffered_records": 2,
+          "flushed": [
+            "a"
+          ]
+        }
+      }
+    },
+    {
+      "name": "ship_at and flush_at are configurable",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "d",
+              "meta": {
+                "run_id": "r"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "i",
+              "meta": {
+                "run_id": "r"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "WARN",
+              "logger": "app",
+              "message": "w",
+              "meta": {
+                "run_id": "r"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "after",
+              "meta": {
+                "run_id": "r"
+              }
+            }
+          }
+        ],
+        "options": {
+          "ship_at": "DEBUG",
+          "flush_at": "WARN"
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_runs": [],
+          "buffered_records": 0,
+          "flushed": [
+            "r"
+          ]
+        }
+      }
+    },
+    {
+      "name": "a custom run key",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "d",
+              "meta": {
+                "job": "j1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "e",
+              "meta": {
+                "job": "j1"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "ignored",
+              "meta": {
+                "run_id": "r"
+              }
+            }
+          }
+        ],
+        "options": {
+          "run_key": "job"
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "d"
+            ]
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_runs": [],
+          "buffered_records": 0,
+          "flushed": [
+            "j1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "too many runs evicts the oldest",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "a1",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "b1",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "c1",
+              "meta": {
+                "run_id": "c"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a-err",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b-err",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          }
+        ],
+        "options": {
+          "max_runs": 2
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "b1"
+            ]
+          }
+        ],
+        "state": {
+          "buffered_runs": [
+            "c"
+          ],
+          "buffered_records": 1,
+          "flushed": [
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "name": "too many buffered records evicts the oldest run",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "a1",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "a2",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "b1",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "b2",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a-err",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b-err",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          }
+        ],
+        "options": {
+          "max_buffered_records": 3
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "b1",
+              "b2"
+            ]
+          }
+        ],
+        "state": {
+          "buffered_runs": [],
+          "buffered_records": 0,
+          "flushed": [
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "name": "a run seen again becomes the newest",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "a1",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "b1",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "a2",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "c1",
+              "meta": {
+                "run_id": "c"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a-err",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b-err",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          }
+        ],
+        "options": {
+          "max_runs": 2
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "a1",
+              "a2"
+            ]
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_runs": [
+            "c"
+          ],
+          "buffered_records": 1,
+          "flushed": [
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "name": "the flushed set is bounded",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "ea",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "eb",
+              "meta": {
+                "run_id": "b"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "ec",
+              "meta": {
+                "run_id": "c"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "later a",
+              "meta": {
+                "run_id": "a"
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "later c",
+              "meta": {
+                "run_id": "c"
+              }
+            }
+          }
+        ],
+        "options": {
+          "max_flushed": 2
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_runs": [
+            "a"
+          ],
+          "buffered_records": 1,
+          "flushed": [
+            "b",
+            "c"
+          ]
+        }
+      },
+      "differs": {
+        "python": {
+          "steps": [
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            }
+          ],
+          "state": {
+            "buffered_runs": [],
+            "buffered_records": 0,
+            "flushed": [
+              "a",
+              "b",
+              "c"
+            ]
+          }
+        }
+      },
+      "rule": "09 \u2014 D24 tail and flight-recorder sets are bounded; D36 messages show JSON values and wire names; D44 a full alert table never drops an alert; D5 run ids are 32 hex digits"
+    },
+    {
+      "name": "a numeric run id",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "d",
+              "meta": {
+                "run_id": 5
+              }
+            }
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "e",
+              "meta": {
+                "run_id": 5
+              }
+            }
+          }
+        ],
+        "options": {}
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "d"
+            ]
+          }
+        ],
+        "state": {
+          "buffered_runs": [],
+          "buffered_records": 0,
+          "flushed": [
+            5
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1400 @@
+{
+  "group": "sampling",
+  "description": "Probabilistic sampling, with tail-based elevation of a whole trace and bounded buffers.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "plain rate: a draw below the rate keeps, equal or above drops",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            },
+            "rng": 0.1
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            },
+            "rng": 0.5
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "c",
+              "meta": {}
+            },
+            "rng": 0.49
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "d",
+              "meta": {}
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.5
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": []
+        }
+      }
+    },
+    {
+      "name": "a rate of zero keeps nothing",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            },
+            "rng": 0.0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            },
+            "rng": 0.0
+          }
+        ],
+        "options": {
+          "rate": 0
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": []
+        }
+      }
+    },
+    {
+      "name": "a rate of one keeps everything",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            },
+            "rng": 0.999999
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            },
+            "rng": 0.0
+          }
+        ],
+        "options": {
+          "rate": 1
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": []
+        }
+      }
+    },
+    {
+      "name": "without tail sampling an error is not rescued",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "e",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": []
+        }
+      }
+    },
+    {
+      "name": "tail: an error flushes its trace and later records ship",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "i1",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "DEBUG",
+              "logger": "app",
+              "message": "d1",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "after",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "other trace",
+              "meta": {
+                "trace_id": "t2"
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1,
+          "tail": true
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "i1",
+              "d1"
+            ]
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [
+            "t2"
+          ],
+          "buffered_records": 1,
+          "elevated": [
+            "t1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "tail: a record with no trace id is only rate-sampled",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {}
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b",
+              "meta": {}
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1,
+          "tail": true
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": []
+        }
+      }
+    },
+    {
+      "name": "tail: a null trace id counts as no trace",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a",
+              "meta": {
+                "trace_id": null
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b",
+              "meta": {
+                "trace_id": null
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1,
+          "tail": true
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": []
+        }
+      },
+      "differs": {
+        "js": {
+          "steps": [
+            {
+              "kept": false,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": [
+                "a"
+              ]
+            }
+          ]
+        }
+      },
+      "rule": "09 \u2014 D24 tail and flight-recorder sets are bounded; D36 messages show JSON values and wire names; D44 a full alert table never drops an alert; D5 run ids are 32 hex digits"
+    },
+    {
+      "name": "tail: a kept record still counts toward the trace",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "kept",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.0
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "dropped",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "boom",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.5,
+          "tail": true
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "dropped"
+            ]
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": [
+            "t1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "tail: elevate at warn",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "i",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "WARN",
+              "logger": "app",
+              "message": "w",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "after",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1,
+          "tail": true,
+          "elevate_at": "WARN"
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "i"
+            ]
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": [
+            "t1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "tail: a custom trace key",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "i",
+              "meta": {
+                "req": "q1"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "e",
+              "meta": {
+                "req": "q1"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "ignored key",
+              "meta": {
+                "trace_id": "t1"
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1,
+          "tail": true,
+          "trace_key": "req"
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "i"
+            ]
+          },
+          {
+            "kept": false,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": [
+            "q1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "tail: a numeric trace id",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "i",
+              "meta": {
+                "trace_id": 5
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "e",
+              "meta": {
+                "trace_id": 5
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1,
+          "tail": true
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "i"
+            ]
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": [
+            5
+          ]
+        }
+      }
+    },
+    {
+      "name": "tail: too many traces evicts the oldest unflushed",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a1",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b1",
+              "meta": {
+                "trace_id": "b"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "c1",
+              "meta": {
+                "trace_id": "c"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a-err",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b-err",
+              "meta": {
+                "trace_id": "b"
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1,
+          "tail": true,
+          "max_traces": 2
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "b1"
+            ]
+          }
+        ],
+        "state": {
+          "buffered_traces": [
+            "c"
+          ],
+          "buffered_records": 1,
+          "elevated": [
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "name": "tail: a trace seen again becomes the newest",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a1",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b1",
+              "meta": {
+                "trace_id": "b"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a2",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "c1",
+              "meta": {
+                "trace_id": "c"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a-err",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b-err",
+              "meta": {
+                "trace_id": "b"
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1,
+          "tail": true,
+          "max_traces": 2
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "a1",
+              "a2"
+            ]
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [
+            "c"
+          ],
+          "buffered_records": 1,
+          "elevated": [
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "name": "tail: too many buffered records evicts the oldest trace",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a1",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a2",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b1",
+              "meta": {
+                "trace_id": "b"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "b2",
+              "meta": {
+                "trace_id": "b"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a-err",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "b-err",
+              "meta": {
+                "trace_id": "b"
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1,
+          "tail": true,
+          "max_buffered_records": 3
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": [
+              "b1",
+              "b2"
+            ]
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": [
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "name": "tail: one trace larger than the buffer evicts itself",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a1",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a2",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "a3",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "a-err",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1,
+          "tail": true,
+          "max_buffered_records": 2
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [],
+          "buffered_records": 0,
+          "elevated": [
+            "a"
+          ]
+        }
+      }
+    },
+    {
+      "name": "tail: the elevated set is bounded",
+      "input": {
+        "steps": [
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "ea",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "eb",
+              "meta": {
+                "trace_id": "b"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "ERROR",
+              "logger": "app",
+              "message": "ec",
+              "meta": {
+                "trace_id": "c"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "later a",
+              "meta": {
+                "trace_id": "a"
+              }
+            },
+            "rng": 0.9
+          },
+          {
+            "record": {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "INFO",
+              "logger": "app",
+              "message": "later c",
+              "meta": {
+                "trace_id": "c"
+              }
+            },
+            "rng": 0.9
+          }
+        ],
+        "options": {
+          "rate": 0.1,
+          "tail": true,
+          "max_elevated": 2
+        }
+      },
+      "expected": {
+        "steps": [
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          },
+          {
+            "kept": false,
+            "written": []
+          },
+          {
+            "kept": true,
+            "written": []
+          }
+        ],
+        "state": {
+          "buffered_traces": [
+            "a"
+          ],
+          "buffered_records": 1,
+          "elevated": [
+            "b",
+            "c"
+          ]
+        }
+      },
+      "differs": {
+        "python": {
+          "steps": [
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            }
+          ],
+          "state": {
+            "buffered_traces": [],
+            "buffered_records": 0,
+            "elevated": [
+              "a",
+              "b",
+              "c"
+            ]
+          }
+        },
+        "js": {
+          "steps": [
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            },
+            {
+              "kept": true,
+              "written": []
+            }
+          ]
+        }
+      },
+      "rule": "09 \u2014 D24 tail and flight-recorder sets are bounded; D36 messages show JSON values and wire names; D44 a full alert table never drops an alert; D5 run ids are 32 hex digits"
+    },
+    {
+      "name": "a rate above one is refused",
+      "input": {
+        "steps": [],
+        "options": {
+          "rate": 1.5
+        }
+      },
+      "expected": {
+        "error": "rate must be between 0 and 1, got 1.5"
+      }
+    },
+    {
+      "name": "a negative rate is refused",
+      "input": {
+        "steps": [],
+        "options": {
+          "rate": -0.1
+        }
+      },
+      "expected": {
+        "error": "rate must be between 0 and 1, got -0.1"
+      }
+    }
+  ]
+}

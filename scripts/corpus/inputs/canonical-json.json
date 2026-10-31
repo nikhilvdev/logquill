@@ -1,0 +1,306 @@
+{
+  "group": "canonical-json",
+  "description": "Canonical JSON text (Python json.dumps with sorted keys and ASCII escapes) and its SHA-256, for hostile values.",
+  "cases": [
+    {
+      "name": "empty object",
+      "input": {
+        "json": "{}"
+      }
+    },
+    {
+      "name": "empty array",
+      "input": {
+        "json": "[]"
+      }
+    },
+    {
+      "name": "empty string",
+      "input": {
+        "json": "\"\""
+      }
+    },
+    {
+      "name": "keys sort by code point",
+      "input": {
+        "json": "{\"b\":1,\"a\":2,\"B\":3,\"_\":4,\"é\":5,\"Z\":6}"
+      }
+    },
+    {
+      "name": "nested keys sort at every depth",
+      "input": {
+        "json": "{\"z\":{\"y\":1,\"x\":[{\"d\":1,\"c\":2}]},\"a\":{}}"
+      }
+    },
+    {
+      "name": "astral key sorts after a high BMP key",
+      "input": {
+        "json": "{\"\\ud834\\udd1e\":1,\"\\uffff\":2,\"a\":3}"
+      }
+    },
+    {
+      "name": "duplicate keys keep the last value",
+      "input": {
+        "json": "{\"a\":1,\"b\":2,\"a\":3}"
+      }
+    },
+    {
+      "name": "ascii passes through",
+      "input": {
+        "json": "\"plain text 123\""
+      }
+    },
+    {
+      "name": "quote and backslash",
+      "input": {
+        "json": "\"say \\\"hi\\\" \\\\ done\""
+      }
+    },
+    {
+      "name": "forward slash is not escaped",
+      "input": {
+        "json": "\"a/b\""
+      }
+    },
+    {
+      "name": "named control escapes",
+      "input": {
+        "json": "\"\\n\\r\\t\\b\\f\""
+      }
+    },
+    {
+      "name": "other control characters use \\u00xx",
+      "input": {
+        "json": "\"\\u0000\\u0001\\u001f\""
+      }
+    },
+    {
+      "name": "U+007F is escaped",
+      "input": {
+        "json": "\"\\u007f\""
+      }
+    },
+    {
+      "name": "latin-1 is escaped lower-case",
+      "input": {
+        "json": "\"é ÿ\""
+      }
+    },
+    {
+      "name": "BMP character",
+      "input": {
+        "json": "\"日本語\""
+      }
+    },
+    {
+      "name": "U+2028 and U+2029",
+      "input": {
+        "json": "\"\\u2028\\u2029\""
+      }
+    },
+    {
+      "name": "astral character becomes a surrogate pair",
+      "input": {
+        "json": "\"𝄞 😀\""
+      }
+    },
+    {
+      "name": "U+FFFF",
+      "input": {
+        "json": "\"\\uffff\""
+      }
+    },
+    {
+      "name": "integer",
+      "input": {
+        "json": "12"
+      }
+    },
+    {
+      "name": "negative integer",
+      "input": {
+        "json": "-7"
+      }
+    },
+    {
+      "name": "zero",
+      "input": {
+        "json": "0"
+      }
+    },
+    {
+      "name": "float keeps its .0",
+      "input": {
+        "json": "12.0"
+      }
+    },
+    {
+      "name": "negative zero float",
+      "input": {
+        "json": "-0.0"
+      }
+    },
+    {
+      "name": "zero float",
+      "input": {
+        "json": "0.0"
+      }
+    },
+    {
+      "name": "integer above 2^53",
+      "input": {
+        "json": "9007199254740993"
+      }
+    },
+    {
+      "name": "integer above u64",
+      "input": {
+        "json": "18446744073709551617"
+      }
+    },
+    {
+      "name": "integer far above u64",
+      "input": {
+        "json": "-12345678901234567890123456789"
+      }
+    },
+    {
+      "name": "float below 1e-4 uses an exponent",
+      "input": {
+        "json": "0.00001"
+      }
+    },
+    {
+      "name": "float at 1e-4 does not",
+      "input": {
+        "json": "0.0001"
+      }
+    },
+    {
+      "name": "float 1e-5 spelled with an exponent",
+      "input": {
+        "json": "1e-5"
+      }
+    },
+    {
+      "name": "float at 1e15 prints in full",
+      "input": {
+        "json": "1e15"
+      }
+    },
+    {
+      "name": "float at 1e16 uses an exponent",
+      "input": {
+        "json": "1e16"
+      }
+    },
+    {
+      "name": "float 1e22",
+      "input": {
+        "json": "1e22"
+      }
+    },
+    {
+      "name": "float 1.5e300",
+      "input": {
+        "json": "1.5e300"
+      }
+    },
+    {
+      "name": "smallest subnormal",
+      "input": {
+        "json": "5e-324"
+      }
+    },
+    {
+      "name": "largest double",
+      "input": {
+        "json": "1.7976931348623157e308"
+      }
+    },
+    {
+      "name": "shortest round trip",
+      "input": {
+        "json": "0.1"
+      }
+    },
+    {
+      "name": "repeating fraction",
+      "input": {
+        "json": "0.30000000000000004"
+      }
+    },
+    {
+      "name": "exponent notation on a whole number is a float",
+      "input": {
+        "json": "1E+2"
+      }
+    },
+    {
+      "name": "integer-valued exponent above 2^63",
+      "input": {
+        "json": "1e19"
+      }
+    },
+    {
+      "name": "NaN",
+      "input": {
+        "json": "NaN"
+      }
+    },
+    {
+      "name": "Infinity",
+      "input": {
+        "json": "Infinity"
+      }
+    },
+    {
+      "name": "negative Infinity",
+      "input": {
+        "json": "-Infinity"
+      }
+    },
+    {
+      "name": "overflowing literal becomes Infinity",
+      "input": {
+        "json": "1e999"
+      }
+    },
+    {
+      "name": "NaN inside a structure",
+      "input": {
+        "json": "{\"a\":[NaN,Infinity,-Infinity,1.0]}"
+      }
+    },
+    {
+      "name": "booleans and null",
+      "input": {
+        "json": "[true,false,null]"
+      }
+    },
+    {
+      "name": "mixed nesting",
+      "input": {
+        "json": "{\"k\":[1,2.5,\"x\",{\"n\":null},[]],\"a\":true}"
+      }
+    },
+    {
+      "name": "keys with escapes",
+      "input": {
+        "json": "{\"a\\\"b\":1,\"c\\nd\":2,\"é\":3}"
+      }
+    },
+    {
+      "name": "deep nesting",
+      "input": {
+        "json": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]"
+      }
+    },
+    {
+      "name": "long string",
+      "input": {
+        "json": "\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\""
+      }
+    }
+  ]
+}

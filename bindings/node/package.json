@@ -1,0 +1,152 @@
+{
+  "name": "logquill",
+  "version": "3.0.0-rc.2",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/nikhilvdev/logquill.git", "directory": "bindings/node" },
+  "publishConfig": { "access": "public", "provenance": true },
+  "description": "A logging framework with one JSON log shape across Python and Node/TypeScript, on a shared Rust core.",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./langchain": {
+      "import": {
+        "types": "./dist/langchain.d.mts",
+        "default": "./dist/langchain.mjs"
+      },
+      "require": {
+        "types": "./dist/langchain.d.ts",
+        "default": "./dist/langchain.cjs"
+      }
+    },
+    "./winston": {
+      "import": {
+        "types": "./dist/winston.d.mts",
+        "default": "./dist/winston.mjs"
+      },
+      "require": {
+        "types": "./dist/winston.d.ts",
+        "default": "./dist/winston.cjs"
+      }
+    },
+    "./instrument": {
+      "import": {
+        "types": "./dist/instrument.d.mts",
+        "default": "./dist/instrument.mjs"
+      },
+      "require": {
+        "types": "./dist/instrument.d.ts",
+        "default": "./dist/instrument.cjs"
+      }
+    },
+    "./browser": {
+      "import": {
+        "types": "./dist/browser.d.mts",
+        "default": "./dist/browser.mjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "logquill.wasm32-wasi.wasm",
+    "logquill.wasi.cjs",
+    "logquill.wasi-browser.js",
+    "wasi-worker.mjs",
+    "wasi-worker-browser.mjs"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "napi": {
+    "binaryName": "logquill",
+    "targets": [
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-pc-windows-msvc"
+    ],
+    "packageName": "@logquill/native"
+  },
+  "scripts": {
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "test:sdk": "vitest run",
+    "docs": "typedoc",
+    "typecheck": "tsc --noEmit",
+    "build:sdk": "tsup",
+    "smoke": "node scripts/smoke.mjs",
+    "pack-smoke": "node scripts/pack-smoke.mjs",
+    "build:wasm": "napi build --release --target wasm32-wasip1-threads --no-default-features --output-dir wasm-out && node scripts/place-wasm.mjs",
+    "trace-python-tests": "node scripts/trace-python-tests.mjs"
+  },
+  "imports": {
+    "#span": {
+      "browser": "./sdk/src/core/span-browser.ts",
+      "node": "./sdk/src/core/span.ts",
+      "default": "./sdk/src/core/span.ts"
+    },
+    "#context": {
+      "browser": "./sdk/src/core/context-browser.ts",
+      "node": "./sdk/src/core/context.ts",
+      "default": "./sdk/src/core/context.ts"
+    },
+    "#native": {
+      "browser": "./sdk/src/core/native-browser.ts",
+      "node": "./sdk/src/core/native.ts",
+      "default": "./sdk/src/core/native.ts"
+    }
+  },
+  "optionalDependencies": {
+    "@emnapi/core": "^2.0.0-beta.2",
+    "@emnapi/runtime": "^2.0.0-beta.2",
+    "@napi-rs/wasm-runtime": "^1.2.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@langchain/core": "^1.2.9",
+    "@napi-rs/cli": "^3.10.9",
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/api-logs": "^0.223.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.223.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.223.0",
+    "@opentelemetry/resources": "^2.12.0",
+    "@opentelemetry/sdk-logs": "^0.223.0",
+    "@opentelemetry/sdk-trace-base": "^2.11.0",
+    "@types/node": "^26.4.0",
+    "@vitest/coverage-v8": "^5.0.1",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "emnapi": "^2.0.0-beta.2",
+    "esbuild": "^0.27.7",
+    "eslint": "^10.9.1",
+    "eslint-config-prettier": "^10.1.8",
+    "fast-check": "^4.9.0",
+    "pino": "^10.3.1",
+    "prettier": "^3.9.6",
+    "tsup": "^8.5.1",
+    "typedoc": "^0.28.20",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.68.0",
+    "vitest": "^5.0.1",
+    "winston": "^3.19.0",
+    "winston-transport": "^4.9.0",
+    "yaml": "^2.9.1"
+  },
+  "sideEffects": false
+}

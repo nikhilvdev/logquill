@@ -1,0 +1,385 @@
+{
+  "group": "levels",
+  "description": "Parsing a level from a name or a numeric weight, and the error for anything else.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "'TRACE'",
+      "input": {
+        "value": "TRACE"
+      },
+      "expected": {
+        "level": "TRACE"
+      }
+    },
+    {
+      "name": "'info'",
+      "input": {
+        "value": "info"
+      },
+      "expected": {
+        "level": "INFO"
+      }
+    },
+    {
+      "name": "'Warn'",
+      "input": {
+        "value": "Warn"
+      },
+      "expected": {
+        "level": "WARN"
+      }
+    },
+    {
+      "name": "'ERROR'",
+      "input": {
+        "value": "ERROR"
+      },
+      "expected": {
+        "level": "ERROR"
+      }
+    },
+    {
+      "name": "'fatal'",
+      "input": {
+        "value": "fatal"
+      },
+      "expected": {
+        "level": "FATAL"
+      }
+    },
+    {
+      "name": "5",
+      "input": {
+        "value": 5
+      },
+      "expected": {
+        "level": "TRACE"
+      }
+    },
+    {
+      "name": "10",
+      "input": {
+        "value": 10
+      },
+      "expected": {
+        "level": "DEBUG"
+      }
+    },
+    {
+      "name": "20",
+      "input": {
+        "value": 20
+      },
+      "expected": {
+        "level": "INFO"
+      }
+    },
+    {
+      "name": "30",
+      "input": {
+        "value": 30
+      },
+      "expected": {
+        "level": "WARN"
+      }
+    },
+    {
+      "name": "40",
+      "input": {
+        "value": 40
+      },
+      "expected": {
+        "level": "ERROR"
+      }
+    },
+    {
+      "name": "50",
+      "input": {
+        "value": 50
+      },
+      "expected": {
+        "level": "FATAL"
+      }
+    },
+    {
+      "name": "'verbose'",
+      "input": {
+        "value": "verbose"
+      },
+      "expected": {
+        "error": "Unknown log level: verbose"
+      },
+      "differs": {
+        "python": {
+          "error": "Unknown log level: 'verbose'"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'empty string'",
+      "input": {
+        "value": ""
+      },
+      "expected": {
+        "error": "Unknown log level: "
+      },
+      "differs": {
+        "python": {
+          "error": "Unknown log level: ''"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'leading space'",
+      "input": {
+        "value": " info"
+      },
+      "expected": {
+        "error": "Unknown log level:  info"
+      },
+      "differs": {
+        "python": {
+          "error": "Unknown log level: ' info'"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'trailing space'",
+      "input": {
+        "value": "INFO "
+      },
+      "expected": {
+        "error": "Unknown log level: INFO "
+      },
+      "differs": {
+        "python": {
+          "error": "Unknown log level: 'INFO '"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'warning'",
+      "input": {
+        "value": "warning"
+      },
+      "expected": {
+        "error": "Unknown log level: warning"
+      },
+      "differs": {
+        "python": {
+          "error": "Unknown log level: 'warning'"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'full-width letter'",
+      "input": {
+        "value": "\uff29nfo"
+      },
+      "expected": {
+        "error": "Unknown log level: \uff29nfo"
+      },
+      "differs": {
+        "python": {
+          "error": "Unknown log level: '\uff29nfo'"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'dotless i'",
+      "input": {
+        "value": "\u0131nfo"
+      },
+      "expected": {
+        "error": "Unknown log level: \u0131nfo"
+      },
+      "differs": {
+        "python": {
+          "level": "INFO"
+        },
+        "js": {
+          "level": "INFO"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "0",
+      "input": {
+        "value": 0
+      },
+      "expected": {
+        "error": "Unknown log level: 0"
+      }
+    },
+    {
+      "name": "25",
+      "input": {
+        "value": 25
+      },
+      "expected": {
+        "error": "Unknown log level: 25"
+      }
+    },
+    {
+      "name": "-1",
+      "input": {
+        "value": -1
+      },
+      "expected": {
+        "error": "Unknown log level: -1"
+      }
+    },
+    {
+      "name": "60",
+      "input": {
+        "value": 60
+      },
+      "expected": {
+        "error": "Unknown log level: 60"
+      }
+    },
+    {
+      "name": "200",
+      "input": {
+        "value": 200
+      },
+      "expected": {
+        "error": "Unknown log level: 200"
+      }
+    },
+    {
+      "name": "'20.0'",
+      "input": {
+        "value": 20.0
+      },
+      "expected": {
+        "error": "Unknown log level: 20.0"
+      },
+      "differs": {
+        "python": {
+          "error": "level must be int, str, or Level, got <class 'float'>"
+        },
+        "js": {
+          "level": "INFO"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'20.5'",
+      "input": {
+        "value": 20.5
+      },
+      "expected": {
+        "error": "Unknown log level: 20.5"
+      },
+      "differs": {
+        "python": {
+          "error": "level must be int, str, or Level, got <class 'float'>"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'null'",
+      "input": {
+        "value": null
+      },
+      "expected": {
+        "error": "level must be a name or a number, got null"
+      },
+      "differs": {
+        "python": {
+          "error": "level must be int, str, or Level, got <class 'NoneType'>"
+        },
+        "js": {
+          "error": "Unknown log level: null"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'true'",
+      "input": {
+        "value": true
+      },
+      "expected": {
+        "error": "level must be a name or a number, got boolean"
+      },
+      "differs": {
+        "python": {
+          "error": "Unknown log level: True"
+        },
+        "js": {
+          "error": "Unknown log level: true"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'false'",
+      "input": {
+        "value": false
+      },
+      "expected": {
+        "error": "level must be a name or a number, got boolean"
+      },
+      "differs": {
+        "python": {
+          "error": "Unknown log level: False"
+        },
+        "js": {
+          "error": "Unknown log level: false"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'array'",
+      "input": {
+        "value": []
+      },
+      "expected": {
+        "error": "level must be a name or a number, got array"
+      },
+      "differs": {
+        "python": {
+          "error": "level must be int, str, or Level, got <class 'list'>"
+        },
+        "js": {
+          "error": "Unknown log level: "
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    },
+    {
+      "name": "'object'",
+      "input": {
+        "value": {}
+      },
+      "expected": {
+        "error": "level must be a name or a number, got object"
+      },
+      "differs": {
+        "python": {
+          "error": "level must be int, str, or Level, got <class 'dict'>"
+        },
+        "js": {
+          "error": "Unknown log level: [object Object]"
+        }
+      },
+      "rule": "D35 \u2014 ASCII-only case folding; a type error for values that are neither a name nor a number"
+    }
+  ]
+}

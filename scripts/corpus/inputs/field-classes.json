@@ -1,0 +1,5 @@
+{
+  "group": "field-classes",
+  "description": "The field-class registry, the content fields in order, and keys_in_class for each class.",
+  "cases": [{ "name": "the registry", "input": {} }]
+}

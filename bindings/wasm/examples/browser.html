@@ -1,0 +1,12 @@
+<script type="module">
+  import { initWasm, Logger, ConsoleTransport, RedactPlugin, PIIRedactPlugin } from "@logquill/wasm";
+
+  await initWasm(); // fetches logquill_wasm_bg.wasm from beside the bundle
+
+  const log = new Logger("web", {
+    transports: [new ConsoleTransport({ colorize: false })],
+    plugins: [new RedactPlugin(), new PIIRedactPlugin()],
+  });
+  log.info("signed in", { user: "alice@example.com", password: "hunter2" });
+  await log.flush();
+</script>

@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LogQuill trace viewer</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #f4f5f7;
+    --fg: #1b1f24;
+    --fg-dim: #63696f;
+    --border: #dde1e6;
+    --accent: #2f6feb;
+    --bar: #6b9fed;
+    --trace: #8a8f96;
+    --debug: #3aa0c7;
+    --info: #2e9e4b;
+    --warn: #b8860b;
+    --error: #cc3b3b;
+    --fatal: #a12ac4;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161a;
+      --bg-alt: #1b1e23;
+      --fg: #e6e8eb;
+      --fg-dim: #9aa0a6;
+      --border: #2c3036;
+      --accent: #6ea8fe;
+      --bar: #3d6fc9;
+      --trace: #7d838a;
+      --debug: #57c2e8;
+      --info: #52c97a;
+      --warn: #e0b84c;
+      --error: #f06868;
+      --fatal: #d17bea;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a; --bg-alt: #1b1e23; --fg: #e6e8eb; --fg-dim: #9aa0a6;
+    --border: #2c3036; --accent: #6ea8fe; --bar: #3d6fc9; --trace: #7d838a;
+    --debug: #57c2e8; --info: #52c97a; --warn: #e0b84c; --error: #f06868; --fatal: #d17bea;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 13px/1.5 var(--mono);
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 14px; margin: 0; font-weight: 600; }
+  header .sub { color: var(--fg-dim); font-size: 12px; }
+  main { flex: 1; display: flex; min-height: 0; }
+  #sidebar {
+    width: 320px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    background: var(--bg-alt);
+  }
+  #controls { padding: 10px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; gap: 8px; }
+  #controls input, #controls select {
+    font: inherit;
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 8px;
+  }
+  #search { flex: 1; min-width: 0; }
+  .run-row {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .run-row:hover { background: var(--bg); }
+  .run-row.selected { background: var(--bg); border-left: 3px solid var(--accent); padding-left: 11px; }
+  .run-row .id { font-weight: 600; overflow-wrap: anywhere; }
+  .run-row .meta { color: var(--fg-dim); font-size: 11px; margin-top: 3px; }
+  .badge {
+    display: inline-block;
+    border-radius: 3px;
+    padding: 0 5px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-left: 6px;
+  }
+  .badge.error { background: color-mix(in srgb, var(--error) 25%, transparent); color: var(--error); }
+  #content { flex: 1; overflow-y: auto; min-width: 0; }
+  #empty { padding: 30px; color: var(--fg-dim); }
+  #tree { padding: 14px; }
+  .node { position: relative; }
+  .node-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .node-row:hover { background: var(--bg-alt); }
+  .node-row.dim { opacity: 0.3; }
+  .node-row.hidden { display: none; }
+  .node-row.match .label { background: color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 2px; }
+  .indent { display: inline-block; }
+  .toggle { width: 12px; display: inline-block; color: var(--fg-dim); cursor: pointer; user-select: none; }
+  .level-tag {
+    font-size: 10px;
+    font-weight: 700;
+    width: 42px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .level-TRACE { color: var(--trace); } .level-DEBUG { color: var(--debug); }
+  .level-INFO { color: var(--info); } .level-WARN { color: var(--warn); }
+  .level-ERROR { color: var(--error); } .level-FATAL { color: var(--fatal); }
+  .label { overflow: hidden; text-overflow: ellipsis; }
+  .waterfall {
+    flex-shrink: 0;
+    width: 220px;
+    height: 14px;
+    background: var(--bg-alt);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .waterfall .bar { position: absolute; top: 1px; bottom: 1px; background: var(--bar); border-radius: 2px; min-width: 2px; }
+  .annot { color: var(--fg-dim); font-size: 11px; flex-shrink: 0; }
+  .children { border-left: 1px solid var(--border); margin-left: 5px; }
+  #detail {
+    border-top: 1px solid var(--border);
+    padding: 10px 14px;
+    max-height: 40%;
+    overflow: auto;
+    background: var(--bg-alt);
+    display: none;
+  }
+  #detail.open { display: block; }
+  #detail pre { margin: 6px 0 0; white-space: pre-wrap; word-break: break-word; }
+  #searchAllResults { padding: 10px 14px; }
+  #searchAllResults .hit { border-bottom: 1px solid var(--border); padding: 6px 0; }
+  #searchAllResults .hit .meta { color: var(--fg-dim); font-size: 11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>LogQuill</h1>
+  <span class="sub">local trace viewer — nothing leaves this machine</span>
+</header>
+<main>
+  <div id="sidebar">
+    <div id="controls">
+      <input id="search" type="text" placeholder="search message / meta…" />
+      <select id="levelFilter">
+        <option value="">All levels</option>
+        <option>TRACE</option><option>DEBUG</option><option>INFO</option>
+        <option>WARN</option><option>ERROR</option><option>FATAL</option>
+      </select>
+    </div>
+    <div id="runList"></div>
+  </div>
+  <div id="content">
+    <div id="empty">Pick a run on the left, or type a search above to look across every run.</div>
+    <div id="searchAllResults" style="display:none"></div>
+    <div id="tree" style="display:none"></div>
+    <div id="detail"></div>
+  </div>
+</main>
+<script>
+"use strict";
+
+const state = { runs: [], selectedRun: null, trace: null, search: "", level: "" };
+
+async function getJSON(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("request failed: " + url);
+  return res.json();
+}
+
+function fmtMs(ms) {
+  if (ms == null) return "";
+  return ms >= 1000 ? (ms / 1000).toFixed(2) + "s" : ms.toFixed(1) + "ms";
+}
+
+function fmtCost(cost) {
+  return cost ? "$" + cost.toFixed(4) : "";
+}
+
+function fmtSpan(start, end) {
+  if (!start) return "";
+  const d = new Date(start);
+  return isNaN(d) ? start : d.toLocaleString();
+}
+
+function annotate(node) {
+  const parts = [];
+  const meta = node.record.meta || {};
+  if (typeof meta.duration_ms === "number") parts.push(fmtMs(meta.duration_ms));
+  const r = node.rollup || {};
+  if (r.tokens_in || r.tokens_out) parts.push(`${r.tokens_in}→${r.tokens_out} tok`);
+  if (r.cost_usd) parts.push(fmtCost(r.cost_usd));
+  return parts.join("  ·  ");
+}
+
+// ---- run list -------------------------------------------------------------
+
+function renderRunList() {
+  const el = document.getElementById("runList");
+  el.innerHTML = "";
+  for (const run of state.runs) {
+    const row = document.createElement("div");
+    row.className = "run-row" + (state.selectedRun === run.run_id ? " selected" : "");
+    const errorBadge = run.error_count ? `<span class="badge error">${run.error_count} err</span>` : "";
+    const agent = run.agent_name ? `${escapeHtml(run.agent_name)} · ` : "";
+    const tokens = (run.tokens_in || run.tokens_out) ? ` · ${run.tokens_in}→${run.tokens_out} tok` : "";
+    row.innerHTML = `
+      <div class="id">${escapeHtml(run.run_id)}${errorBadge}</div>
+      <div class="meta">${agent}${run.record_count} records${tokens}${fmtCost(run.cost_usd) ? " · " + fmtCost(run.cost_usd) : ""}</div>
+      <div class="meta">${fmtSpan(run.start)}</div>`;
+    row.addEventListener("click", () => selectRun(run.run_id));
+    el.appendChild(row);
+  }
+}
+
+async function selectRun(runId) {
+  state.selectedRun = runId;
+  document.getElementById("searchAllResults").style.display = "none";
+  document.getElementById("empty").style.display = "none";
+  document.getElementById("tree").style.display = "block";
+  renderRunList();
+  state.trace = await getJSON(`/api/trace?run_id=${encodeURIComponent(runId)}`);
+  renderTree();
+}
+
+// ---- span tree / waterfall --------------------------------------------------
+
+function spanRange(nodes) {
+  let min = Infinity, max = -Infinity;
+  const walk = (node) => {
+    const end = Date.parse(node.record.timestamp);
+    if (!isNaN(end)) {
+      const dur = (node.record.meta && node.record.meta.duration_ms) || 0;
+      min = Math.min(min, end - dur);
+      max = Math.max(max, end);
+    }
+    (node.children || []).forEach(walk);
+  };
+  nodes.forEach(walk);
+  return min <= max ? { min, max } : null;
+}
+
+function matches(node) {
+  if (state.level && node.record.level !== state.level) return false;
+  if (!state.search) return true;
+  const haystack = (node.record.message + " " + JSON.stringify(node.record.meta || {})).toLowerCase();
+  return haystack.includes(state.search);
+}
+
+function subtreeHasMatch(node) {
+  if (matches(node)) return true;
+  return (node.children || []).some(subtreeHasMatch);
+}
+
+function renderTree() {
+  const el = document.getElementById("tree");
+  el.innerHTML = "";
+  if (!state.trace || !state.trace.length) {
+    el.innerHTML = '<div style="color:var(--fg-dim)">No records for this run.</div>';
+    return;
+  }
+  const range = spanRange(state.trace);
+  const total = range ? Math.max(range.max - range.min, 1) : 1;
+
+  const build = (node, depth) => {
+    const wrap = document.createElement("div");
+    wrap.className = "node";
+
+    const row = document.createElement("div");
+    const filtering = state.search || state.level;
+    const isMatch = matches(node);
+    row.className = "node-row" + (filtering && !isMatch ? " dim" : "") + (state.search && isMatch && state.search.length ? " match" : "");
+    if (filtering && !subtreeHasMatch(node)) row.classList.add("hidden");
+
+    const hasChildren = node.children && node.children.length > 0;
+    const toggle = document.createElement("span");
+    toggle.className = "toggle";
+    toggle.textContent = hasChildren ? "▾" : "";
+    if (hasChildren) toggle.addEventListener("click", (e) => { e.stopPropagation(); wrap.classList.toggle("collapsed"); });
+
+    const indent = document.createElement("span");
+    indent.className = "indent";
+    indent.style.width = (depth * 16) + "px";
+
+    const level = document.createElement("span");
+    level.className = "level-tag level-" + node.record.level;
+    level.textContent = node.record.level;
+
+    const bar = document.createElement("div");
+    bar.className = "waterfall";
+    const end = Date.parse(node.record.timestamp);
+    const dur = (node.record.meta && node.record.meta.duration_ms) || 0;
+    if (range && !isNaN(end)) {
+      const startPct = ((end - dur - range.min) / total) * 100;
+      const widthPct = Math.max((dur / total) * 100, 0.3);
+      const b = document.createElement("div");
+      b.className = "bar";
+      b.style.left = Math.max(startPct, 0) + "%";
+      b.style.width = Math.min(widthPct, 100) + "%";
+      bar.appendChild(b);
+    }
+
+    const label = document.createElement("span");
+    label.className = "label";
+    label.textContent = node.record.message;
+
+    const annot = document.createElement("span");
+    annot.className = "annot";
+    annot.textContent = annotate(node);
+
+    row.append(toggle, indent, level, bar, label, annot);
+    row.addEventListener("click", () => showDetail(node.record));
+    wrap.appendChild(row);
+
+    if (hasChildren) {
+      const kids = document.createElement("div");
+      kids.className = "children";
+      node.children.forEach((child) => kids.appendChild(build(child, depth + 1)));
+      wrap.appendChild(kids);
+    }
+    return wrap;
+  };
+
+  state.trace.forEach((root) => el.appendChild(build(root, 0)));
+}
+
+function showDetail(record) {
+  const el = document.getElementById("detail");
+  el.classList.add("open");
+  el.innerHTML = `<strong>${escapeHtml(record.message)}</strong> <span style="color:var(--fg-dim)">${escapeHtml(record.timestamp)}</span><pre>${escapeHtml(JSON.stringify(record, null, 2))}</pre>`;
+}
+
+// ---- search across every run (shown when nothing is selected) --------------
+
+async function renderSearchAll() {
+  if (state.selectedRun) return;
+  const empty = document.getElementById("empty");
+  const results = document.getElementById("searchAllResults");
+  if (!state.search && !state.level) {
+    empty.style.display = "block";
+    results.style.display = "none";
+    return;
+  }
+  empty.style.display = "none";
+  results.style.display = "block";
+  const params = new URLSearchParams();
+  if (state.search) params.set("q", state.search);
+  if (state.level) params.set("level", state.level);
+  const hits = await getJSON("/api/search?" + params.toString());
+  results.innerHTML = hits.length
+    ? hits.map((r) => `<div class="hit"><span class="level-tag level-${r.level}">${r.level}</span> ${escapeHtml(r.message)}<div class="meta">${escapeHtml(r.timestamp)} · ${escapeHtml((r.meta && r.meta.run_id) || "no run_id")}</div></div>`).join("")
+    : '<div style="color:var(--fg-dim)">No matches.</div>';
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+document.getElementById("search").addEventListener("input", (e) => {
+  state.search = e.target.value.toLowerCase();
+  if (state.selectedRun) renderTree(); else renderSearchAll();
+});
+document.getElementById("levelFilter").addEventListener("change", (e) => {
+  state.level = e.target.value;
+  if (state.selectedRun) renderTree(); else renderSearchAll();
+});
+
+(async function init() {
+  state.runs = await getJSON("/api/runs");
+  renderRunList();
+})();
+</script>
+</body>
+</html>

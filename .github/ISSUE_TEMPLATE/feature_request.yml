@@ -15,7 +15,6 @@ body:
     attributes:
       label: Proposed solution
       description: The API or behavior you'd like to see. A short code sketch helps.
-      render: python
     validations:
       required: false
 
@@ -31,9 +30,9 @@ body:
     attributes:
       label: Cross-language contract
       description: >-
-        logquill ships as a pair with `logquill` on npm and both must agree
-        on levels, logger methods, the record shape, and the transport/plugin
-        contracts. Flag it if your request touches that.
+        LogQuill ships SDKs for several languages from one core, and all of them
+        must agree on levels, logger methods, the record shape, and the
+        transport/plugin contracts. Flag it if your request touches that.
       options:
-        - label: This would change something both packages need to agree on (levels, record shape, transport/plugin contract, config shape)
+        - label: This would change something every language needs to agree on (levels, record shape, transport/plugin contract, config shape)
           required: false

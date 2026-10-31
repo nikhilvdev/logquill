@@ -1,0 +1,468 @@
+{
+  "group": "content-policy",
+  "description": "The content-capture policy applied to a content field: off, hash, truncate and full, across hostile values.",
+  "cases": [
+    {
+      "name": "off: a short string",
+      "input": {
+        "policy": "off",
+        "json": "\"hello\""
+      }
+    },
+    {
+      "name": "off: an object with floats",
+      "input": {
+        "policy": "off",
+        "json": "{\"b\":1,\"a\":[1.0,\"é\"]}"
+      }
+    },
+    {
+      "name": "off: a message list",
+      "input": {
+        "policy": "off",
+        "json": "[{\"role\":\"user\",\"content\":\"hi\"}]"
+      }
+    },
+    {
+      "name": "off: a number",
+      "input": {
+        "policy": "off",
+        "json": "12.0"
+      }
+    },
+    {
+      "name": "off: null",
+      "input": {
+        "policy": "off",
+        "json": "null"
+      }
+    },
+    {
+      "name": "off: a boolean",
+      "input": {
+        "policy": "off",
+        "json": "true"
+      }
+    },
+    {
+      "name": "off: an empty list",
+      "input": {
+        "policy": "off",
+        "json": "[]"
+      }
+    },
+    {
+      "name": "off: a string of 190 characters",
+      "input": {
+        "policy": "off",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "off: text of exactly 200 characters",
+      "input": {
+        "policy": "off",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "off: text of 201 characters",
+      "input": {
+        "policy": "off",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "off: a long string",
+      "input": {
+        "policy": "off",
+        "json": "\"word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \""
+      }
+    },
+    {
+      "name": "off: non-ASCII that grows when escaped",
+      "input": {
+        "policy": "off",
+        "json": "\"\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\""
+      }
+    },
+    {
+      "name": "off: astral characters that double when escaped",
+      "input": {
+        "policy": "off",
+        "json": "\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\""
+      }
+    },
+    {
+      "name": "off: a large nested object",
+      "input": {
+        "policy": "off",
+        "json": "{\"k0\": [0, 0.0, \"xxxxxxxxxx\"], \"k1\": [1, 1.5, \"xxxxxxxxxx\"], \"k2\": [2, 3.0, \"xxxxxxxxxx\"], \"k3\": [3, 4.5, \"xxxxxxxxxx\"], \"k4\": [4, 6.0, \"xxxxxxxxxx\"], \"k5\": [5, 7.5, \"xxxxxxxxxx\"], \"k6\": [6, 9.0, \"xxxxxxxxxx\"], \"k7\": [7, 10.5, \"xxxxxxxxxx\"], \"k8\": [8, 12.0, \"xxxxxxxxxx\"], \"k9\": [9, 13.5, \"xxxxxxxxxx\"], \"k10\": [10, 15.0, \"xxxxxxxxxx\"], \"k11\": [11, 16.5, \"xxxxxxxxxx\"], \"k12\": [12, 18.0, \"xxxxxxxxxx\"], \"k13\": [13, 19.5, \"xxxxxxxxxx\"], \"k14\": [14, 21.0, \"xxxxxxxxxx\"], \"k15\": [15, 22.5, \"xxxxxxxxxx\"], \"k16\": [16, 24.0, \"xxxxxxxxxx\"], \"k17\": [17, 25.5, \"xxxxxxxxxx\"], \"k18\": [18, 27.0, \"xxxxxxxxxx\"], \"k19\": [19, 28.5, \"xxxxxxxxxx\"], \"k20\": [20, 30.0, \"xxxxxxxxxx\"], \"k21\": [21, 31.5, \"xxxxxxxxxx\"], \"k22\": [22, 33.0, \"xxxxxxxxxx\"], \"k23\": [23, 34.5, \"xxxxxxxxxx\"], \"k24\": [24, 36.0, \"xxxxxxxxxx\"], \"k25\": [25, 37.5, \"xxxxxxxxxx\"], \"k26\": [26, 39.0, \"xxxxxxxxxx\"], \"k27\": [27, 40.5, \"xxxxxxxxxx\"], \"k28\": [28, 42.0, \"xxxxxxxxxx\"], \"k29\": [29, 43.5, \"xxxxxxxxxx\"]}"
+      }
+    },
+    {
+      "name": "hash: a short string",
+      "input": {
+        "policy": "hash",
+        "json": "\"hello\""
+      }
+    },
+    {
+      "name": "hash: an object with floats",
+      "input": {
+        "policy": "hash",
+        "json": "{\"b\":1,\"a\":[1.0,\"é\"]}"
+      }
+    },
+    {
+      "name": "hash: a message list",
+      "input": {
+        "policy": "hash",
+        "json": "[{\"role\":\"user\",\"content\":\"hi\"}]"
+      }
+    },
+    {
+      "name": "hash: a number",
+      "input": {
+        "policy": "hash",
+        "json": "12.0"
+      }
+    },
+    {
+      "name": "hash: null",
+      "input": {
+        "policy": "hash",
+        "json": "null"
+      }
+    },
+    {
+      "name": "hash: a boolean",
+      "input": {
+        "policy": "hash",
+        "json": "true"
+      }
+    },
+    {
+      "name": "hash: an empty list",
+      "input": {
+        "policy": "hash",
+        "json": "[]"
+      }
+    },
+    {
+      "name": "hash: a string of 190 characters",
+      "input": {
+        "policy": "hash",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "hash: text of exactly 200 characters",
+      "input": {
+        "policy": "hash",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "hash: text of 201 characters",
+      "input": {
+        "policy": "hash",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "hash: a long string",
+      "input": {
+        "policy": "hash",
+        "json": "\"word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \""
+      }
+    },
+    {
+      "name": "hash: non-ASCII that grows when escaped",
+      "input": {
+        "policy": "hash",
+        "json": "\"\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\""
+      }
+    },
+    {
+      "name": "hash: astral characters that double when escaped",
+      "input": {
+        "policy": "hash",
+        "json": "\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\""
+      }
+    },
+    {
+      "name": "hash: a large nested object",
+      "input": {
+        "policy": "hash",
+        "json": "{\"k0\": [0, 0.0, \"xxxxxxxxxx\"], \"k1\": [1, 1.5, \"xxxxxxxxxx\"], \"k2\": [2, 3.0, \"xxxxxxxxxx\"], \"k3\": [3, 4.5, \"xxxxxxxxxx\"], \"k4\": [4, 6.0, \"xxxxxxxxxx\"], \"k5\": [5, 7.5, \"xxxxxxxxxx\"], \"k6\": [6, 9.0, \"xxxxxxxxxx\"], \"k7\": [7, 10.5, \"xxxxxxxxxx\"], \"k8\": [8, 12.0, \"xxxxxxxxxx\"], \"k9\": [9, 13.5, \"xxxxxxxxxx\"], \"k10\": [10, 15.0, \"xxxxxxxxxx\"], \"k11\": [11, 16.5, \"xxxxxxxxxx\"], \"k12\": [12, 18.0, \"xxxxxxxxxx\"], \"k13\": [13, 19.5, \"xxxxxxxxxx\"], \"k14\": [14, 21.0, \"xxxxxxxxxx\"], \"k15\": [15, 22.5, \"xxxxxxxxxx\"], \"k16\": [16, 24.0, \"xxxxxxxxxx\"], \"k17\": [17, 25.5, \"xxxxxxxxxx\"], \"k18\": [18, 27.0, \"xxxxxxxxxx\"], \"k19\": [19, 28.5, \"xxxxxxxxxx\"], \"k20\": [20, 30.0, \"xxxxxxxxxx\"], \"k21\": [21, 31.5, \"xxxxxxxxxx\"], \"k22\": [22, 33.0, \"xxxxxxxxxx\"], \"k23\": [23, 34.5, \"xxxxxxxxxx\"], \"k24\": [24, 36.0, \"xxxxxxxxxx\"], \"k25\": [25, 37.5, \"xxxxxxxxxx\"], \"k26\": [26, 39.0, \"xxxxxxxxxx\"], \"k27\": [27, 40.5, \"xxxxxxxxxx\"], \"k28\": [28, 42.0, \"xxxxxxxxxx\"], \"k29\": [29, 43.5, \"xxxxxxxxxx\"]}"
+      }
+    },
+    {
+      "name": "truncate: a short string",
+      "input": {
+        "policy": "truncate",
+        "json": "\"hello\""
+      }
+    },
+    {
+      "name": "truncate: an object with floats",
+      "input": {
+        "policy": "truncate",
+        "json": "{\"b\":1,\"a\":[1.0,\"é\"]}"
+      }
+    },
+    {
+      "name": "truncate: a message list",
+      "input": {
+        "policy": "truncate",
+        "json": "[{\"role\":\"user\",\"content\":\"hi\"}]"
+      }
+    },
+    {
+      "name": "truncate: a number",
+      "input": {
+        "policy": "truncate",
+        "json": "12.0"
+      }
+    },
+    {
+      "name": "truncate: null",
+      "input": {
+        "policy": "truncate",
+        "json": "null"
+      }
+    },
+    {
+      "name": "truncate: a boolean",
+      "input": {
+        "policy": "truncate",
+        "json": "true"
+      }
+    },
+    {
+      "name": "truncate: an empty list",
+      "input": {
+        "policy": "truncate",
+        "json": "[]"
+      }
+    },
+    {
+      "name": "truncate: a string of 190 characters",
+      "input": {
+        "policy": "truncate",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "truncate: text of exactly 200 characters",
+      "input": {
+        "policy": "truncate",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "truncate: text of 201 characters",
+      "input": {
+        "policy": "truncate",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "truncate: a long string",
+      "input": {
+        "policy": "truncate",
+        "json": "\"word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \""
+      }
+    },
+    {
+      "name": "truncate: non-ASCII that grows when escaped",
+      "input": {
+        "policy": "truncate",
+        "json": "\"\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\""
+      }
+    },
+    {
+      "name": "truncate: astral characters that double when escaped",
+      "input": {
+        "policy": "truncate",
+        "json": "\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\""
+      }
+    },
+    {
+      "name": "truncate: a large nested object",
+      "input": {
+        "policy": "truncate",
+        "json": "{\"k0\": [0, 0.0, \"xxxxxxxxxx\"], \"k1\": [1, 1.5, \"xxxxxxxxxx\"], \"k2\": [2, 3.0, \"xxxxxxxxxx\"], \"k3\": [3, 4.5, \"xxxxxxxxxx\"], \"k4\": [4, 6.0, \"xxxxxxxxxx\"], \"k5\": [5, 7.5, \"xxxxxxxxxx\"], \"k6\": [6, 9.0, \"xxxxxxxxxx\"], \"k7\": [7, 10.5, \"xxxxxxxxxx\"], \"k8\": [8, 12.0, \"xxxxxxxxxx\"], \"k9\": [9, 13.5, \"xxxxxxxxxx\"], \"k10\": [10, 15.0, \"xxxxxxxxxx\"], \"k11\": [11, 16.5, \"xxxxxxxxxx\"], \"k12\": [12, 18.0, \"xxxxxxxxxx\"], \"k13\": [13, 19.5, \"xxxxxxxxxx\"], \"k14\": [14, 21.0, \"xxxxxxxxxx\"], \"k15\": [15, 22.5, \"xxxxxxxxxx\"], \"k16\": [16, 24.0, \"xxxxxxxxxx\"], \"k17\": [17, 25.5, \"xxxxxxxxxx\"], \"k18\": [18, 27.0, \"xxxxxxxxxx\"], \"k19\": [19, 28.5, \"xxxxxxxxxx\"], \"k20\": [20, 30.0, \"xxxxxxxxxx\"], \"k21\": [21, 31.5, \"xxxxxxxxxx\"], \"k22\": [22, 33.0, \"xxxxxxxxxx\"], \"k23\": [23, 34.5, \"xxxxxxxxxx\"], \"k24\": [24, 36.0, \"xxxxxxxxxx\"], \"k25\": [25, 37.5, \"xxxxxxxxxx\"], \"k26\": [26, 39.0, \"xxxxxxxxxx\"], \"k27\": [27, 40.5, \"xxxxxxxxxx\"], \"k28\": [28, 42.0, \"xxxxxxxxxx\"], \"k29\": [29, 43.5, \"xxxxxxxxxx\"]}"
+      }
+    },
+    {
+      "name": "full: a short string",
+      "input": {
+        "policy": "full",
+        "json": "\"hello\""
+      }
+    },
+    {
+      "name": "full: an object with floats",
+      "input": {
+        "policy": "full",
+        "json": "{\"b\":1,\"a\":[1.0,\"é\"]}"
+      }
+    },
+    {
+      "name": "full: a message list",
+      "input": {
+        "policy": "full",
+        "json": "[{\"role\":\"user\",\"content\":\"hi\"}]"
+      }
+    },
+    {
+      "name": "full: a number",
+      "input": {
+        "policy": "full",
+        "json": "12.0"
+      }
+    },
+    {
+      "name": "full: null",
+      "input": {
+        "policy": "full",
+        "json": "null"
+      }
+    },
+    {
+      "name": "full: a boolean",
+      "input": {
+        "policy": "full",
+        "json": "true"
+      }
+    },
+    {
+      "name": "full: an empty list",
+      "input": {
+        "policy": "full",
+        "json": "[]"
+      }
+    },
+    {
+      "name": "full: a string of 190 characters",
+      "input": {
+        "policy": "full",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "full: text of exactly 200 characters",
+      "input": {
+        "policy": "full",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "full: text of 201 characters",
+      "input": {
+        "policy": "full",
+        "json": "\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\""
+      }
+    },
+    {
+      "name": "full: a long string",
+      "input": {
+        "policy": "full",
+        "json": "\"word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \""
+      }
+    },
+    {
+      "name": "full: non-ASCII that grows when escaped",
+      "input": {
+        "policy": "full",
+        "json": "\"\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\\u00e9\""
+      }
+    },
+    {
+      "name": "full: astral characters that double when escaped",
+      "input": {
+        "policy": "full",
+        "json": "\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\""
+      }
+    },
+    {
+      "name": "full: a large nested object",
+      "input": {
+        "policy": "full",
+        "json": "{\"k0\": [0, 0.0, \"xxxxxxxxxx\"], \"k1\": [1, 1.5, \"xxxxxxxxxx\"], \"k2\": [2, 3.0, \"xxxxxxxxxx\"], \"k3\": [3, 4.5, \"xxxxxxxxxx\"], \"k4\": [4, 6.0, \"xxxxxxxxxx\"], \"k5\": [5, 7.5, \"xxxxxxxxxx\"], \"k6\": [6, 9.0, \"xxxxxxxxxx\"], \"k7\": [7, 10.5, \"xxxxxxxxxx\"], \"k8\": [8, 12.0, \"xxxxxxxxxx\"], \"k9\": [9, 13.5, \"xxxxxxxxxx\"], \"k10\": [10, 15.0, \"xxxxxxxxxx\"], \"k11\": [11, 16.5, \"xxxxxxxxxx\"], \"k12\": [12, 18.0, \"xxxxxxxxxx\"], \"k13\": [13, 19.5, \"xxxxxxxxxx\"], \"k14\": [14, 21.0, \"xxxxxxxxxx\"], \"k15\": [15, 22.5, \"xxxxxxxxxx\"], \"k16\": [16, 24.0, \"xxxxxxxxxx\"], \"k17\": [17, 25.5, \"xxxxxxxxxx\"], \"k18\": [18, 27.0, \"xxxxxxxxxx\"], \"k19\": [19, 28.5, \"xxxxxxxxxx\"], \"k20\": [20, 30.0, \"xxxxxxxxxx\"], \"k21\": [21, 31.5, \"xxxxxxxxxx\"], \"k22\": [22, 33.0, \"xxxxxxxxxx\"], \"k23\": [23, 34.5, \"xxxxxxxxxx\"], \"k24\": [24, 36.0, \"xxxxxxxxxx\"], \"k25\": [25, 37.5, \"xxxxxxxxxx\"], \"k26\": [26, 39.0, \"xxxxxxxxxx\"], \"k27\": [27, 40.5, \"xxxxxxxxxx\"], \"k28\": [28, 42.0, \"xxxxxxxxxx\"], \"k29\": [29, 43.5, \"xxxxxxxxxx\"]}"
+      }
+    },
+    {
+      "name": "every content field is governed",
+      "input": {
+        "policy": "hash",
+        "json": "\"x\"",
+        "field": "tool_result"
+      }
+    },
+    {
+      "name": "off applies to output_messages",
+      "input": {
+        "policy": "off",
+        "json": "\"secret prompt\"",
+        "field": "output_messages"
+      }
+    },
+    {
+      "name": "off applies to system_instructions",
+      "input": {
+        "policy": "off",
+        "json": "\"secret prompt\"",
+        "field": "system_instructions"
+      }
+    },
+    {
+      "name": "off applies to tool_arguments",
+      "input": {
+        "policy": "off",
+        "json": "\"secret prompt\"",
+        "field": "tool_arguments"
+      }
+    },
+    {
+      "name": "off applies to state_diff",
+      "input": {
+        "policy": "off",
+        "json": "\"secret prompt\"",
+        "field": "state_diff"
+      }
+    },
+    {
+      "name": "invalid policy ''",
+      "input": {
+        "error_policy": ""
+      }
+    },
+    {
+      "name": "invalid policy 'OFF'",
+      "input": {
+        "error_policy": "OFF"
+      }
+    },
+    {
+      "name": "invalid policy 'none'",
+      "input": {
+        "error_policy": "none"
+      }
+    },
+    {
+      "name": "invalid policy 'Full'",
+      "input": {
+        "error_policy": "Full"
+      }
+    },
+    {
+      "name": "invalid policy ' hash'",
+      "input": {
+        "error_policy": " hash"
+      }
+    }
+  ]
+}

@@ -1,0 +1,2181 @@
+{
+  "group": "hash-chain",
+  "description": "Hash-chaining records, the head signature, and what verification reports for tampered chains.",
+  "references": {
+    "python": "2.0.0",
+    "js": "4354829"
+  },
+  "cases": [
+    {
+      "name": "three records, untouched",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": true,
+          "records_checked": 3,
+          "broken_at": null,
+          "reason": null,
+          "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+        }
+      }
+    },
+    {
+      "name": "empty chain",
+      "input": {
+        "records": []
+      },
+      "expected": {
+        "chain": [],
+        "head_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "verify": {
+          "ok": true,
+          "records_checked": 0,
+          "broken_at": null,
+          "reason": null,
+          "head_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "one record",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          }
+        ],
+        "head_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+        "verify": {
+          "ok": true,
+          "records_checked": 1,
+          "broken_at": null,
+          "reason": null,
+          "head_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+        }
+      }
+    },
+    {
+      "name": "a 1.x record without schema_version",
+      "input": {
+        "records": [
+          {
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "l",
+            "message": "m",
+            "meta": {}
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "l",
+            "message": "m",
+            "meta": {
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "2b436116bc4ef0680008f255163034e4cbbf534d882a16fb8137a33b0ba34207"
+            }
+          }
+        ],
+        "head_hash": "2b436116bc4ef0680008f255163034e4cbbf534d882a16fb8137a33b0ba34207",
+        "verify": {
+          "ok": true,
+          "records_checked": 1,
+          "broken_at": null,
+          "reason": null,
+          "head_hash": "2b436116bc4ef0680008f255163034e4cbbf534d882a16fb8137a33b0ba34207"
+        }
+      }
+    },
+    {
+      "name": "non-ASCII, floats, big integers and an llm block",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "WARN",
+            "logger": "svc.\u00e9",
+            "message": "caf\u00e9 \u007f \ud834\udd1e \u2028 \u0001",
+            "meta": {
+              "z": 1.0,
+              "a": [
+                1,
+                2.5,
+                null
+              ],
+              "tiny": 1e-05,
+              "big": 9007199254740993,
+              "nested": {
+                "b": 1,
+                "a": 2
+              }
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "llm",
+            "message": "llm_call",
+            "meta": {
+              "run_id": "r"
+            },
+            "llm": {
+              "model": "m",
+              "tokens_in": 10,
+              "tokens_out": 20,
+              "cost_usd": 0.5,
+              "latency_ms": 12.5,
+              "finish_reason": "stop"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "WARN",
+            "logger": "svc.\u00e9",
+            "message": "caf\u00e9 \u007f \ud834\udd1e \u2028 \u0001",
+            "meta": {
+              "z": 1.0,
+              "a": [
+                1,
+                2.5,
+                null
+              ],
+              "tiny": 1e-05,
+              "big": 9007199254740993,
+              "nested": {
+                "b": 1,
+                "a": 2
+              },
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "63ce25903664cbe7c083eefea6439af01532051e07e016684bf682b4c9731d40"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "llm",
+            "message": "llm_call",
+            "meta": {
+              "run_id": "r",
+              "prev_hash": "63ce25903664cbe7c083eefea6439af01532051e07e016684bf682b4c9731d40",
+              "hash": "7e933fa543587729f598befeeb7945fb467cc9494aec84c482148386ee5e395e"
+            },
+            "llm": {
+              "model": "m",
+              "tokens_in": 10,
+              "tokens_out": 20,
+              "cost_usd": 0.5,
+              "latency_ms": 12.5,
+              "finish_reason": "stop"
+            }
+          }
+        ],
+        "head_hash": "7e933fa543587729f598befeeb7945fb467cc9494aec84c482148386ee5e395e",
+        "verify": {
+          "ok": true,
+          "records_checked": 2,
+          "broken_at": null,
+          "reason": null,
+          "head_hash": "7e933fa543587729f598befeeb7945fb467cc9494aec84c482148386ee5e395e"
+        }
+      },
+      "differs": {
+        "js": {
+          "chain": [
+            {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "WARN",
+              "logger": "svc.\u00e9",
+              "message": "caf\u00e9 \u007f \ud834\udd1e \u2028 \u0001",
+              "meta": {
+                "z": 1,
+                "a": [
+                  1,
+                  2.5,
+                  null
+                ],
+                "tiny": 1e-05,
+                "big": 9007199254740992,
+                "nested": {
+                  "b": 1,
+                  "a": 2
+                },
+                "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "hash": "ca7455b19d5c701e61c8c3c300aef3f70d15374407b62d0c83f0db308a133074"
+              }
+            },
+            {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:01.000Z",
+              "level": "INFO",
+              "logger": "llm",
+              "message": "llm_call",
+              "meta": {
+                "run_id": "r",
+                "prev_hash": "ca7455b19d5c701e61c8c3c300aef3f70d15374407b62d0c83f0db308a133074",
+                "hash": "f6e27d2d6d9ade34277ea28f4866f8f180f486b451ef13969cffeb1e920aa766"
+              },
+              "llm": {
+                "model": "m",
+                "tokens_in": 10,
+                "tokens_out": 20,
+                "cost_usd": 0.5,
+                "latency_ms": 12.5,
+                "finish_reason": "stop"
+              }
+            }
+          ],
+          "head_hash": "f6e27d2d6d9ade34277ea28f4866f8f180f486b451ef13969cffeb1e920aa766",
+          "verify": {
+            "ok": true
+          }
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0, so the canonical text and every later hash differ"
+    },
+    {
+      "name": "a custom genesis hash",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "genesis": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "hash": "82a89e2060827bf3568cf1db8984d99d84d0f1869e7555eecb067b1ebd6f8546"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "82a89e2060827bf3568cf1db8984d99d84d0f1869e7555eecb067b1ebd6f8546",
+              "hash": "bbec8bbde88cb179d98c05db40c5063c11bbe2173bc970fb7a4cb878674683cd"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "bbec8bbde88cb179d98c05db40c5063c11bbe2173bc970fb7a4cb878674683cd",
+              "hash": "87d412b64908a88d931e297bc3c0b5b99addb0cbe9a331b29400c30c8b9ea0f0"
+            }
+          }
+        ],
+        "head_hash": "87d412b64908a88d931e297bc3c0b5b99addb0cbe9a331b29400c30c8b9ea0f0",
+        "verify": {
+          "ok": true,
+          "records_checked": 3,
+          "broken_at": null,
+          "reason": null,
+          "head_hash": "87d412b64908a88d931e297bc3c0b5b99addb0cbe9a331b29400c30c8b9ea0f0"
+        }
+      }
+    },
+    {
+      "name": "a signed chain, untouched",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "key": "audit-key"
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "signature": "c8b9b9906d3a2cafb00b7f319b50768c3da45366f55982420de7d4cc37e0d501",
+        "verify": {
+          "ok": true,
+          "records_checked": 3,
+          "broken_at": null,
+          "reason": null,
+          "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+        },
+        "verify_signed": {
+          "ok": true,
+          "records_checked": 3,
+          "broken_at": null,
+          "reason": null,
+          "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+        }
+      }
+    },
+    {
+      "name": "an edited message",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_message",
+            "index": 1,
+            "value": "tampered"
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 2,
+          "broken_at": 2,
+          "reason": "this record's content doesn't match its own stored hash \u2014 this line was edited after being chained",
+          "head_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+        }
+      }
+    },
+    {
+      "name": "an edited message, signed",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "key": "k",
+        "mutations": [
+          {
+            "type": "edit_message",
+            "index": 2,
+            "value": "x"
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "signature": "39448cd89f5c90e75794d37ee4fe227068b907e078b59e756c0dbd14bbf3d2e8",
+        "verify": {
+          "ok": false,
+          "records_checked": 3,
+          "broken_at": 3,
+          "reason": "this record's content doesn't match its own stored hash \u2014 this line was edited after being chained",
+          "head_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+        },
+        "verify_signed": {
+          "ok": false,
+          "records_checked": 3,
+          "broken_at": 3,
+          "reason": "this record's content doesn't match its own stored hash \u2014 this line was edited after being chained",
+          "head_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+        }
+      }
+    },
+    {
+      "name": "an edited meta value",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_meta",
+            "index": 0,
+            "key": "n",
+            "value": 99
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 1,
+          "broken_at": 1,
+          "reason": "this record's content doesn't match its own stored hash \u2014 this line was edited after being chained",
+          "head_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "an added meta key",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_meta",
+            "index": 2,
+            "key": "extra",
+            "value": true
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 3,
+          "broken_at": 3,
+          "reason": "this record's content doesn't match its own stored hash \u2014 this line was edited after being chained",
+          "head_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+        }
+      }
+    },
+    {
+      "name": "a deleted middle record",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "delete",
+            "index": 1
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 2,
+          "broken_at": 2,
+          "reason": "meta.prev_hash doesn't match the previous record's hash \u2014 a line before this one was edited, removed, or reordered",
+          "head_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+        }
+      }
+    },
+    {
+      "name": "a deleted first record",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "delete",
+            "index": 0
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 1,
+          "broken_at": 1,
+          "reason": "meta.prev_hash doesn't match the previous record's hash \u2014 a line before this one was edited, removed, or reordered",
+          "head_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "a swapped pair",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "swap",
+            "index": 0,
+            "other": 1
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 1,
+          "broken_at": 1,
+          "reason": "meta.prev_hash doesn't match the previous record's hash \u2014 a line before this one was edited, removed, or reordered",
+          "head_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "a removed hash",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "drop_hash",
+            "index": 1
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 2,
+          "broken_at": 2,
+          "reason": "this record has no meta.hash \u2014 it was never chained, or that field was removed",
+          "head_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+        }
+      }
+    },
+    {
+      "name": "a removed hash on the first record",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "drop_hash",
+            "index": 0
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 1,
+          "broken_at": 1,
+          "reason": "this record has no meta.hash \u2014 it was never chained, or that field was removed",
+          "head_hash": null
+        }
+      }
+    },
+    {
+      "name": "an edited stored hash",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_hash",
+            "index": 1,
+            "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 2,
+          "broken_at": 2,
+          "reason": "this record's content doesn't match its own stored hash \u2014 this line was edited after being chained",
+          "head_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+        }
+      }
+    },
+    {
+      "name": "an edited prev_hash",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_prev_hash",
+            "index": 2,
+            "value": "0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 3,
+          "broken_at": 3,
+          "reason": "meta.prev_hash doesn't match the previous record's hash \u2014 a line before this one was edited, removed, or reordered",
+          "head_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+        }
+      }
+    },
+    {
+      "name": "a truncated tail, unsigned",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "truncate",
+            "keep": 2
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": true,
+          "records_checked": 2,
+          "broken_at": null,
+          "reason": null,
+          "head_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+        }
+      }
+    },
+    {
+      "name": "a truncated tail, signed",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "key": "k",
+        "mutations": [
+          {
+            "type": "truncate",
+            "keep": 2
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "signature": "39448cd89f5c90e75794d37ee4fe227068b907e078b59e756c0dbd14bbf3d2e8",
+        "verify": {
+          "ok": true,
+          "records_checked": 2,
+          "broken_at": null,
+          "reason": null,
+          "head_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+        },
+        "verify_signed": {
+          "ok": false,
+          "records_checked": 2,
+          "broken_at": 2,
+          "reason": "the chain is internally consistent, but its head doesn't match the given signature \u2014 the file may have been truncated, or replaced outright, after the signature was taken",
+          "head_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+        }
+      }
+    },
+    {
+      "name": "a chain truncated to nothing, signed",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "key": "k",
+        "mutations": [
+          {
+            "type": "truncate",
+            "keep": 0
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "signature": "39448cd89f5c90e75794d37ee4fe227068b907e078b59e756c0dbd14bbf3d2e8",
+        "verify": {
+          "ok": true,
+          "records_checked": 0,
+          "broken_at": null,
+          "reason": null,
+          "head_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "verify_signed": {
+          "ok": false,
+          "records_checked": 0,
+          "broken_at": 0,
+          "reason": "the chain is internally consistent, but its head doesn't match the given signature \u2014 the file may have been truncated, or replaced outright, after the signature was taken",
+          "head_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "an edited llm block",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "WARN",
+            "logger": "svc.\u00e9",
+            "message": "caf\u00e9 \u007f \ud834\udd1e \u2028 \u0001",
+            "meta": {
+              "z": 1.0,
+              "a": [
+                1,
+                2.5,
+                null
+              ],
+              "tiny": 1e-05,
+              "big": 9007199254740993,
+              "nested": {
+                "b": 1,
+                "a": 2
+              }
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "llm",
+            "message": "llm_call",
+            "meta": {
+              "run_id": "r"
+            },
+            "llm": {
+              "model": "m",
+              "tokens_in": 10,
+              "tokens_out": 20,
+              "cost_usd": 0.5,
+              "latency_ms": 12.5,
+              "finish_reason": "stop"
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_llm",
+            "index": 1,
+            "key": "tokens_in",
+            "value": 11
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "WARN",
+            "logger": "svc.\u00e9",
+            "message": "caf\u00e9 \u007f \ud834\udd1e \u2028 \u0001",
+            "meta": {
+              "z": 1.0,
+              "a": [
+                1,
+                2.5,
+                null
+              ],
+              "tiny": 1e-05,
+              "big": 9007199254740993,
+              "nested": {
+                "b": 1,
+                "a": 2
+              },
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "63ce25903664cbe7c083eefea6439af01532051e07e016684bf682b4c9731d40"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "llm",
+            "message": "llm_call",
+            "meta": {
+              "run_id": "r",
+              "prev_hash": "63ce25903664cbe7c083eefea6439af01532051e07e016684bf682b4c9731d40",
+              "hash": "7e933fa543587729f598befeeb7945fb467cc9494aec84c482148386ee5e395e"
+            },
+            "llm": {
+              "model": "m",
+              "tokens_in": 10,
+              "tokens_out": 20,
+              "cost_usd": 0.5,
+              "latency_ms": 12.5,
+              "finish_reason": "stop"
+            }
+          }
+        ],
+        "head_hash": "7e933fa543587729f598befeeb7945fb467cc9494aec84c482148386ee5e395e",
+        "verify": {
+          "ok": false,
+          "records_checked": 2,
+          "broken_at": 2,
+          "reason": "this record's content doesn't match its own stored hash \u2014 this line was edited after being chained",
+          "head_hash": "63ce25903664cbe7c083eefea6439af01532051e07e016684bf682b4c9731d40"
+        }
+      },
+      "differs": {
+        "js": {
+          "chain": [
+            {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:00.000Z",
+              "level": "WARN",
+              "logger": "svc.\u00e9",
+              "message": "caf\u00e9 \u007f \ud834\udd1e \u2028 \u0001",
+              "meta": {
+                "z": 1,
+                "a": [
+                  1,
+                  2.5,
+                  null
+                ],
+                "tiny": 1e-05,
+                "big": 9007199254740992,
+                "nested": {
+                  "b": 1,
+                  "a": 2
+                },
+                "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "hash": "ca7455b19d5c701e61c8c3c300aef3f70d15374407b62d0c83f0db308a133074"
+              }
+            },
+            {
+              "schema_version": "2.0",
+              "timestamp": "2026-01-01T00:00:01.000Z",
+              "level": "INFO",
+              "logger": "llm",
+              "message": "llm_call",
+              "meta": {
+                "run_id": "r",
+                "prev_hash": "ca7455b19d5c701e61c8c3c300aef3f70d15374407b62d0c83f0db308a133074",
+                "hash": "f6e27d2d6d9ade34277ea28f4866f8f180f486b451ef13969cffeb1e920aa766"
+              },
+              "llm": {
+                "model": "m",
+                "tokens_in": 10,
+                "tokens_out": 20,
+                "cost_usd": 0.5,
+                "latency_ms": 12.5,
+                "finish_reason": "stop"
+              }
+            }
+          ],
+          "head_hash": "f6e27d2d6d9ade34277ea28f4866f8f180f486b451ef13969cffeb1e920aa766",
+          "verify": {
+            "ok": false
+          }
+        }
+      },
+      "rule": "D4 \u2014 a float keeps its .0, so the canonical text and every later hash differ"
+    },
+    {
+      "name": "an edited schema_version",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_schema_version",
+            "index": 0,
+            "value": "2.1"
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 1,
+          "broken_at": 1,
+          "reason": "this record's content doesn't match its own stored hash \u2014 this line was edited after being chained",
+          "head_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "an edited level",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_level",
+            "index": 0,
+            "value": "DEBUG"
+          }
+        ]
+      },
+      "expected": {
+        "chain": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0,
+              "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1,
+              "prev_hash": "0121fc3b56ff1fe4cd7e760a6f3a3c847969d92fb68ac5df7aa1f452ef55a408",
+              "hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556"
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2,
+              "prev_hash": "d2914f02b8aa17c8ccb81fe73a9c14fb413563601da413c6d9bbc1af96d5f556",
+              "hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5"
+            }
+          }
+        ],
+        "head_hash": "4fd5ddc1ef547ba1c27540383561244005c1c19825441d3e1269ba1b95840bc5",
+        "verify": {
+          "ok": false,
+          "records_checked": 1,
+          "broken_at": 1,
+          "reason": "this record's content doesn't match its own stored hash \u2014 this line was edited after being chained",
+          "head_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    }
+  ]
+}

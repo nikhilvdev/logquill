@@ -1,0 +1,36 @@
+[package]
+name = "logquill-core"
+description = "LogQuill core: records, levels, privacy, integrity and pipeline logic. No I/O, no threads."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+# `preserve_order` keeps a record's keys in the order the contract fixes; `arbitrary_precision`
+# keeps a number's source spelling, so `12.0` stays distinct from `12` and integers beyond
+# 64 bits survive.
+serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
+# Hashing and signing for the tamper-evident chain.
+sha2 = "0.10"
+hmac = "0.12"
+# Pattern redaction and the logfmt reader. ASCII classes only (decision D41), so the Unicode tables the crate loads by
+# default are never read; they are left out, and the matching engines are chosen by the features below.
+regex = { version = "1", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+# Validates records against schema/record.schema.json. No default features: the schema's
+# references are all local, so the HTTP and file resolvers are not needed.
+jsonschema = { version = "0.60", default-features = false }
+proptest = "1"
+
+[features]
+default = ["regex-perf"]
+# Every regex speed feature: the right choice for the native bindings, where size does not matter.
+regex-perf = ["regex/perf"]
+# What a browser downloads: the literal prefilter and the lazy DFA are the two that matter (without the DFA, scanning
+# text for PII is 28 to 55 times slower); the rest of `perf` costs 22 KB gzipped for almost nothing more.
+regex-perf-web = ["regex/perf-literal", "regex/perf-dfa"]
+
+[lints]
+workspace = true

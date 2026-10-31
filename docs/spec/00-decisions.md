@@ -1,0 +1,67 @@
+# Decisions: where Python and JS differ
+
+Each row is a real difference found in the code. "Recommend" is the proposed choice
+for the Rust-based 3.0; change it here before building if you disagree.
+
+**How the choice is made:** Python 2.0 is the baseline because it is far ahead of JS; JS
+is followed only where it is the better practice, and defects in either are fixed. The
+full rule, the list of what JS must gain and the list of what everyone adopts from JS are
+in `09-parity-and-gap-closing.md`. Rows where the recommendation is JS's behaviour: D2, D9,
+D11, D13, D15, D17, D18, D30 (and D20–D27 are fixes for both). Items marked
+**fix** are defects in both or one side that the new code must not reproduce.
+
+| ID | Topic | Python (P) | JavaScript (J) | Recommend |
+|---|---|---|---|---|
+| D1 | Does `child()` inherit plugins? | No. Transports, level and content policy are inherited; `fixed_meta` is added via a `ContextPlugin`. A child can `.use(RunPlugin())` without touching the parent. | Yes: plugins are copied (the same instances are shared, so a `RunPlugin` counter is shared). Base `meta` is merged. | Do not inherit by default. Plugins that declare themselves inheritable (redaction, PII, the tamper chain, which must share one chain) are inherited. `AuditLogger.child` already needs this. |
+| D2 | Default dispatch | Synchronous on the caller's thread; `async_dispatch=True` opts into a queue and worker thread. | Always queued and drained on `setImmediate`/microtask. | Queued by default in every language, with an explicit synchronous option for tests and short scripts. This is a behaviour change for Python. |
+| D3 | Placeholder for content when policy is `off` | `"<content capture is off — see Logger(content_policy=...)>"` | `"<content capture is off — see Logger's contentPolicy option>"` | One language-neutral string, fixed in a golden fixture: `"<content capture is off — set the logger's content policy to capture it>"`. |
+| D4 | Float output in JSON lines | `12.0` stays `12.0` | `12.0` prints as `12` | Records compare by parsed value, not by text. For the hash chain, preserve whether a number was written as an integer or a float (see 03). |
+| D5 | `run_id` default | `uuid4().hex` (32 hex, no dashes) | `randomUUID()` (with dashes) | 32 hex without dashes. Consumers must treat run ids as opaque. |
+| D6 | PII patterns | 12 patterns (email, ssn, credit_card, phone, openai/anthropic keys, AWS key id, GitHub token, Slack token, JWT, private-key block, bearer token) | 4 (email, ssn, creditCard, phone) | Python's 12, snake_case names. |
+| D7 | Queue drop warning interval | 60 s | 5 s (`warnIntervalMs`) | 60 s default, configurable. |
+| D8 | Level-change signal | `SIGUSR1`, env `LOGQUILL_LEVEL` | `SIGUSR2` (Node reserves `SIGUSR1`), same env; throws on Windows | Keep each language's default; same env variable; the core only supplies "apply this string as a level". |
+| D9 | Console colour default | Always on | On unless `NO_COLOR` is set | On only for a terminal and when `NO_COLOR` is unset, in every language. |
+| D10 | HTTP transport bounds | `batch_size=50`, `max_bytes=1_000_000`, `timeout=10`; drops a failed batch with a logged error | `batchSize=50` only; no byte bound; no timeout option | Python's. |
+| D11 | Elasticsearch auth | none | `apiKey` → header `Authorization: ApiKey …` | Add API key and basic auth. |
+| D12 | App Insights | Posts envelopes to `https://dc.services.visualstudio.com/v2/track` using an instrumentation key; ignores the formatter | Uses the `applicationinsights` SDK with a connection string; message is the formatted record | Native HTTP envelopes (Python's), accepting a connection string. |
+| D13 | Redis stream name | `"logs"` | `"logquill:logs"` | `"logquill:logs"`. |
+| D14 | RabbitMQ default URL | `amqp://guest:guest@localhost:5672/%2F` | `amqp://localhost` | Python's explicit form. |
+| D15 | SQS chunking | Sequential chunks of 10 | Chunks of 10 sent in parallel | Parallel with a small bound. |
+| D16 | Caller info shape | `module`, `function`, `line`, `file` | `function`, `file`, `line`, `column` | Host-defined; both stay valid under `meta.caller`. |
+| D17 | Syslog over TCP | No cap on pending data | Drops writes when pending bytes would exceed 1 MiB | Adopt the cap. |
+| D18 | Legacy meta keys | 1.x already snake_case | `parse_record` renames camelCase keys of a record with no `schema_version` (`runId`→`run_id`, `spanId`→`span_id`, `parentSpanId`→`parent_span_id`, `traceId`→`trace_id`, `durationMs`→`duration_ms`, `prevHash`→`prev_hash`) | Keep the rename for legacy records in the core; harmless for Python's. |
+| D19 | NaN / Infinity in canonical JSON | Emits `NaN`, `Infinity`, `-Infinity` | Emits `null` | Python's, so existing Python chains still verify. |
+| D20 | Defect: redaction failure | A plugin whose `before_log` raises is skipped and the record continues unredacted | Same | **fix**: a redaction plugin that fails drops the record. |
+| D21 | Defect: PII on non-JSON values | Objects/exceptions in `meta` are stringified later with `default=str`, after redaction | Same (`JSON.stringify`) | **fix**: scan the string form of every non-JSON leaf. |
+| D22 | Defect: chain under concurrency | Hash computed on the caller's thread, written later | Single-threaded, but queued | **fix**: chain at write time, one record at a time. |
+| D23 | Defect: unbounded id sets | `SamplingPlugin._elevated`, `FlightRecorderPlugin._flushed` never evicted | `SamplingPlugin.elevated` never evicted | **fix**: bound both (evict oldest at `max_traces` / `max_runs`). |
+| D24 | Defect: stdlib bridge loop | The `LogQuillHandler` forwards LogQuill's own diagnostics | n/a | **fix**: ignore records from the `logquill` logger. |
+| D25 | Defect: worker after `fork` | Worker thread does not survive; queue never drains | n/a | **fix**: restart in the child. |
+| D26 | Defect: failed rotation | File closed, never reopened | Same shape (`closeSync` then rename) | **fix**: reopen in a `finally`. |
+| D27 | Defect: `RedactPlugin` depth | Top-level keys only | Top-level keys only | **fix**: recurse with a depth and cycle guard. |
+| D28 | `span()` shape | `with logger.span(name, **meta)` context manager; emits on exit | `await logger.span(name, fn, options)` callback; emits on settle | Idiomatic per language; the emitted record is identical. |
+| D29 | `llm_call` shape | keyword args `tokens_in=…` | camelCase options `tokensIn` | Idiomatic per language; wire names are snake_case. |
+| D30 | Release gate | Tag runs build only; tests are a manual check | Tag runs lint, typecheck, tests, build, then publish | Tests in the release job, as JS does. |
+| D31 | Non-finite numbers in JSON lines | `json.dumps` writes `NaN`/`Infinity` (not valid JSON) | `JSON.stringify` writes `null` | `null` (valid JSON). The hash chain still uses the Python words (D19). |
+| D32 | Non-ASCII in JSON lines | Escaped as `\uXXXX` (stdlib `ensure_ascii`); the optional `orjson` backend writes UTF-8 | UTF-8 | UTF-8. Readers must compare parsed values. The hash chain keeps ASCII-escaped canonical text (03). |
+| D33 | Reading the SQLite table in the viewer | Rebuilds records with `schema_version "1.0"` and no `llm` (the table has no column for it) | n/a | Add an `llm` JSON column to the new SQLite sink so tokens and cost survive; keep reading old tables. |
+| D34 | Sampling elevation writes straight to sinks | Bypasses later plugins and, when asynchronous, writes on the caller's thread | Same, on the queue's turn | Route elevated records through the same dispatch path (queue and chain) instead of writing directly. |
+| D35 | Parsing a level | Names case-folded with Unicode `upper()` (so `ınfo` works); integers must be exact weights; other types raise `TypeError` naming a Python class; booleans are read as the integers 0 and 1 | `toUpperCase()` (same Unicode folding); a whole-number float such as `20.0` is accepted; `null`/lists give "Unknown log level: …" | **Settled.** ASCII-only folding. A name or number that is not a level: `Unknown log level: <v>` (a string is shown as written, a number as JSON text, so `20.0` and `20.5` are unknown). A value that is neither (null, boolean, array, object): `level must be a name or a number, got <json type>`. |
+| D36 | Values and type names inside error and warning messages | Python `repr` (`'3.0'`, `None`) and Python class names (`str`, `list`, `NoneType`) | `JSON.stringify` (`"3.0"`, `null`) and JS type names (`undefined`, `object` for `null`) | **Settled.** Values render as compact JSON text; type names are JSON types (`null`, `boolean`, `number`, `string`, `array`, `object`); a missing field reads as `null`. The LLM-block warning is `llm_call: ignoring <name>=<json> — expected …` in every language (wire names, not camelCase). |
+| D37 | Invalid content policy | `content_policy must be one of ('off', …), got 'x'` | `contentPolicy must be one of "off", …, got "x"` | **Settled.** The core says `content policy must be one of "off", "hash", "truncate", "full", got <json>`; a binding may prefix its own option name. |
+| D38 | Which digits a `schema_version` may use | `re` with Unicode `\d` and a `$` that tolerates a trailing newline, so `"٢.٠"` and `"2.0\n"` are accepted | `\d` is ASCII and `$` is strict | **Settled.** ASCII digits only, nothing after the minor version (`^[0-9]+\.[0-9]+$` with `$` meaning end of text). |
+| D39 | `"llm": null` in a record being read | Kept as `null` in the result | Error `record field 'llm' must be an object, got object` | **Settled.** Treated as absent and dropped, so reading a record and writing it back is stable. |
+| D40 | Reading trace ids and headers | Python `re` with Unicode `\\d`, a `$` that tolerates a trailing newline, and `str.strip()` (which also trims U+0085); a 16-hex span id plus `\\n` is kept as an id; an all-zero id or version `ff` in a `traceparent` is accepted | JS `\\d` and `$` are strict, `trim()` differs from Python's; all-zero ids accepted | **Settled.** ASCII digits only, `$` means end of text, only ASCII whitespace is trimmed from a header, and an all-zero trace or parent id, or version `ff`, is not a trace (the W3C rules; `trace_id_for` already treated all-zero as invalid). |
+| D41 | Pattern semantics and depth limits in redaction | `\\b`, `\\d`, `\\s` are Unicode in Python and ASCII in JS; values deeper than 50 levels are left unredacted | ASCII classes; same depth limit | **Settled.** ASCII classes (so a letter next to an address cannot hide it, and non-Latin digits are not SSNs); keys are checked at every depth (D27); a string or container deeper than 50 levels is replaced by the replacement text, never passed through. |
+| D42 | Logfmt and text formatting of odd input | Python quotes a value if it contains any Unicode whitespace (`\\s`); a missing `timestamp`, `level`, `logger` or `message` raises `KeyError`; a `null` level prints `None`; non-finite numbers print `nan`/`inf`; the reader splits on Unicode whitespace | JS: a missing field prints `undefined`, a `null` level `null`, non-finite `NaN`/`Infinity`; same Unicode whitespace | **Settled.** Only ASCII whitespace, the listed control characters, `"`, `=` and `\\` trigger quoting and split pairs; a missing or `null` timestamp/level/logger prints `?`, a missing message prints empty (`message=""` in logfmt); non-finite numbers print `null`; a `\\uD800`-style escape that is not half of a valid pair stays as the literal text; floats keep Python's spelling in every format. |
+| D43 | Values in GenAI span attributes, and timestamps | `isinstance(x, int)` accepts booleans, so `tokens_in: true` becomes the attribute `true`, and a boolean cost becomes `1.0`; `epoch_ns` goes through a float and is off by up to a few hundred nanoseconds; event text is `json.dumps` with `\\u` escapes | `Number.isInteger` accepts `5.0`; timestamps keep only milliseconds; messages and text spelled by `JSON.stringify` | **Settled.** Counts are JSON integers only (not booleans, not floats); a cost is any non-boolean number; timestamps are read exactly, accepting only `YYYY-MM-DDTHH:MM:SS[.f…]Z` (one to nine fraction digits) and anything else is "no time"; event text is the UTF-8 compact JSON of D32. |
+| D44 | A full alert-dedupe table | At `max_tracked_keys` distinct errors a new error is **dropped without an alert** | Same | **Settled (fix).** An alert is never dropped for lack of room: it is sent at once, and its repeats are not collapsed until room frees up. |
+| D45 | Bounded sets and generated ids | The sampling `_elevated` and flight-recorder `_flushed` sets grow without limit (D24); an empty `run_id` given to `RunPlugin` is silently replaced; `RunPlugin` ids are `uuid4().hex` (P) / `randomUUID()` (J, with dashes) | Same | **Settled.** Both sets keep the 10,000 most recently used ids (`max_elevated`, `max_flushed`; evicting one means that trace or run is sampled or buffered afresh); a hit refreshes the entry; an empty `run_id` means "generate one"; generated ids are 32 hex digits (D5). A record that would become its own ancestor in a trace tree is a root, not dropped (06). |
+
+## Status of the decisions
+
+Settled (the corpus in `schema/corpus/` and the code follow them): D3, D4, D18, D19, D31, D32,
+D35–D45. The remaining rows are settled by the stage that first needs them, as written above;
+change a recommendation in this file before that stage starts if you disagree. Open for the
+author: the licence for the shared core, finishing JS 2.0 versus skipping to 3.0, and the
+monorepo name (none blocks Stage 1).

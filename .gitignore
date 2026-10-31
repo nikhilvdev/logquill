@@ -6,7 +6,17 @@
 *.key
 **/secrets/
 
-# ── Python ───────────────────────────────────────────────────────────
+# ── Rust and other build output ──────────────────────────────────────
+target/
+# wasm-bindgen output of bindings/wasm (rebuilt by `npm run build`)
+bindings/wasm/pkg/
+# fixtures packed from schema/ for the browser, Deno and Worker test hosts
+bindings/wasm/tests/hosts/fixtures.generated.mjs
+**/*.rs.bk
+*.profraw
+node_modules/
+
+# ── Python (the Python binding's tooling) ────────────────────────────
 .venv/
 **/__pycache__/
 *.pyc
@@ -36,3 +46,40 @@ graphify-out/
 .claude/
 .codex/
 Agents.md
+
+# The compiled extension that `maturin develop` places beside the Python sources.
+bindings/python/python/logquill/*.so
+bindings/python/python/logquill/*.pyd
+bindings/python/python/logquill/*.dylib
+
+# ── Node binding build output ────────────────────────────────────────
+*.node
+
+# WebAssembly build output (bindings/node): built by `npm run build:wasm`
+bindings/node/wasm-out/
+bindings/node/*.wasm
+bindings/node/logquill.wasi*.cjs
+bindings/node/logquill.wasi-browser.js
+bindings/node/wasi-worker*.mjs
+bindings/node/dist/
+
+# ── Stage 8: build products of the medium-tier bindings ─────────────
+# .NET
+bindings/dotnet/**/bin/
+bindings/dotnet/**/obj/
+bindings/dotnet/src/LogQuill/runtimes/
+# JVM
+bindings/jvm/build/
+bindings/jvm/.gradle/
+bindings/jvm/native/
+# Swift
+bindings/swift/.build/
+bindings/swift/CLogQuill.xcframework/
+# Ruby
+bindings/ruby/*.gem
+bindings/ruby/lib/logquill/native/
+# Go: bindings/go/core.wasm is committed on purpose (a module-proxy fetch of a tag has no build step); rebuild it with
+# bindings/go/scripts/build-core.sh whenever the core changes. A Go test fails if its version differs from the workspace's.
+bindings/jvm/bin/
+bindings/wasm/.wrangler/
+docs-out/

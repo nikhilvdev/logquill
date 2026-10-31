@@ -22,7 +22,6 @@ body:
     attributes:
       label: Minimal reproduction
       description: A short code snippet that reproduces the issue.
-      render: python
     validations:
       required: true
 
@@ -30,15 +29,15 @@ body:
     id: version
     attributes:
       label: logquill version
-      placeholder: e.g. 2.0.0
+      placeholder: e.g. 3.0.0
     validations:
       required: true
 
   - type: input
-    id: python-version
+    id: runtime
     attributes:
-      label: Python version
-      placeholder: e.g. 3.11.4
+      label: Language and runtime
+      placeholder: e.g. Python 3.12, Node 22, Go 1.23, JVM 21
     validations:
       required: true
 

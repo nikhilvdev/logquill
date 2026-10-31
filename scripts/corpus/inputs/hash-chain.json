@@ -1,0 +1,958 @@
+{
+  "group": "hash-chain",
+  "description": "Hash-chaining records, the head signature, and what verification reports for tampered chains.",
+  "cases": [
+    {
+      "name": "three records, untouched",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "empty chain",
+      "input": {
+        "records": []
+      }
+    },
+    {
+      "name": "one record",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "a 1.x record without schema_version",
+      "input": {
+        "records": [
+          {
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "l",
+            "message": "m",
+            "meta": {}
+          }
+        ]
+      }
+    },
+    {
+      "name": "non-ASCII, floats, big integers and an llm block",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "WARN",
+            "logger": "svc.é",
+            "message": "café  𝄞   \u0001",
+            "meta": {
+              "z": 1.0,
+              "a": [
+                1,
+                2.5,
+                null
+              ],
+              "tiny": 1e-05,
+              "big": 9007199254740993,
+              "nested": {
+                "b": 1,
+                "a": 2
+              }
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "llm",
+            "message": "llm_call",
+            "meta": {
+              "run_id": "r"
+            },
+            "llm": {
+              "model": "m",
+              "tokens_in": 10,
+              "tokens_out": 20,
+              "cost_usd": 0.5,
+              "latency_ms": 12.5,
+              "finish_reason": "stop"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "a custom genesis hash",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "genesis": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "name": "a signed chain, untouched",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "key": "audit-key"
+      }
+    },
+    {
+      "name": "an edited message",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_message",
+            "index": 1,
+            "value": "tampered"
+          }
+        ]
+      }
+    },
+    {
+      "name": "an edited message, signed",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "key": "k",
+        "mutations": [
+          {
+            "type": "edit_message",
+            "index": 2,
+            "value": "x"
+          }
+        ]
+      }
+    },
+    {
+      "name": "an edited meta value",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_meta",
+            "index": 0,
+            "key": "n",
+            "value": 99
+          }
+        ]
+      }
+    },
+    {
+      "name": "an added meta key",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_meta",
+            "index": 2,
+            "key": "extra",
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "a deleted middle record",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "delete",
+            "index": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "a deleted first record",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "delete",
+            "index": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "a swapped pair",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "swap",
+            "index": 0,
+            "other": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "a removed hash",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "drop_hash",
+            "index": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "a removed hash on the first record",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "drop_hash",
+            "index": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "an edited stored hash",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_hash",
+            "index": 1,
+            "value": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+          }
+        ]
+      }
+    },
+    {
+      "name": "an edited prev_hash",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_prev_hash",
+            "index": 2,
+            "value": "0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "a truncated tail, unsigned",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "truncate",
+            "keep": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "a truncated tail, signed",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "key": "k",
+        "mutations": [
+          {
+            "type": "truncate",
+            "keep": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "a chain truncated to nothing, signed",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "key": "k",
+        "mutations": [
+          {
+            "type": "truncate",
+            "keep": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "an edited llm block",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "WARN",
+            "logger": "svc.é",
+            "message": "café  𝄞   \u0001",
+            "meta": {
+              "z": 1.0,
+              "a": [
+                1,
+                2.5,
+                null
+              ],
+              "tiny": 1e-05,
+              "big": 9007199254740993,
+              "nested": {
+                "b": 1,
+                "a": 2
+              }
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "llm",
+            "message": "llm_call",
+            "meta": {
+              "run_id": "r"
+            },
+            "llm": {
+              "model": "m",
+              "tokens_in": 10,
+              "tokens_out": 20,
+              "cost_usd": 0.5,
+              "latency_ms": 12.5,
+              "finish_reason": "stop"
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_llm",
+            "index": 1,
+            "key": "tokens_in",
+            "value": 11
+          }
+        ]
+      }
+    },
+    {
+      "name": "an edited schema_version",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_schema_version",
+            "index": 0,
+            "value": "2.1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "an edited level",
+      "input": {
+        "records": [
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:00.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "m",
+            "meta": {
+              "n": 0
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:01.000Z",
+            "level": "INFO",
+            "logger": "app",
+            "message": "second",
+            "meta": {
+              "n": 1
+            }
+          },
+          {
+            "schema_version": "2.0",
+            "timestamp": "2026-01-01T00:00:02.000Z",
+            "level": "ERROR",
+            "logger": "app",
+            "message": "third",
+            "meta": {
+              "n": 2
+            }
+          }
+        ],
+        "mutations": [
+          {
+            "type": "edit_level",
+            "index": 0,
+            "value": "DEBUG"
+          }
+        ]
+      }
+    }
+  ]
+}

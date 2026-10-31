@@ -1,0 +1,525 @@
+test/adapters/langchain-adapter.test.ts::reconstructs a full run's span tree from a mix of events
+test/adapters/langchain-adapter.test.ts::nested chains link via parentSpanId
+test/adapters/langchain-adapter.test.ts::a chain error closes the span at ERROR level
+test/adapters/langchain-adapter.test.ts::a tool error logs at ERROR level with the tool's spanId
+test/adapters/langchain-adapter.test.ts::a non-Error throw (a tool's _call can legally throw anything) doesn't corrupt or crash
+test/adapters/langchain-adapter.test.ts::an LLM error logs at ERROR level
+test/adapters/langchain-adapter.test.ts::falls back to the last id segment when serialized.name is absent
+test/adapters/langchain-adapter.test.ts::handleAgentAction maps to .action() with parentSpanId
+test/adapters/langgraph-adapter.test.ts::is a LangChainAdapter — LangGraph.js nodes run as ordinary LangChain Runnables
+test/adapters/langgraph-adapter.test.ts::handles the same chain/LLM/tool events identically to LangChainAdapter
+test/bridges/pino-destination.test.ts::forwards a pino .info() call through to the LogQuill logger's transports
+test/bridges/pino-destination.test.ts::maps pino's numeric levels onto LogQuill levels
+test/bridges/pino-destination.test.ts::a LogQuill Logger's own level still filters records that reach it
+test/bridges/pino-destination.test.ts::skips an unparsable line instead of throwing
+test/bridges/pino-destination.test.ts::handles more than one NDJSON line in a single write() call
+test/bridges/winston-transport.test.ts::forwards a winston .info() call through to the LogQuill logger's transports
+test/bridges/winston-transport.test.ts::maps winston levels onto LogQuill levels via DEFAULT_WINSTON_LEVEL_MAP
+test/bridges/winston-transport.test.ts::a LogQuill Logger's own level still filters records that reach it
+test/bridges/winston-transport.test.ts::an unmapped custom level falls back to INFO
+test/browser/context-browser.test.ts::is empty outside any bound block
+test/browser/context-browser.test.ts::is visible inside the block
+test/browser/context-browser.test.ts::is visible through nested function calls with no manual threading
+test/browser/context-browser.test.ts::restores the outer context once the block exits
+test/browser/context-browser.test.ts::pops its frame even if fn throws
+test/browser/context-browser.test.ts::nested blocks merge, with the inner value winning on collision
+test/browser/context-browser.test.ts::returns fn's return value
+test/browser/context-browser.test.ts::documented limitation: two concurrent bindContext calls across an await interleave, unlike the Node build's AsyncLocalStorage-backed version
+test/browser/no-node-builtins.test.ts::resolves with no Node built-in imports
+test/browser/span-browser.test.ts::has no active span outside runInSpan
+test/browser/span-browser.test.ts::newSpanId returns a 16-hex-char id
+test/browser/span-browser.test.ts::runInSpan makes the id current for the duration of fn
+test/browser/span-browser.test.ts::nested runInSpan calls form a stack, restored on exit
+test/browser/span-browser.test.ts::pops its span even if fn throws
+test/browser/span-browser.test.ts::survives an internal await for a single in-flight span
+test/browser/span-browser.test.ts::pops an async fn's span even if it rejects
+test/browser/span-browser.test.ts::documented limitation: two concurrent runInSpan calls across an await can interleave, unlike the Node build's AsyncLocalStorage-backed version
+test/config.test.ts::builds transports and plugins from built-in types, converting snake_case options
+test/config.test.ts::resolves a class entry from a module and export name
+test/config.test.ts::fails with an actionable message on bad entries
+test/config.test.ts::loads JSON and YAML
+test/config.test.ts::rejects a non-object file
+test/config.test.ts::LEVEL wins over the config file's level
+test/config.test.ts::works with no environment set
+test/config.test.ts::resolve a relative module against the config file, not the library
+test/contract.test.ts::names the version this package writes
+test/contract.test.ts::labels a 1.x record '1.0', defaults meta, and leaves the input alone
+test/contract.test.ts::renames the camelCase named keys logquill-js 1.x wrote, leaving user keys alone
+test/contract.test.ts::returns a record that shares no mutable state with its input
+test/contract.test.ts::does not rename keys in a 2.x record
+test/contract.test.ts::says what to do when it refuses a record
+test/contract.test.ts::stamps schema_version on every record
+test/contract.test.ts::validates records from a full pipeline: span, run, trace context, tamper chain
+test/core/context.test.ts::is empty outside any bound block
+test/core/context.test.ts::is visible to a direct log call inside the block
+test/core/context.test.ts::is visible through nested function calls with no manual threading
+test/core/context.test.ts::survives an internal await
+test/core/context.test.ts::restores the outer context once the block exits
+test/core/context.test.ts::nested blocks merge, with the inner value winning on collision
+test/core/context.test.ts::a call-site meta value always wins over bound context
+test/core/context.test.ts::concurrent async operations don't leak context into each other
+test/core/dispatch-queue.test.ts::runs enqueued tasks outside the caller's own call stack
+test/core/dispatch-queue.test.ts::flush() resolves once every queued task has run
+test/core/dispatch-queue.test.ts::flush() on an idle queue resolves immediately
+test/core/dispatch-queue.test.ts::a throwing task does not stop the rest of the queue from draining
+test/core/dispatch-queue.test.ts::dropOldest evicts the longest-waiting task to make room
+test/core/dispatch-queue.test.ts::dropNewest discards the incoming task, keeping what's already queued
+test/core/dispatch-queue.test.ts::block runs the overflowing task synchronously instead of dropping it
+test/core/dispatch-queue.test.ts::never grows past maxSize under a sustained burst, regardless of policy
+test/core/dispatch-queue.test.ts::rate-limits onDrop instead of calling it once per dropped task
+test/core/dispatch-queue.test.ts::a broken onDrop callback does not crash the caller
+test/core/formatter.test.ts::round-trips a record
+test/core/formatter.test.ts::produces a compact JSON line with no extra whitespace
+test/core/formatters.test.ts::renders one entry with compact meta
+test/core/formatters.test.ts::prints meta.stack on the lines after the entry
+test/core/formatters.test.ts::does not throw on a circular or BigInt meta value
+test/core/formatters.test.ts::round-trips through parse()
+test/core/formatters.test.ts::emits the four fields then meta pairs, quoting only when needed
+test/core/formatters.test.ts::flattens nested objects, JSON-encodes arrays, and prefixes reserved keys
+test/core/formatters.test.ts::always emits exactly one line
+test/core/formatters.test.ts::round-trips scalar values through parseLogfmt
+test/core/formatters.test.ts::does not throw on circular meta
+test/core/formatters.test.ts::maps bare keys to '' and lets the last duplicate win
+test/core/formatters.test.ts::rejects a pattern with no named groups, or a cast for an unknown group
+test/core/formatters.test.ts::streams a file, skipping non-matching lines and casting groups
+test/core/formatters.test.ts::names the line number when a cast fails
+test/core/formatters.test.ts::TextFormatter prints it as llm={...} before meta, like logquill-python
+test/core/formatters.test.ts::LogfmtFormatter flattens it to llm.* pairs before meta
+test/core/formatters.test.ts::omits it when empty, and round-trips through parse()
+test/core/levels.test.ts::has the same names and numeric weights as the Python contract
+test/core/levels.test.ts::levelName returns the name for a numeric level
+test/core/levels.test.ts::parseLevel accepts a Level
+test/core/levels.test.ts::parseLevel accepts a numeric weight
+test/core/levels.test.ts::parseLevel accepts a level name, case-insensitively
+test/core/levels.test.ts::parseLevel throws on an unknown name
+test/core/levels.test.ts::parseLevel throws on an unknown numeric weight
+test/core/logger-api.property.test.ts::TextFormatter and LogfmtFormatter never throw, whatever the meta
+test/core/logger-api.property.test.ts::a logfmt line is always exactly one line
+test/core/logger-api.property.test.ts::JSONFormatter may refuse an unserializable record, but the logger catches it
+test/core/logger-api.property.test.ts::contentPolicy never throws for any policy and any content value
+test/core/logger-api.property.test.ts::opt({ lazy, depth }) never throws, even with throwing functions in meta
+test/core/logger-api.property.test.ts::llmCall never throws for any field values
+test/core/logger-api.property.test.ts::a span with an adversarial captureState never throws into the caller
+test/core/logger-api.property.test.ts::retry tracking never throws and never mutates the caller's meta
+test/core/logger-api.property.test.ts::Console and Syslog transports never throw into the caller for any meta, with every formatter
+test/core/logger-api.test.ts::silences a logger and everything nested under it, but not a sibling with a shared prefix
+test/core/logger-api.test.ts::the most specific rule wins
+test/core/logger-api.test.ts::disable() with no name turns everything off, and enable() turns it back on
+test/core/logger-api.test.ts::rejects a non-string name
+test/core/logger-api.test.ts::calls function-valued meta only when the record will really be emitted
+test/core/logger-api.test.ts::does not call them at all for a disabled logger
+test/core/logger-api.test.ts::turns a throwing function into a placeholder instead of throwing into the caller
+test/core/logger-api.test.ts::leaves functions alone when lazy is off
+test/core/logger-api.test.ts::depth 0 names the code that called the log method
+test/core/logger-api.test.ts::depth 1 inside a wrapper names the wrapper's caller, not the wrapper
+test/core/logger-api.test.ts::returns no caller (rather than throwing) when the stack is not that deep
+test/core/logger-api.test.ts::does not overwrite a caller the call site supplied
+test/core/logger-api.test.ts::rejects a negative or fractional depth
+test/core/logger-api.test.ts::caches one view per combination
+test/core/logger-api.test.ts::stops caching past 32 combinations but keeps working
+test/core/logger-api.test.ts::every method goes through the logger's level, plugins and transports
+test/core/logger-api.test.ts::logs an action carrying the llm block in snake_case
+test/core/logger-api.test.ts::omits fields you leave out, and the whole block if nothing is left
+test/core/logger-api.test.ts::accepts a custom message
+test/core/logger-api.test.ts::drops a field of the wrong type with a warning naming it, rather than throwing
+test/core/logger-api.test.ts::is written by the JSON formatter with the llm block
+test/core/logger-api.test.ts::works through opt()
+test/core/logger-api.test.ts::stamps retry_count on a reopened tool action, not on the first attempt
+test/core/logger-api.test.ts::a successful observation ends the chain
+test/core/logger-api.test.ts::an errored observation does not end the chain
+test/core/logger-api.test.ts::tracks tools and call ids independently, and ignores records with no tool
+test/core/logger-api.test.ts::keeps a retry_count the call site set, and never mutates the caller's meta
+test/core/logger-api.test.ts::scopes a chain to the enclosing span
+test/core/logger-api.test.ts::RetryTracker is bounded: the oldest in-flight call is forgotten first
+test/core/logger-api.test.ts::records only the keys that changed, before and after
+test/core/logger-api.test.ts::sees an in-place mutation of nested state (the snapshot is a copy)
+test/core/logger-api.test.ts::omits state_diff when nothing changed
+test/core/logger-api.test.ts::still records a diff when the block throws
+test/core/logger-api.test.ts::a state that cannot be copied, or a callback that throws, just means no state_diff
+test/core/logger-api.test.ts::is a content field: the default policy replaces it with a placeholder
+test/core/logger-api.test.ts::diffs non-object state as a whole value
+test/core/logger-pipeline.property.test.ts::never throws into the caller for any adversarial meta shape, through a full plugin pipeline
+test/core/logger-pipeline.property.test.ts::never throws when the record actually reaches a transport (JSON formatting included)
+test/core/logger-pipeline.property.test.ts::a beforeLog that throws on any input never crashes the caller and never stops later plugins running
+test/core/logger-pipeline.property.test.ts::an onError that itself throws never crashes the caller
+test/core/logger-pipeline.property.test.ts::a transport whose format()/write() throws on any record never crashes the caller
+test/core/logger-pipeline.property.test.ts::huge messages and huge meta payloads never crash the caller
+test/core/logger.test.ts::produces a well-formed record
+test/core/logger.test.ts::filters records below the configured level
+test/core/logger.test.ts::setLevel changes the threshold
+test/core/logger.test.ts::level getter reflects the current threshold
+test/core/logger.test.ts::every level method produces a matching level name
+test/core/logger.test.ts::dispatches formatted records to every transport
+test/core/logger.test.ts::close() closes every attached transport
+test/core/logger.test.ts::use() registers a plugin and returns the logger for chaining
+test/core/logger.test.ts::beforeLog can modify a record
+test/core/logger.test.ts::beforeLog returning null drops the record before it reaches transports
+test/core/logger.test.ts::a throwing plugin hook does not crash logging and is routed to onError
+test/core/logger.test.ts::a throwing afterLog hook does not crash logging and is routed to onError
+test/core/logger.test.ts::child() inherits level, transports, and plugins, and merges meta
+test/core/logger.test.ts::meta passed per-call overrides base meta on key collisions
+test/core/logger.test.ts::use() accepts a plain function and behaves identically to an equivalent Plugin
+test/core/logger.test.ts::a function passed to use() can drop a record by returning null
+test/core/logger.test.ts::a function passed via the constructor's plugins array is wrapped the same way
+test/core/logger.test.ts::info() returns before the write it triggered runs
+test/core/logger.test.ts::a burst under the configured queue limit loses nothing once flushed
+test/core/logger.test.ts::a burst above the queue limit applies the configured backpressure policy and stays bounded
+test/core/logger.test.ts::the block policy never drops a record, even above the queue limit
+test/core/logger.test.ts::child() shares the parent's dispatch queue
+test/core/logger.test.ts::close() drains pending writes before closing transports
+test/core/logger.test.ts::waits for a transport's own flush() before closing it, so a final send is not cut off
+test/core/logger.test.ts::a transport whose flush() rejects is reported, and everything is still closed
+test/core/logger.test.ts::replaces an Error in meta.err with a formatted meta.stack
+test/core/logger.test.ts::falls back to a formatted name/message when the Error has no stack
+test/core/logger.test.ts::leaves a non-Error meta.err untouched
+test/core/logger.test.ts::leaves records without meta.err unaffected
+test/core/privacy.test.ts::matches node:crypto on multi-byte text
+test/core/privacy.test.ts::is off by default: a content field becomes a placeholder, other fields are untouched
+test/core/privacy.test.ts::full passes the value through
+test/core/privacy.test.ts::hash replaces the value with the same sha256 digest logquill-python produces
+test/core/privacy.test.ts::hash is stable: the same content hashes the same, different content differs
+test/core/privacy.test.ts::truncate keeps the first characters and says how long the original was
+test/core/privacy.test.ts::is applied before any plugin sees the record, so a plugin cannot read raw content
+test/core/privacy.test.ts::governs state_diff and every other content field
+test/core/privacy.test.ts::does not throw on a circular value under hash or truncate
+test/core/privacy.test.ts::rejects an unknown policy at construction, naming the valid ones
+test/core/privacy.test.ts::is inherited by a child logger
+test/core/privacy.test.ts::applyContentPolicy leaves meta without content fields alone
+test/core/privacy.test.ts::never reaches any transport by default
+test/core/privacy.test.ts::throws a TypeError on a circular reference immediately, without overflowing the stack
+test/core/privacy.test.ts::allows the same object appearing twice when it is not an ancestor of itself
+test/core/serverless.test.ts::awaits logger.flush() before the wrapped handler's return value resolves
+test/core/serverless.test.ts::still flushes when the handler throws, then rethrows
+test/core/serverless.test.ts::forces a batching transport to send its buffer even under its own threshold
+test/core/serverless.test.ts::withCloudFunction and withAzureFunction are the same wrapper under platform-matching names
+test/core/serverless.test.ts::passes arguments through to the wrapped function unchanged
+test/core/shutdown.test.ts::flushes and closes the logger on beforeExit, without calling process.exit
+test/core/shutdown.test.ts::flushes, closes, and exits on a registered signal
+test/core/shutdown.test.ts::only runs the shutdown sequence once even if multiple signals fire
+test/core/shutdown.test.ts::the returned unsubscribe function removes the listeners
+test/core/tracing.test.ts::a call-site kind overrides the method's default
+test/core/tracing.test.ts::emits a record with spanId and durationMs
+test/core/tracing.test.ts::has no parentSpanId and kind 'span' at the top level
+test/core/tracing.test.ts::returns fn's resolved value
+test/core/tracing.test.ts::stamps records logged inside the block with parentSpanId
+test/core/tracing.test.ts::stamps records across an internal await with parentSpanId
+test/core/tracing.test.ts::nested spans form a parent chain
+test/core/tracing.test.ts::still emits its record and rethrows on exception
+test/core/tracing.test.ts::accepts explicit spanId and parentSpanId
+test/core/tracing.test.ts::extra options become meta
+test/core/tracing.test.ts::concurrent spans on the same logger don't leak parentSpanId across each other
+test/index.test.ts::exports a version string
+test/index.test.ts::exports the core public API
+test/instrument/instrument.test.ts::logs one llm record per awaited call and returns the SDK's own promise
+test/instrument/instrument.test.ts::does not parse the body for a caller that never awaits (asResponse only)
+test/instrument/instrument.test.ts::records once however many times the result is consumed
+test/instrument/instrument.test.ts::passes streaming calls through untouched
+test/instrument/instrument.test.ts::never lets a recording failure break the call
+test/instrument/instrument.test.ts::leaves a failed call's rejection alone and records nothing
+test/instrument/instrument.test.ts::refuses to patch twice, and uninstrument restores the original
+test/instrument/instrument.test.ts::patches the shared prototype, so a second client is covered too
+test/instrument/instrument.test.ts::names the fix when given something that is not a client
+test/instrument/instrument.test.ts::covers chat completions and the responses API
+test/instrument/instrument.test.ts::restores both methods on uninstrument
+test/instrument/instrument.test.ts::propagate builds a W3C traceparent and optional run id
+test/instrument/instrument.test.ts::client to server shares one trace_id, and server records carry meta.mcp
+test/instrument/instrument.test.ts::tolerates a request with no _meta and does not leak context afterwards
+test/instrument/instrument.test.ts::rethrows the handler's error unchanged
+test/otel/semconv.test.ts::defaults to the latest names, and an explicit choice wins over the environment
+test/otel/semconv.test.ts::reads OTEL_SEMCONV_STABILITY_OPT_IN, including from a comma-separated list
+test/otel/semconv.test.ts::never emits old and new names together: a /dup opt-in warns once and uses one generation
+test/otel/semconv.test.ts::rejects an unknown generation, naming the valid ones
+test/otel/semconv.test.ts::captureContentEnabled follows the standard environment switch, case-insensitively
+test/otel/semconv.test.ts::maps the llm block onto the latest GenAI names
+test/otel/semconv.test.ts::legacy names differ in exactly the provider and token attributes, and the two never mix
+test/otel/semconv.test.ts::uses the default provider when the record names none, and text_completion when asked
+test/otel/semconv.test.ts::exports prompt and completion text only when capture is on
+test/otel/semconv.test.ts::marks an error from meta.error or an ERROR level, with error.type taken from the message head
+test/otel/semconv.test.ts::attaches a state_diff as an event
+test/otel/semconv.test.ts::toolSpec is execute_tool {tool} with the call id and duration
+test/otel/semconv.test.ts::an ordinary span keeps its own name and carries no GenAI operation
+test/otel/semconv.test.ts::a span that names an agent (or says invoke_agent) is an invoke_agent span
+test/otel/semconv.test.ts::is not fooled by a record that is none of the three kinds
+test/otel/semconv.test.ts::gives a log record the llm block's model and usage under the same names as its span
+test/otel/semconv.test.ts::epochHr keeps millisecond precision, and hrMinusMs borrows across a second
+test/otel/semconv.test.ts::match the ids logquill-python derives, so a trace that crosses both lines up
+test/otel/semconv.test.ts::an invalid trace id falls back to the run id, and a record naming neither has none
+test/otel/semconv.test.ts::keeps every gen_ai.* attribute name in semconv.ts, so moving to a newer convention is a one-file change
+test/plugins/alerting-plugin.test.ts::an ERROR-level record fires an alert
+test/plugins/alerting-plugin.test.ts::below-threshold records do not fire an alert
+test/plugins/alerting-plugin.test.ts::never blocks the caller even when the destination is unreachable
+test/plugins/alerting-plugin.test.ts::duplicate errors within the window collapse into one follow-up alert
+test/plugins/alerting-plugin.test.ts::a single occurrence gets no follow-up alert
+test/plugins/alerting-plugin.test.ts::new dedupe keys beyond maxTrackedKeys are dropped
+test/plugins/alerting-plugin.test.ts::close() cancels pending dedupe timers
+test/plugins/context-plugin.test.ts::injects fixed context into meta
+test/plugins/context-plugin.test.ts::call-site meta overrides fixed context
+test/plugins/email-alert-plugin.test.ts::sends an email via the injected sender
+test/plugins/email-alert-plugin.test.ts::includes the occurrence count in the subject on a follow-up alert
+test/plugins/email-alert-plugin.test.ts::throws an actionable error when nodemailer isn't installed and no sender is given
+test/plugins/otel-span-processor.test.ts::emits an .action() on span start and an .observation() on span end
+test/plugins/otel-span-processor.test.ts::carries the span's own spanId onto both records
+test/plugins/otel-span-processor.test.ts::stamps parentSpanId from an explicitly nested span
+test/plugins/otel-span-processor.test.ts::emits .error() instead of .observation() when the span ends with an error status
+test/plugins/otel-span-processor.test.ts::copies non-empty span attributes onto meta.attributes
+test/plugins/otel-span-processor.test.ts::omits meta.attributes entirely when a span has none
+test/plugins/otel-span-processor.test.ts::supports a custom attributesKey
+test/plugins/otel-span-processor.test.ts::forceFlush() and shutdown() resolve without doing anything to the wrapped Logger
+test/plugins/pagerduty-alert-plugin.test.ts::posts an Events API v2 payload
+test/plugins/pagerduty-alert-plugin.test.ts::FATAL maps to critical severity
+test/plugins/pagerduty-alert-plugin.test.ts::includes the occurrence count on a follow-up alert
+test/plugins/pagerduty-alert-plugin.test.ts::the default fetch-based sender throws on a non-ok response
+test/plugins/pii-redact-plugin.test.ts::redacts an email in a string value
+test/plugins/pii-redact-plugin.test.ts::redacts an SSN regardless of key name
+test/plugins/pii-redact-plugin.test.ts::redacts a phone number
+test/plugins/pii-redact-plugin.test.ts::leaves non-string values untouched
+test/plugins/pii-redact-plugin.test.ts::redacts a credit card number
+test/plugins/pii-redact-plugin.test.ts::redacts recursively through arrays
+test/plugins/pii-redact-plugin.test.ts::redacts recursively through nested objects and arrays
+test/plugins/pii-redact-plugin.test.ts::a circular reference does not crash
+test/plugins/pii-redact-plugin.test.ts::custom patterns override the defaults
+test/plugins/rate-limit-plugin.test.ts::allows up to maxRecords per window
+test/plugins/rate-limit-plugin.test.ts::different levels have independent windows by default
+test/plugins/rate-limit-plugin.test.ts::window resets once perSeconds elapses
+test/plugins/rate-limit-plugin.test.ts::a custom keyFunc groups by message
+test/plugins/rate-limit-plugin.test.ts::maxKeys evicts the least-recently-seen key
+test/plugins/rate-limit-plugin.test.ts::throws for a maxRecords below 1
+test/plugins/rate-limit-plugin.test.ts::throws for a non-positive perSeconds
+test/plugins/redact-plugin.test.ts::redacts default sensitive keys
+test/plugins/redact-plugin.test.ts::matches keys case-insensitively
+test/plugins/redact-plugin.test.ts::supports custom keys and replacement
+test/plugins/run-plugin.test.ts::generates a runId when none given
+test/plugins/run-plugin.test.ts::accepts an explicit runId
+test/plugins/run-plugin.test.ts::increments step per record
+test/plugins/run-plugin.test.ts::does not override an existing runId
+test/plugins/run-plugin.test.ts::two instances track independent counters
+test/plugins/sampling-plugin.test.ts::rate 0 drops everything
+test/plugins/sampling-plugin.test.ts::rate 1 keeps everything
+test/plugins/sampling-plugin.test.ts::throws on an invalid rate
+test/plugins/sampling-plugin.test.ts::a custom rng controls keep or drop
+test/plugins/sampling-plugin.test.ts::without transports, a traceId does not enable tail-based elevation
+test/plugins/sampling-plugin.test.ts::tail-based elevation flushes buffered records from the same trace
+test/plugins/sampling-plugin.test.ts::elevation only affects the matching trace
+test/plugins/sampling-plugin.test.ts::records after elevation ship unconditionally
+test/plugins/sampling-plugin.test.ts::the buffer is bounded by maxTraces
+test/plugins/sampling-plugin.test.ts::the buffer is bounded by maxBufferedRecords
+test/plugins/slack-alert-plugin.test.ts::posts a JSON body with text
+test/plugins/slack-alert-plugin.test.ts::includes the occurrence count on a follow-up alert
+test/plugins/slack-alert-plugin.test.ts::the default fetch-based sender throws on a non-ok response
+test/plugins/tamper-evident-plugin.test.ts::each record gets a hash and prev_hash
+test/plugins/tamper-evident-plugin.test.ts::the chain links consecutive records
+test/plugins/tamper-evident-plugin.test.ts::verifyChain passes on an untampered log
+test/plugins/tamper-evident-plugin.test.ts::verifyChain detects an edited message
+test/plugins/tamper-evident-plugin.test.ts::verifyChain detects a removed record
+test/plugins/tamper-evident-plugin.test.ts::verifyChain detects reordered records
+test/plugins/tamper-evident-plugin.test.ts::verifyChain on empty input is true
+test/plugins/tamper-evident-plugin.test.ts::verifies a chain logquill-python wrote, including non-ASCII, control characters, small floats and an llm block
+test/plugins/tamper-evident-plugin.test.ts::detects an edit to a Python-written record, to its llm block, or to its schema_version
+test/plugins/trace-context-plugin.test.ts::generates a traceId when nothing is available
+test/plugins/trace-context-plugin.test.ts::does not override an existing traceId
+test/plugins/trace-context-plugin.test.ts::supports a custom traceKey
+test/plugins/trace-context-plugin.test.ts::parses an explicit traceparent constructor option
+test/plugins/trace-context-plugin.test.ts::setTraceparent propagates via AsyncLocalStorage, and reset restores generation
+test/plugins/trace-context-plugin.test.ts::an active OTel span wins over a header, via an injected resolver
+test/plugins/trace-context-plugin.test.ts::falls back gracefully when @opentelemetry/api is not installed
+test/plugins/trace-context-plugin.test.ts::parses a W3C traceparent header
+test/plugins/trace-context-plugin.test.ts::parses an AWS X-Ray header
+test/plugins/trace-context-plugin.test.ts::parses a GCP Cloud Trace header
+test/plugins/trace-context-plugin.test.ts::returns undefined for an unrecognized header
+test/runtime-level.test.ts::re-reads the env var and applies it when the signal arrives, then uninstalls cleanly
+test/runtime-level.test.ts::ignores an invalid or empty value with a warning naming it, and never throws
+test/runtime-level.test.ts::applies the file's level, and only again when it changes
+test/runtime-level.test.ts::treats a missing file as no change until it appears
+test/runtime-level.test.ts::ignores an invalid level with a warning
+test/runtime-level.test.ts::polls on a timer once started and stops when asked
+test/runtime-level.test.ts::applies the variable when it changes inside the process
+test/transports/beacon-transport.test.ts::prefers navigator.sendBeacon when available
+test/transports/beacon-transport.test.ts::falls back to a keepalive fetch without navigator.sendBeacon
+test/transports/beacon-transport.test.ts::reports a rejected fallback fetch instead of crashing the caller
+test/transports/beacon-transport.test.ts::batches writes until batchSize is reached
+test/transports/beacon-transport.test.ts::close() flushes a partial batch
+test/transports/beacon-transport.test.ts::close() on an empty batch sends nothing
+test/transports/beacon-transport.test.ts::reports a throwing sender instead of crashing the caller
+test/transports/cloud/app-insights-transport.import.test.ts::builds a real TelemetryClient, tracks each trace, and flushes once per batch when no client is injected
+test/transports/cloud/app-insights-transport.test.ts::batches writes until maxRecords is reached
+test/transports/cloud/app-insights-transport.test.ts::loops one trace per record within a single sendBatch call, mapped to SeverityLevel
+test/transports/cloud/app-insights-transport.test.ts::close() flushes a partial batch
+test/transports/cloud/app-insights-transport.test.ts::close() on an empty batch sends nothing
+test/transports/cloud/app-insights-transport.test.ts::throws an actionable error when the Application Insights SDK isn't installed and no client is given
+test/transports/cloud/cloud-logging-transport.import.test.ts::builds a real Logging client, resolves the log by name, and writes entries when no client is injected
+test/transports/cloud/cloud-logging-transport.test.ts::batches writes until maxRecords is reached
+test/transports/cloud/cloud-logging-transport.test.ts::maps levels onto GCP severities
+test/transports/cloud/cloud-logging-transport.test.ts::puts the formatted record into jsonPayload
+test/transports/cloud/cloud-logging-transport.test.ts::close() flushes a partial batch
+test/transports/cloud/cloud-logging-transport.test.ts::close() on an empty batch sends nothing
+test/transports/cloud/cloud-logging-transport.test.ts::throws an actionable error when the GCP SDK isn't installed and no client is given
+test/transports/cloud/cloudwatch-transport.import.test.ts::builds a real CloudWatchLogsClient and sends a PutLogEventsCommand when no client is injected
+test/transports/cloud/cloudwatch-transport.test.ts::batches writes until maxRecords is reached
+test/transports/cloud/cloudwatch-transport.test.ts::sorts events by timestamp ascending before sending
+test/transports/cloud/cloudwatch-transport.test.ts::close() flushes a partial batch
+test/transports/cloud/cloudwatch-transport.test.ts::close() on an empty batch sends nothing
+test/transports/cloud/cloudwatch-transport.test.ts::throws an actionable error when the AWS SDK isn't installed and no client is given
+test/transports/cloud/datadog-transport.test.ts::builds the intake URL from the configured site, defaulting to datadoghq.com
+test/transports/cloud/datadog-transport.test.ts::batches writes until maxRecords is reached, passing the API key to the sender
+test/transports/cloud/datadog-transport.test.ts::close() flushes a partial batch
+test/transports/cloud/datadog-transport.test.ts::close() on an empty batch sends nothing
+test/transports/cloud/datadog-transport.test.ts::defaults to POSTing a JSON array via fetch, with the DD-API-KEY header
+test/transports/cloud/datadog-transport.test.ts::reports a non-ok response from the default sender
+test/transports/cloud/ecs-mapper.test.ts::adds the standard ECS fields alongside the record's own
+test/transports/cloud/ecs-mapper.test.ts::accepts snake_case trace ids and omits fields that are absent
+test/transports/cloud/elasticsearch-transport.test.ts::writes each document with Elastic Common Schema fields added
+test/transports/cloud/elasticsearch-transport.test.ts::warns that a custom formatter is ignored
+test/transports/cloud/elasticsearch-transport.test.ts::builds the bulk URL from node, trimming a trailing slash
+test/transports/cloud/elasticsearch-transport.test.ts::batches writes until maxRecords is reached, as NDJSON action+source pairs
+test/transports/cloud/elasticsearch-transport.test.ts::uses a custom index and sets the ApiKey Authorization header when apiKey is given
+test/transports/cloud/elasticsearch-transport.test.ts::omits the Authorization header when no apiKey is given
+test/transports/cloud/elasticsearch-transport.test.ts::close() flushes a partial batch
+test/transports/cloud/elasticsearch-transport.test.ts::close() on an empty batch sends nothing
+test/transports/cloud/elasticsearch-transport.test.ts::defaults to POSTing NDJSON via fetch
+test/transports/cloud/elasticsearch-transport.test.ts::reports a non-ok response from the default sender
+test/transports/cloud/new-relic-transport.test.ts::defaults to the US region URL
+test/transports/cloud/new-relic-transport.test.ts::uses the .eu. variant when region is EU
+test/transports/cloud/new-relic-transport.test.ts::sends the license key in the Api-Key header
+test/transports/cloud/new-relic-transport.test.ts::gzips the payload
+test/transports/cloud/new-relic-transport.test.ts::strips meta.eventType from the sent payload without mutating the original record
+test/transports/cloud/new-relic-transport.test.ts::sends the record's ISO8601 timestamp as-is, no conversion
+test/transports/cloud/new-relic-transport.test.ts::on a 429, pauses sends until Retry-After (seconds) elapses, using the injectable clock
+test/transports/cloud/new-relic-transport.test.ts::on a 429, pauses sends until Retry-After (HTTP-date) elapses
+test/transports/cloud/new-relic-transport.test.ts::close() flushes a partial batch
+test/transports/cloud/new-relic-transport.test.ts::close() on an empty batch sends nothing
+test/transports/cloud/new-relic-transport.test.ts::reports a non-ok, non-429 response as a failed batch
+test/transports/cloud/syslog-transport.test.ts::frames a record as RFC 5424 with the level's severity
+test/transports/cloud/syslog-transport.test.ts::maps WARN to severity 4 and newline-frames TCP
+test/transports/cloud/syslog-transport.test.ts::rejects an unknown protocol
+test/transports/cloud/syslog-transport.test.ts::delivers over a real UDP socket
+test/transports/cloud/syslog-transport.test.ts::does not throw into the caller when nothing is listening on TCP
+test/transports/cloud/syslog-transport.test.ts::does not keep the process alive after logging
+test/transports/cloud/syslog-transport.test.ts::drops messages instead of queueing without bound while a TCP server is not reading
+test/transports/cloud/syslog-transport.test.ts::reconnects after the server closes the connection
+test/transports/console-transport.test.ts::writes to console.log, uncolored, when colorize is off
+test/transports/console-transport.test.ts::routes ERROR and above to console.error
+test/transports/console-transport.test.ts::wraps output in ANSI codes when colorize is on
+test/transports/console-transport.test.ts::defaults colorize based on the NO_COLOR environment variable
+test/transports/file-transport.test.ts::appends writes to the file
+test/transports/file-transport.test.ts::rotates the current file to a .1 backup once it exceeds maxBytes
+test/transports/file-transport.test.ts::shifts existing numbered backups up before writing .1
+test/transports/file-transport.test.ts::with backupCount 1, repeated rotation replaces the single backup
+test/transports/file-transport.test.ts::with backupCount 0, rotation deletes the file instead of keeping a backup
+test/transports/file-transport.test.ts::creates parent directories that don't exist yet
+test/transports/file-transport.test.ts::decrypts a token written by logquill-python's Fernet
+test/transports/file-transport.test.ts::writes one decryptable token per line and never the plaintext
+test/transports/file-transport.test.ts::rejects a malformed key at construction, saying how to make one
+test/transports/file-transport.test.ts::refuses the wrong key and an edited line
+test/transports/file-transport.test.ts::gzips rotated backups and shifts them as .1.gz, .2.gz
+test/transports/http-transport.test.ts::defaults to POSTing newline-delimited JSON via fetch
+test/transports/http-transport.test.ts::reports a non-ok response from the default sender
+test/transports/http-transport.test.ts::batches writes until batchSize is reached
+test/transports/http-transport.test.ts::close() flushes a partial batch
+test/transports/http-transport.test.ts::close() on an empty batch sends nothing
+test/transports/http-transport.test.ts::reports an async sender rejection instead of crashing the caller
+test/transports/nosql/dynamodb-transport.import.test.ts::builds a real DynamoDBClient and sends a BatchWriteItemCommand when no client is injected
+test/transports/nosql/dynamodb-transport.import.test.ts::marshals every meta value type onto its correct DynamoDB AttributeValue shape
+test/transports/nosql/dynamodb-transport.test.ts::batches writes until maxRecords is reached
+test/transports/nosql/dynamodb-transport.test.ts::close() flushes a partial batch, writing to the configured table with timestamp as sort key
+test/transports/nosql/dynamodb-transport.test.ts::falls back to trace_id, then the logger name, for the partition key when run_id is absent
+test/transports/nosql/dynamodb-transport.test.ts::chunks a batch of 30 records into two BatchWriteItem-equivalent calls of 25 and 5
+test/transports/nosql/dynamodb-transport.test.ts::close() on an empty batch sends nothing
+test/transports/nosql/dynamodb-transport.test.ts::throws an actionable error when @aws-sdk/client-dynamodb isn't installed and no client is given
+test/transports/nosql/mongodb-transport.import.test.ts::builds a real MongoClient, connects, resolves the collection, and inserts documents when none is injected
+test/transports/nosql/mongodb-transport.test.ts::batches inserts until maxRecords is reached
+test/transports/nosql/mongodb-transport.test.ts::close() flushes a partial batch, mapping records 1:1 to documents
+test/transports/nosql/mongodb-transport.test.ts::flushes once maxBytes is reached even below maxRecords
+test/transports/nosql/mongodb-transport.test.ts::close() on an empty batch sends nothing
+test/transports/nosql/mongodb-transport.test.ts::throws an actionable error when mongodb isn't installed and no collection is given
+test/transports/nosql/mongodb-transport.test.ts::throws an actionable error when neither a collection nor a connectionString is given
+test/transports/nosql/redis-transport.import.test.ts::builds a real client via createClient(), connects it, and writes through it when no client is injected
+test/transports/nosql/redis-transport.test.ts::batches until maxRecords is reached, then issues one XADD per record
+test/transports/nosql/redis-transport.test.ts::close() flushes a partial batch to the configured stream with '*' as the entry id
+test/transports/nosql/redis-transport.test.ts::flushes once maxBytes is reached even below maxRecords
+test/transports/nosql/redis-transport.test.ts::close() on an empty batch sends nothing
+test/transports/nosql/redis-transport.test.ts::throws an actionable error when redis isn't installed and no client is given
+test/transports/otel/logs-transport.test.ts::emits the message as the body, the level as severity, and meta as attributes
+test/transports/otel/logs-transport.test.ts::maps every level to its OTLP severity number
+test/transports/otel/logs-transport.test.ts::turns nested values into JSON strings, a stack into exception.stacktrace, and skips nulls
+test/transports/otel/logs-transport.test.ts::adds the standard model and token attributes for an llm record
+test/transports/otel/logs-transport.test.ts::carries the same trace and span ids OTLPTransport gives the span, so a collector can join them
+test/transports/otel/logs-transport.test.ts::a log line written inside a span carries that span's trace and span id, the ones OTLPTransport exports
+test/transports/otel/logs-transport.test.ts::a log line inside a span with no run or trace id still joins it, with the trace derived from the parent
+test/transports/otel/logs-transport.test.ts::a record with a trace_id but no span_id keeps the trace id as an attribute only
+test/transports/otel/logs-transport.test.ts::uses the legacy attribute names when asked
+test/transports/otel/logs-transport.test.ts::flush() exports what the batch processor is holding, and close() shuts down cleanly
+test/transports/otel/logs-transport.test.ts::rejects an unknown processor at construction
+test/transports/otel/logs-transport.test.ts::works next to OTLPTransport on one logger: spans and log lines for the same run
+test/transports/otel/otel.property.test.ts::OTLPTransport.write never throws, whatever the record holds
+test/transports/otel/otel.property.test.ts::OTelLogsTransport.write never throws, whatever the record holds
+test/transports/otel/otlp-transport.test.ts::exports a recorded agent run as the exact span tree, with gen_ai.usage.* attributes
+test/transports/otel/otlp-transport.test.ts::ignores records that describe no work: thoughts, plain logs, observations
+test/transports/otel/otlp-transport.test.ts::marks a failed span as an error with the message, and keeps the exception propagating
+test/transports/otel/otlp-transport.test.ts::carries a span's state_diff as an event
+test/transports/otel/otlp-transport.test.ts::uses the legacy attribute names when asked, and never both
+test/transports/otel/otlp-transport.test.ts::never exports prompt text unless captureContent is on (and the logger's contentPolicy lets it through)
+test/transports/otel/otlp-transport.test.ts::spans that name a parent but no run share a trace derived from the parent
+test/transports/otel/otlp-transport.test.ts::flush() sends what the batch processor is holding, and close() shuts down cleanly
+test/transports/otel/otlp-transport.test.ts::rejects an unknown processor at construction
+test/transports/otel/otlp-transport.test.ts::says which package to install when an OpenTelemetry package is missing
+test/transports/otel/otlp-transport.test.ts::never throws into the caller for an odd record
+test/transports/queue/base-queue-transport.test.ts::never calls publishBatch for an empty buffer
+test/transports/queue/base-queue-transport.test.ts::batches until maxRecords, never one publish per log call
+test/transports/queue/base-queue-transport.test.ts::close() flushes a partial batch
+test/transports/queue/base-queue-transport.test.ts::exposes the topic option to subclasses
+test/transports/queue/base-queue-transport.test.ts::reports a failed publishBatch via console.error instead of throwing
+test/transports/queue/kafka-transport.import.test.ts::builds a real Kafka producer, connects it, and sends through it when no client is injected
+test/transports/queue/kafka-transport.test.ts::batches messages until maxRecords is reached
+test/transports/queue/kafka-transport.test.ts::keys messages by meta.run_id so same-run messages land on one partition
+test/transports/queue/kafka-transport.test.ts::falls back to meta.trace_id when meta.run_id is absent
+test/transports/queue/kafka-transport.test.ts::keys with null when neither run_id nor trace_id is present
+test/transports/queue/kafka-transport.test.ts::close() flushes a partial batch
+test/transports/queue/kafka-transport.test.ts::handles a burst above maxRecords in multiple correctly-sized batches
+test/transports/queue/kafka-transport.test.ts::close() on an empty batch sends nothing
+test/transports/queue/kafka-transport.test.ts::throws an actionable error when kafkajs isn't installed and no client is given
+test/transports/queue/pubsub-transport.import.test.ts::builds a real PubSub topic and publishes through it when no client is injected
+test/transports/queue/pubsub-transport.test.ts::batches at the buffering level but publishes one message per record
+test/transports/queue/pubsub-transport.test.ts::close() flushes a partial batch
+test/transports/queue/pubsub-transport.test.ts::handles a burst above maxRecords, publishing every record across flushes
+test/transports/queue/pubsub-transport.test.ts::flushes once maxBytes is reached even below maxRecords
+test/transports/queue/pubsub-transport.test.ts::close() on an empty batch sends nothing
+test/transports/queue/pubsub-transport.test.ts::throws an actionable error when @google-cloud/pubsub isn't installed and no client is given
+test/transports/queue/rabbitmq-transport.import.test.ts::connects, opens a channel, asserts the queue, and sends through it when no client is injected
+test/transports/queue/rabbitmq-transport.test.ts::batches at the buffering level but sends one message per record
+test/transports/queue/rabbitmq-transport.test.ts::close() flushes a partial batch
+test/transports/queue/rabbitmq-transport.test.ts::handles a burst above maxRecords, sending every record across flushes
+test/transports/queue/rabbitmq-transport.test.ts::close() on an empty batch sends nothing
+test/transports/queue/rabbitmq-transport.test.ts::throws an actionable error when amqplib isn't installed and no client is given
+test/transports/queue/sqs-transport.import.test.ts::builds a real SQSClient and sends a SendMessageBatchCommand when no client is injected
+test/transports/queue/sqs-transport.test.ts::batches until maxRecords is reached, sending a single sendMessageBatch call
+test/transports/queue/sqs-transport.test.ts::close() flushes a partial batch
+test/transports/queue/sqs-transport.test.ts::chunks a batch of 25 records into three SendMessageBatch calls of 10, 10, and 5
+test/transports/queue/sqs-transport.test.ts::close() on an empty batch sends nothing
+test/transports/queue/sqs-transport.test.ts::throws an actionable error when @aws-sdk/client-sqs isn't installed and no client is given
+test/transports/sql/mysql-transport.import.test.ts::builds a real pool via createPool() and inserts through it when no client is injected
+test/transports/sql/mysql-transport.import.test.ts::runs createTableSQL() via execute() when ensureSchema is true
+test/transports/sql/mysql-transport.test.ts::batches inserts until maxRecords is reached, as one multi-row INSERT
+test/transports/sql/mysql-transport.test.ts::close() flushes a partial batch
+test/transports/sql/mysql-transport.test.ts::never runs ensureTable unless ensureSchema is set
+test/transports/sql/mysql-transport.test.ts::runs ensureTable exactly once when ensureSchema is true
+test/transports/sql/mysql-transport.test.ts::flushes once maxBytes is reached even below maxRecords
+test/transports/sql/mysql-transport.test.ts::close() on an empty batch sends nothing
+test/transports/sql/mysql-transport.test.ts::throws an actionable error when mysql2 isn't installed and no client is given
+test/transports/sql/postgres-transport.import.test.ts::builds a real Pool and inserts through it when no client is injected
+test/transports/sql/postgres-transport.import.test.ts::runs createTableSQL() via query() when ensureSchema is true
+test/transports/sql/postgres-transport.test.ts::batches inserts until maxRecords is reached, as one multi-row INSERT
+test/transports/sql/postgres-transport.test.ts::close() flushes a partial batch
+test/transports/sql/postgres-transport.test.ts::never runs ensureTable unless ensureSchema is set
+test/transports/sql/postgres-transport.test.ts::runs ensureTable exactly once when ensureSchema is true
+test/transports/sql/postgres-transport.test.ts::flushes once maxBytes is reached even below maxRecords
+test/transports/sql/postgres-transport.test.ts::close() on an empty batch sends nothing
+test/transports/sql/postgres-transport.test.ts::throws an actionable error when pg isn't installed and no client is given
+test/transports/sql/sqlite-transport.import.test.ts::builds a real Database and inserts through it when no client is injected
+test/transports/sql/sqlite-transport.import.test.ts::runs createTableSQL() via exec() when ensureSchema is true
+test/transports/sql/sqlite-transport.test.ts::batches inserts until maxRecords is reached
+test/transports/sql/sqlite-transport.test.ts::close() flushes a partial batch
+test/transports/sql/sqlite-transport.test.ts::never runs ensureTable unless ensureSchema is set
+test/transports/sql/sqlite-transport.test.ts::runs ensureTable exactly once when ensureSchema is true
+test/transports/sql/sqlite-transport.test.ts::flushes once maxBytes is reached even below maxRecords
+test/transports/sql/sqlite-transport.test.ts::close() on an empty batch sends nothing
+test/transports/sql/sqlite-transport.test.ts::throws an actionable error when better-sqlite3 isn't installed and no client is given

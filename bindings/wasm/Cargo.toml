@@ -1,0 +1,36 @@
+[package]
+name = "logquill-wasm"
+description = "LogQuill for the browser, Deno and Workers: the Rust core compiled for wasm32-unknown-unknown."
+version = "3.0.0-rc.2"
+edition = "2021"
+rust-version = "1.80"
+# No licence field yet: the licence is an open decision (docs/rust-core-plan.md, section 8).
+license = "MIT"
+publish = false
+
+[lib]
+name = "logquill_wasm"
+crate-type = ["cdylib"]
+
+[dependencies]
+# The core only: no threads, files or sockets exist in this target, so `logquill-runtime` is not built.
+logquill-core = { path = "../../crates/logquill-core", default-features = false, features = ["regex-perf-web"] }
+# The CLI that turns the .wasm into a loadable module must be the exact same version (`scripts/build.mjs` checks).
+wasm-bindgen = "=0.2.129"
+# The clock: `std::time::SystemTime::now()` panics on wasm32-unknown-unknown, so the time comes from `Date.now()`.
+js-sys = "0.3"
+# arbitrary_precision keeps a number's own spelling (`1.0` stays `1.0`), which the tamper chain hashes.
+serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
+
+# Size matters more than raw speed for a module that is downloaded by every page that uses it.
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+
+# Not `[lints] workspace = true`: wasm-bindgen's macros expand to `unsafe` code, which the workspace forbids.
+[lints.rust]
+unsafe_code = "allow"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }

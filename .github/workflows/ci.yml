@@ -3,92 +3,374 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, develop]
+  workflow_call: # the release workflow requires this whole workflow to pass on the tagged commit
+
+# Least privilege: nothing here writes to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: ${{ matrix.python-version }}
+          persist-credentials: false
+      # rust-toolchain.toml selects the toolchain and components; cargo installs them on first use.
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+      # Timing is only meaningful optimised; the budget is a ratio to serialising, so it travels across runners.
+      - run: cargo test --release -p logquill-runtime-checks --test timing
 
-      - run: pip install -e ".[dev,http,apprise,otel]"
-
-      - run: ruff check .
-
-      - run: mypy logquill
-
-      - run: pytest --cov
-
-  # Memory budgets for the logging hot path (see benchmarks/measure.py). Kept
-  # out of the matrix above and away from coverage: line tracing inflates
-  # allocation counts, and the budgets only need one interpreter to gate on.
-  benchmarks:
+  # The queue and worker are the only hand-rolled concurrency in the runtime; Miri checks them
+  # for undefined behaviour and data races. Needs nightly, so it is its own job.
+  miri:
+    name: miri (worker and queue)
     runs-on: ubuntu-latest
-
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: "3.12"
+          persist-credentials: false
+      - run: rustup toolchain install nightly --profile minimal --component miri
+      - run: cargo +nightly miri test -p logquill-runtime --test runtime -- tasks_run drop_ block_ closing_ drain_ the_worker
+        env:
+          # ignore-leaks: the simulated-fork test abandons the "parent" worker thread on purpose.
+          MIRIFLAGS: -Zmiri-disable-isolation -Zmiri-ignore-leaks
 
-      - run: pip install -e ".[dev]"
-
-      - run: pytest benchmarks
-
-  # Free-threaded (PEP 703, no-GIL) builds — the audit this phase requires
-  # for the worker/transport locking that backs `async_dispatch=False`
-  # (multiple application threads sharing one `Logger` and its transports).
-  # 3.13t and 3.14t get different dependency installs, not the same `dev`
-  # extras as the matrix above, because the free-threaded packaging
-  # ecosystem is still catching up as of this writing:
-  #   - `orjson` (the `fast` extra) refuses to build for *any* free-threaded
-  #     interpreter — its own build script rejects it outright, not just a
-  #     missing-wheel gap. Skipped on both versions here.
-  #   - `hypothesis`'s native extension, `jsonschema`'s `rpds-py`, and
-  #     `twine`'s dependency chain are all PyO3-based and PyO3 itself
-  #     refuses to target a free-threaded build below 3.14 — so on 3.13t
-  #     only a pure-Python subset (`pytest`/`pytest-asyncio`/`pytest-cov`)
-  #     installs at all. `tests/conftest.py` turns a missing `hypothesis`
-  #     into a clean `collect_ignore_glob` for the property-based suites
-  #     rather than a collection error. 3.14t has real `hypothesis` wheels
-  #     and runs the full suite, `fast` aside.
-  #   - `ruff`/`mypy` aren't re-run here — they don't depend on the
-  #     interpreter's threading model, and the matrix job above already
-  #     covers them on 3.13/3.14.
-  free-threaded:
-    runs-on: ubuntu-latest
+  # The Python binding lives outside the Cargo workspace (its macros need `unsafe`, and building it
+  # needs Python), so it has its own job: build the wheel in place, test it, lint the Rust.
+  python:
+    name: python binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.13t", "3.14t"]
-
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: bindings/python
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: ${{ matrix.python-version }}
+          persist-credentials: false
+      - run: python3 -m venv .venv && .venv/bin/pip install maturin pytest "hypothesis>=6.100"
+      - run: python3 -m venv /tmp/logquill-old && /tmp/logquill-old/bin/pip install logquill==2.0.0
+      - run: .venv/bin/maturin develop
+        env:
+          VIRTUAL_ENV: ${{ github.workspace }}/bindings/python/.venv
+      # the oracle tests compare every scenario against the published 2.0.0
+      - run: .venv/bin/python -m pytest -q
+        env:
+          LOGQUILL_ORACLE_PYTHON: /tmp/logquill-old/bin/python
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      # latency against 2.0.0 needs an optimised build; fails if a caller-side row is over the margin
+      - run: .venv/bin/maturin develop --release
+        env:
+          VIRTUAL_ENV: ${{ github.workspace }}/bindings/python/.venv
+      - run: .venv/bin/python bench/compare.py /tmp/logquill-old/bin/python ${{ github.workspace }}/bindings/python/.venv/bin/python
+      # install-and-run from a built wheel in a clean environment, with no source tree on the path
+      - run: |
+          .venv/bin/maturin build --release -o dist
+          python3 -m venv /tmp/smoke && /tmp/smoke/bin/pip install dist/*.whl
+          test -z "$(unzip -l dist/*.whl | grep -E '__pycache__|\.pyc')"
+          cd /tmp && /tmp/smoke/bin/python -I -c "
+          import json, os, tempfile, logquill
+          p = os.path.join(tempfile.mkdtemp(), 'a.log')
+          log = logquill.Logger('smoke', transports=[logquill.FileTransport(p)], meta={'service': 'x'})
+          log.info('hello', n=1)
+          log.close()
+          rec = json.loads(open(p).read())
+          assert rec['meta'] == {'service': 'x', 'n': 1} and rec['schema_version'] == '2.0', rec
+          print('smoke ok')
+          "
 
-      - run: python -c "import sys; assert not sys._is_gil_enabled(), 'GIL unexpectedly enabled'"
+  # PyO3 builds free-threaded CPython from 3.14 on, and not as abi3, so this is its own job.
+  python-free-threaded:
+    name: python binding (3.14t, GIL off)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: bindings/python
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 -m pip install uv && uv venv --python 3.14t .venv-ft
+      - run: uv pip install --python .venv-ft/bin/python maturin pytest "hypothesis>=6.100"
+      - run: .venv-ft/bin/maturin develop --release
+        env:
+          VIRTUAL_ENV: ${{ github.workspace }}/bindings/python/.venv-ft
+      - run: .venv-ft/bin/python -c "import sys; assert not sys._is_gil_enabled()"
+      - run: .venv-ft/bin/python -X gil=0 -m pytest -q
 
-      - name: Install dependencies
+  # The Node binding lives outside the Cargo workspace for the same reason the Python one does, so it
+  # has its own job. Uses the Node that ships on the runner; the LTS matrix comes with slice 7.
+  node:
+    name: node binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: bindings/node
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: node --version && npm --version
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      # the WebAssembly fallback: the core without the runtime, for platforms with no native build
+      - run: rustup target add wasm32-wasip1-threads
+      - run: npm run build:wasm
+      - run: node --test "tests/*.test.mjs"
+        env:
+          NAPI_RS_FORCE_WASI: "true"
+      - run: npx vitest run
+        env:
+          NAPI_RS_FORCE_WASI: "true"
+      - run: npm test
+      # the Node LTS lines, from the `node` npm package so no unpinned action is needed
+      - run: npx -y -p node@22 node --test "tests/*.test.mjs"
+      - run: npx -y -p node@24 node --test "tests/*.test.mjs"
+      - run: npx tsc --noEmit
+      - run: npm run build:sdk
+      # load the built bundles as a consumer would, as ESM and as CommonJS
+      - run: npm run smoke
+      - run: npx -y -p node@22 node scripts/smoke.mjs
+      - run: npx -y -p node@24 node scripts/smoke.mjs
+      # pack the package and a platform package, install both into a clean project, import by name
+      - run: npm run pack-smoke
+      - run: npx -y -p node@22 node scripts/pack-smoke.mjs
+      - run: npx -y -p node@24 node scripts/pack-smoke.mjs
+      # the SDK suite twice: on the Rust file transport, then with the addon off (the pure-JS fallback)
+      - run: npx vitest run
+      - run: npx vitest run
+        env:
+          LOGQUILL_NO_NATIVE: "1"
+      - run: cargo fmt --check
+      # the library only: in the test-harness build napi's registration macros compile away and
+      # every exported item looks unused
+      - run: cargo clippy -- -D warnings
+
+  wasm:
+    name: wasm binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            sha256: 82d12bb940e2d4e72e0d5605387fc1b8ca179044e012b620f0ce4e7440e8320e
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            sha256: 81d4a23d56b3c3eb8187658329116d50e0b228a93b343825fb71f70179051cd1
+    defaults:
+      run:
+        working-directory: bindings/wasm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup target add wasm32-unknown-unknown
+      # the CLI has to be exactly the version Cargo.toml pins; the prebuilt release, checked against a pinned hash,
+      # saves compiling it (several minutes) on every run
+      - name: install wasm-bindgen 0.2.129
         run: |
-          if [ "${{ matrix.python-version }}" = "3.13t" ]; then
-            pip install -e ".[http,apprise,otel]" "pytest>=8.0" "pytest-asyncio>=0.24" "pytest-cov>=5.0"
-          else
-            pip install -e ".[dev,http,apprise,otel]"
-          fi
+          v=0.2.129
+          curl -fsSL -o "$RUNNER_TEMP/wbg.tgz" "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/$v/wasm-bindgen-$v-${{ matrix.target }}.tar.gz"
+          (cd "$RUNNER_TEMP" && echo "${{ matrix.sha256 }}  wbg.tgz" | shasum -a 256 -c - && tar -xzf wbg.tgz)
+          echo "$RUNNER_TEMP/wasm-bindgen-$v-${{ matrix.target }}" >> "$GITHUB_PATH"
+      - run: node --version && npm --version
+      - run: npm ci --ignore-scripts
+      # Bun's launcher links its binary in a postinstall script, the one install script this job needs
+      - run: npm rebuild bun
+      # build the module and the SDK, then the corpus in Node, Deno, Bun, headless Chrome and a Worker (workerd),
+      # then the size and speed budget
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: cargo fmt --check
+      - run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
 
-      - run: pytest
+  # ---- Stage 8: the C ABI and the medium-tier bindings built on it ----------------------------------------------------
+  ffi:
+    name: C ABI (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: cargo build -p logquill-ffi
+      # the header is generated; the committed copy must be what cbindgen produces now, and a C program must build against it
+      - run: cargo install cbindgen --locked
+      - run: crates/logquill-ffi/tests/c/run.sh
+      # the shared corpus through the C ABI (Deno's FFI): every stateless group, 815 checks
+      - run: npm ci --ignore-scripts && npm run build:hosts
+        working-directory: bindings/wasm
+      - run: bindings/wasm/node_modules/.bin/deno run --allow-ffi --allow-read --allow-env crates/logquill-ffi/tests/deno/run.mjs
+      # the build with no runtime, for WebAssembly hosts (Go)
+      - run: rustup target add wasm32-wasip1
+      - run: cargo clippy -p logquill-ffi --target wasm32-wasip1 --no-default-features -- -D warnings
 
-      - run: pytest benchmarks
+  ruby:
+    name: ruby binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: bindings/ruby
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: cargo build -p logquill-ffi --release
+        working-directory: .
+      - run: ruby --version && gem install ffi minitest --no-document --user-install  # the runner's system Ruby is not writable
+      - run: ruby -Ilib test/test_logquill.rb && ruby -Ilib test/test_readme.rb
+      - run: ruby scripts/pack_smoke.rb
+
+  dotnet:
+    name: dotnet binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: dotnet --list-sdks
+      - run: cargo build -p logquill-ffi --release
+      - run: dotnet test bindings/dotnet/tests/LogQuill.Tests
+      - run: bindings/dotnet/scripts/pack-smoke.sh
+
+  go:
+    name: go binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: bindings/go
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # the macOS runner image has no Go; the Ubuntu one does
+      - run: brew install go
+        if: runner.os == 'macOS'
+      - run: go version
+      - run: rustup target add wasm32-wasip1 && scripts/build-core.sh
+      - run: test -z "$(gofmt -l .)" && go vet ./...
+      - run: go test -race ./...
+      - run: go test -run '^$' -bench . -benchtime 1s
+      - run: scripts/consumer-smoke.sh
+
+  swift:
+    name: swift binding (macos-latest)
+    runs-on: macos-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: bindings/swift
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: swift --version && xcodebuild -version
+      # with full Xcode on the runner this goes through `xcodebuild -create-xcframework`, the path not exercised locally
+      - run: scripts/build-xcframework.sh
+      - run: swift build && swift run LogQuillChecks
+      - run: scripts/smoke.sh
+
+  jvm:
+    name: jvm binding (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: java -version && gradle --version
+      - run: cargo build -p logquill-ffi --release
+      - run: gradle --no-daemon test
+        working-directory: bindings/jvm
+      - run: bindings/jvm/scripts/pack-smoke.sh
+
+  # one lockstep version in every manifest (docs/rust-core-plan.md, section 7); a release job runs it again with the tag
+  versions:
+    name: manifest versions agree
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 scripts/check-versions.py
+
+  # the packaging scripts the release workflow runs, exercised here with the one platform's library this runner builds, so a
+  # break shows up on a pull request and not on release day (signing is skipped: the bundle's layout is what is checked)
+  release-scripts:
+    name: release packaging scripts (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, id: linux-x64, file: liblogquill_ffi.so }
+          - { os: macos-latest, id: macos-arm64, file: liblogquill_ffi.dylib }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: cargo build -p logquill-ffi --release
+      - run: |
+          mkdir -p "libs/${{ matrix.id }}"
+          cp "target/release/${{ matrix.file }}" "libs/${{ matrix.id }}/"
+      - run: ruby bindings/ruby/scripts/build_platform_gems.rb libs gems
+      - run: bindings/dotnet/scripts/pack-release.sh libs nupkg
+      - run: LQ_ALLOW_UNSIGNED=1 bindings/jvm/scripts/central-bundle.sh libs bundle
+      - if: runner.os == 'macOS'
+        run: LQ_HOST_ONLY=1 bindings/swift/scripts/release-xcframework.sh xcframework
+      - if: runner.os == 'macOS'
+        run: bindings/swift/scripts/prepare-mirror.sh mirror https://example.invalid/CLogQuill.xcframework.zip "$(cat xcframework/CLogQuill.xcframework.zip.checksum)"

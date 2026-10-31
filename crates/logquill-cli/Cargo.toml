@@ -1,0 +1,26 @@
+[package]
+name = "logquill-cli"
+description = "The logquill command: tail, trace, dev, serve and verify."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+name = "logquill_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "logquill"
+path = "src/main.rs"
+
+[dependencies]
+logquill-core = { version = "3.0.0-rc.2", path = "../logquill-core" }
+serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
+# Argument parsing for the subcommands (only `verify` so far).
+clap = { version = "4", features = ["derive"] }
+# Reads the SQLite transport's table for `serve --db`, read-only.
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+
+[lints]
+workspace = true

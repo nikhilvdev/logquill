@@ -1,0 +1,45 @@
+name: Corpus
+
+# Re-runs both reference implementations and fails if the committed fixtures no longer match,
+# so a reference that changes (a re-release, a moved tag) is noticed rather than trusted.
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  pull_request:
+    paths: ["scripts/corpus/**", "schema/corpus/**", ".github/workflows/corpus.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Unpack the Python reference
+        run: |
+          mkdir -p "$RUNNER_TEMP/ref-py"
+          git archive "$(jq -r .python.tag scripts/corpus/references.json)" | tar -x -C "$RUNNER_TEMP/ref-py"
+      - name: Check out the JavaScript reference
+        run: |
+          repo="$(jq -r .js.repository scripts/corpus/references.json)"
+          commit="$(jq -r .js.commit scripts/corpus/references.json)"
+          git clone --quiet "https://github.com/$repo.git" "$RUNNER_TEMP/ref-js"
+          git -C "$RUNNER_TEMP/ref-js" checkout --quiet "$commit"
+          npm ci --prefix "$RUNNER_TEMP/ref-js"
+      - name: Compare
+        env:
+          LOGQUILL_PY_DIR: ${{ runner.temp }}/ref-py
+          LOGQUILL_JS_DIR: ${{ runner.temp }}/ref-js
+        run: python3 scripts/corpus/build.py --check

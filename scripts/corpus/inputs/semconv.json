@@ -1,0 +1,1674 @@
+{
+  "group": "semconv",
+  "description": "The OpenTelemetry GenAI span and log attributes a record maps to, convention selection and timestamps.",
+  "cases": [
+    {
+      "name": "latest: a full llm record",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "provider": "openai",
+            "response_model": "gpt-4o-2024"
+          },
+          "llm": {
+            "model": "gpt-4o",
+            "tokens_in": 10,
+            "tokens_out": 20,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        },
+        "convention": "latest"
+      }
+    },
+    {
+      "name": "latest: an agent span",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "agent_name": "planner",
+            "agent_id": "a-1",
+            "provider": "anthropic"
+          }
+        },
+        "convention": "latest"
+      }
+    },
+    {
+      "name": "latest: a tool action",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "search",
+            "tool_call_id": "c1",
+            "duration_ms": 5
+          }
+        },
+        "convention": "latest"
+      }
+    },
+    {
+      "name": "latest: log attributes of an llm record",
+      "input": {
+        "op": "log_attributes",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "gpt-4o",
+            "tokens_in": 10,
+            "tokens_out": 20,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        },
+        "convention": "latest"
+      }
+    },
+    {
+      "name": "legacy: a full llm record",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "provider": "openai",
+            "response_model": "gpt-4o-2024"
+          },
+          "llm": {
+            "model": "gpt-4o",
+            "tokens_in": 10,
+            "tokens_out": 20,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        },
+        "convention": "legacy"
+      }
+    },
+    {
+      "name": "legacy: an agent span",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "agent_name": "planner",
+            "agent_id": "a-1",
+            "provider": "anthropic"
+          }
+        },
+        "convention": "legacy"
+      }
+    },
+    {
+      "name": "legacy: a tool action",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "search",
+            "tool_call_id": "c1",
+            "duration_ms": 5
+          }
+        },
+        "convention": "legacy"
+      }
+    },
+    {
+      "name": "legacy: log attributes of an llm record",
+      "input": {
+        "op": "log_attributes",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "gpt-4o",
+            "tokens_in": 10,
+            "tokens_out": 20,
+            "cost_usd": 0.5,
+            "latency_ms": 12.5,
+            "finish_reason": "stop"
+          }
+        },
+        "convention": "legacy"
+      }
+    },
+    {
+      "name": "an llm record with the minimum",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "an llm record with no model",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "tokens_in": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "an empty llm block",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {}
+        }
+      }
+    },
+    {
+      "name": "a text completion",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "operation": "text_completion"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "another operation name is a chat",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "operation": "embedding"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "the default provider",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        },
+        "default_provider": "acme"
+      }
+    },
+    {
+      "name": "an empty provider falls back",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "provider": ""
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "a non-string provider falls back",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "provider": 5
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "tokens that are floats",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": 5.0,
+            "tokens_out": 2.5
+          }
+        }
+      }
+    },
+    {
+      "name": "tokens that are booleans",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": true,
+            "tokens_out": false
+          }
+        }
+      }
+    },
+    {
+      "name": "negative tokens are kept as given",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": -1
+          }
+        }
+      }
+    },
+    {
+      "name": "a cost that is an integer",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "cost_usd": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "a cost that is a boolean",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "cost_usd": true
+          }
+        }
+      }
+    },
+    {
+      "name": "a cost of zero",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "cost_usd": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "an empty finish reason",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "finish_reason": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "latency that is a boolean",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "latency_ms": true
+          }
+        }
+      }
+    },
+    {
+      "name": "latency that is an integer",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "latency_ms": 7
+          }
+        }
+      }
+    },
+    {
+      "name": "latency that is a string",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "latency_ms": "7"
+          }
+        }
+      }
+    },
+    {
+      "name": "content capture off hides messages",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "input_messages": [
+              {
+                "role": "user",
+                "content": "hi"
+              }
+            ],
+            "output_messages": [
+              {
+                "role": "assistant",
+                "content": "yo"
+              }
+            ]
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "content capture on shows messages",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "input_messages": [
+              {
+                "role": "user",
+                "content": "h\\u00e9"
+              }
+            ],
+            "output_messages": "plain"
+          },
+          "llm": {
+            "model": "m"
+          }
+        },
+        "capture_content": true
+      }
+    },
+    {
+      "name": "content capture on with null messages",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "input_messages": null
+          },
+          "llm": {
+            "model": "m"
+          }
+        },
+        "capture_content": true
+      }
+    },
+    {
+      "name": "an error string",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": "TimeoutError: slow"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "an error without a colon",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": "ValueError"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "an error whose head has a space",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": "bad thing: why"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "an error with an empty head",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": ": why"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "an error with padding around the head",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": "  KeyError  : x"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "an empty error",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": ""
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "a non-string error",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "error": 5
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "an ERROR level without error text",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "a FATAL level",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "FATAL",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "the common attributes",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "thread_id": "t1",
+            "agent_name": "ag",
+            "run_id": "r1",
+            "node_name": "n1",
+            "retry_count": 2
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "empty common attributes are skipped",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "thread_id": "",
+            "agent_name": "",
+            "run_id": "",
+            "node_name": ""
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "a retry count that is a boolean",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "retry_count": true
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "a retry count that is a float",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "retry_count": 1.0
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "a retry count of zero",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "retry_count": 0
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "a state diff object",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "state_diff": {
+              "b": 1,
+              "a": [
+                1.0,
+                "\\u00e9"
+              ]
+            }
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "a state diff that is not an object",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "state_diff": [
+              1
+            ]
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "non-ASCII model",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "mod\\u00e9l"
+          }
+        }
+      }
+    },
+    {
+      "name": "a tool with no call id",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "calc"
+          }
+        }
+      }
+    },
+    {
+      "name": "a tool with an empty call id",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "calc",
+            "tool_call_id": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "a tool with an error",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "calc",
+            "error": "ZeroDivisionError: x"
+          }
+        }
+      }
+    },
+    {
+      "name": "a tool at ERROR level only",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "calc"
+          }
+        }
+      }
+    },
+    {
+      "name": "a tool with a boolean duration",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "calc",
+            "duration_ms": true
+          }
+        }
+      }
+    },
+    {
+      "name": "an action without a tool is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action"
+          }
+        }
+      }
+    },
+    {
+      "name": "an action with an empty tool is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "a thought is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "thought",
+            "tool": "x"
+          }
+        }
+      }
+    },
+    {
+      "name": "a plain span",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "load data",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "duration_ms": 12
+          }
+        }
+      }
+    },
+    {
+      "name": "a span with a non-string span id is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": 5
+          }
+        }
+      }
+    },
+    {
+      "name": "a span with no span id is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span"
+          }
+        }
+      }
+    },
+    {
+      "name": "a span run as an agent by operation",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "planner.run",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "operation": "invoke_agent"
+          }
+        }
+      }
+    },
+    {
+      "name": "an agent span with an empty agent name",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "step",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "agent_name": ""
+          }
+        }
+      }
+    },
+    {
+      "name": "an agent span with a provider",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "agent_name": "a",
+            "provider": "openai"
+          }
+        },
+        "default_provider": "acme"
+      }
+    },
+    {
+      "name": "a span at ERROR level",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "ERROR",
+          "logger": "app",
+          "message": "failed",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1"
+          }
+        }
+      }
+    },
+    {
+      "name": "a span with an error string but INFO level",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "error": "X: y"
+          }
+        }
+      }
+    },
+    {
+      "name": "a span with a state diff",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "state_diff": {
+              "k": "v"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "a span with a float duration",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "duration_ms": 0.25
+          }
+        }
+      }
+    },
+    {
+      "name": "an ordinary record is ignored",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "user": "u"
+          }
+        }
+      }
+    },
+    {
+      "name": "an llm record that is also a span",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s1",
+            "duration_ms": 9
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "an llm record that is also a tool",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "t"
+          },
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "a tool record that is also a span",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "t",
+            "span_id": "s1"
+          }
+        }
+      }
+    },
+    {
+      "name": "meta that is not an object",
+      "input": {
+        "op": "spec",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "classify: an llm record",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m"
+          }
+        }
+      }
+    },
+    {
+      "name": "classify: a span",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "span",
+            "span_id": "s"
+          }
+        }
+      }
+    },
+    {
+      "name": "classify: a tool",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {
+            "kind": "action",
+            "tool": "t"
+          }
+        }
+      }
+    },
+    {
+      "name": "classify: a plain record",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "classify: an llm that is not an object",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": "x"
+        }
+      }
+    },
+    {
+      "name": "classify: a null llm",
+      "input": {
+        "op": "classify",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {}
+        }
+      }
+    },
+    {
+      "name": "log attributes: a plain record",
+      "input": {
+        "op": "log_attributes",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {}
+        },
+        "convention": "latest"
+      }
+    },
+    {
+      "name": "log attributes: bool tokens",
+      "input": {
+        "op": "log_attributes",
+        "record": {
+          "schema_version": "2.0",
+          "timestamp": "2026-01-01T00:00:00.123Z",
+          "level": "INFO",
+          "logger": "app",
+          "message": "m",
+          "meta": {},
+          "llm": {
+            "model": "m",
+            "tokens_in": true,
+            "cost_usd": true
+          }
+        },
+        "convention": "latest"
+      }
+    },
+    {
+      "name": "resolve: the default is the latest names",
+      "input": {
+        "op": "resolve"
+      }
+    },
+    {
+      "name": "resolve: explicit latest",
+      "input": {
+        "op": "resolve",
+        "explicit": "latest"
+      }
+    },
+    {
+      "name": "resolve: explicit legacy",
+      "input": {
+        "op": "resolve",
+        "explicit": "legacy"
+      }
+    },
+    {
+      "name": "resolve: an unknown explicit value",
+      "input": {
+        "op": "resolve",
+        "explicit": "v2"
+      }
+    },
+    {
+      "name": "resolve: an empty explicit value",
+      "input": {
+        "op": "resolve",
+        "explicit": ""
+      }
+    },
+    {
+      "name": "resolve: the opt-in token selects latest",
+      "input": {
+        "op": "resolve",
+        "env": {
+          "OTEL_SEMCONV_STABILITY_OPT_IN": "gen_ai_latest_experimental"
+        }
+      }
+    },
+    {
+      "name": "resolve: the opt-in token among others",
+      "input": {
+        "op": "resolve",
+        "env": {
+          "OTEL_SEMCONV_STABILITY_OPT_IN": " http , gen_ai_latest_experimental "
+        }
+      }
+    },
+    {
+      "name": "resolve: an unrelated opt-in",
+      "input": {
+        "op": "resolve",
+        "env": {
+          "OTEL_SEMCONV_STABILITY_OPT_IN": "http"
+        }
+      }
+    },
+    {
+      "name": "resolve: a dup opt-in is ignored",
+      "input": {
+        "op": "resolve",
+        "env": {
+          "OTEL_SEMCONV_STABILITY_OPT_IN": "gen_ai_latest_experimental/dup"
+        }
+      }
+    },
+    {
+      "name": "resolve: explicit beats the environment",
+      "input": {
+        "op": "resolve",
+        "explicit": "legacy",
+        "env": {
+          "OTEL_SEMCONV_STABILITY_OPT_IN": "gen_ai_latest_experimental"
+        }
+      }
+    },
+    {
+      "name": "content capture env: unset",
+      "input": {
+        "op": "capture",
+        "env": {}
+      }
+    },
+    {
+      "name": "content capture env: true",
+      "input": {
+        "op": "capture",
+        "env": {
+          "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "true"
+        }
+      }
+    },
+    {
+      "name": "content capture env: True with spaces",
+      "input": {
+        "op": "capture",
+        "env": {
+          "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": " True "
+        }
+      }
+    },
+    {
+      "name": "content capture env: false",
+      "input": {
+        "op": "capture",
+        "env": {
+          "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "false"
+        }
+      }
+    },
+    {
+      "name": "content capture env: 1",
+      "input": {
+        "op": "capture",
+        "env": {
+          "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "1"
+        }
+      }
+    },
+    {
+      "name": "content capture env: empty",
+      "input": {
+        "op": "capture",
+        "env": {
+          "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": ""
+        }
+      }
+    },
+    {
+      "name": "epoch: '2026-01-01T00:00:00.000Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "epoch: '2026-01-01T00:00:00.123Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T00:00:00.123Z"
+      }
+    },
+    {
+      "name": "epoch: '2026-12-31T23:59:59.999Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-12-31T23:59:59.999Z"
+      }
+    },
+    {
+      "name": "epoch: '1970-01-01T00:00:00.000Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "1970-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "epoch: '2024-02-29T12:00:00.001Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2024-02-29T12:00:00.001Z"
+      }
+    },
+    {
+      "name": "epoch: '2026-01-01T00:00:00Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "name": "epoch: '2026-01-01T00:00:00.123456Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T00:00:00.123456Z"
+      }
+    },
+    {
+      "name": "epoch: '2026-01-01T00:00:00.5Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T00:00:00.5Z"
+      }
+    },
+    {
+      "name": "epoch: '2026-01-01T02:00:00.000+02:00'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-01-01T02:00:00.000+02:00"
+      }
+    },
+    {
+      "name": "epoch: 'not a time'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "not a time"
+      }
+    },
+    {
+      "name": "epoch: ''",
+      "input": {
+        "op": "epoch",
+        "timestamp": ""
+      }
+    },
+    {
+      "name": "epoch: '2026-13-01T00:00:00.000Z'",
+      "input": {
+        "op": "epoch",
+        "timestamp": "2026-13-01T00:00:00.000Z"
+      }
+    }
+  ]
+}

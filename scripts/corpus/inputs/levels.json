@@ -1,0 +1,186 @@
+{
+  "group": "levels",
+  "description": "Parsing a level from a name or a numeric weight, and the error for anything else.",
+  "cases": [
+    {
+      "name": "'TRACE'",
+      "input": {
+        "value": "TRACE"
+      }
+    },
+    {
+      "name": "'info'",
+      "input": {
+        "value": "info"
+      }
+    },
+    {
+      "name": "'Warn'",
+      "input": {
+        "value": "Warn"
+      }
+    },
+    {
+      "name": "'ERROR'",
+      "input": {
+        "value": "ERROR"
+      }
+    },
+    {
+      "name": "'fatal'",
+      "input": {
+        "value": "fatal"
+      }
+    },
+    {
+      "name": "5",
+      "input": {
+        "value": 5
+      }
+    },
+    {
+      "name": "10",
+      "input": {
+        "value": 10
+      }
+    },
+    {
+      "name": "20",
+      "input": {
+        "value": 20
+      }
+    },
+    {
+      "name": "30",
+      "input": {
+        "value": 30
+      }
+    },
+    {
+      "name": "40",
+      "input": {
+        "value": 40
+      }
+    },
+    {
+      "name": "50",
+      "input": {
+        "value": 50
+      }
+    },
+    {
+      "name": "'verbose'",
+      "input": {
+        "value": "verbose"
+      }
+    },
+    {
+      "name": "'empty string'",
+      "input": {
+        "value": ""
+      }
+    },
+    {
+      "name": "'leading space'",
+      "input": {
+        "value": " info"
+      }
+    },
+    {
+      "name": "'trailing space'",
+      "input": {
+        "value": "INFO "
+      }
+    },
+    {
+      "name": "'warning'",
+      "input": {
+        "value": "warning"
+      }
+    },
+    {
+      "name": "'full-width letter'",
+      "input": {
+        "value": "Ｉnfo"
+      }
+    },
+    {
+      "name": "'dotless i'",
+      "input": {
+        "value": "ınfo"
+      }
+    },
+    {
+      "name": "0",
+      "input": {
+        "value": 0
+      }
+    },
+    {
+      "name": "25",
+      "input": {
+        "value": 25
+      }
+    },
+    {
+      "name": "-1",
+      "input": {
+        "value": -1
+      }
+    },
+    {
+      "name": "60",
+      "input": {
+        "value": 60
+      }
+    },
+    {
+      "name": "200",
+      "input": {
+        "value": 200
+      }
+    },
+    {
+      "name": "'20.0'",
+      "input": {
+        "value": 20.0
+      }
+    },
+    {
+      "name": "'20.5'",
+      "input": {
+        "value": 20.5
+      }
+    },
+    {
+      "name": "'null'",
+      "input": {
+        "value": null
+      }
+    },
+    {
+      "name": "'true'",
+      "input": {
+        "value": true
+      }
+    },
+    {
+      "name": "'false'",
+      "input": {
+        "value": false
+      }
+    },
+    {
+      "name": "'array'",
+      "input": {
+        "value": []
+      }
+    },
+    {
+      "name": "'object'",
+      "input": {
+        "value": {}
+      }
+    }
+  ]
+}
