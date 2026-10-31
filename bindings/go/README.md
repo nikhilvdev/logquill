@@ -5,7 +5,7 @@ chain as the Python, Node, browser and other bindings. The core runs as **WebAss
 is no cgo, no shared library to ship and nothing to install besides the module. Redaction and the level filter run in the
 core before anything is written.
 
-> **Not published yet.** The module is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.2) is prepared but not published
+> **Not published yet.** The module is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.3) is prepared but not published
 > (`docs/stages/stage-9.md`). See [Build and test](#build-and-test) to use it from this repository.
 
 ## Use it

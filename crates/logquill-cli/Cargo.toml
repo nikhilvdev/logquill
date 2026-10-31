@@ -15,7 +15,7 @@ name = "logquill"
 path = "src/main.rs"
 
 [dependencies]
-logquill-core = { version = "3.0.0-rc.2", path = "../logquill-core" }
+logquill-core = { version = "3.0.0-rc.3", path = "../logquill-core" }
 serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
 # Argument parsing for the subcommands (only `verify` so far).
 clap = { version = "4", features = ["derive"] }
