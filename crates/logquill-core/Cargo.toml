@@ -13,7 +13,7 @@ license.workspace = true
 serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
 # Hashing and signing for the tamper-evident chain.
 sha2 = "0.10"
-hmac = "0.12"
+hmac = "0.13"
 # Pattern redaction and the logfmt reader. ASCII classes only (decision D41), so the Unicode tables the crate loads by
 # default are never read; they are left out, and the matching engines are chosen by the features below.
 regex = { version = "1", default-features = false, features = ["std"] }

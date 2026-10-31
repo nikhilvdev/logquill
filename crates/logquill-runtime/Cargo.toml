@@ -13,7 +13,7 @@ cbc = { version = "0.1.2", features = ["alloc"] }
 flate2 = "1.1.10"
 gethostname = "1.1.0"
 getrandom = "0.3.4"
-hmac = "0.12.1"
+hmac = "0.13.0"
 lettre = { version = "0.11.19", default-features = false, features = ["smtp-transport", "builder", "rustls", "ring", "webpki-roots"] }
 logquill-core = { version = "3.0.0-rc.3", path = "../logquill-core" }
 rusqlite = { version = "0.40.2", features = ["bundled"] }
