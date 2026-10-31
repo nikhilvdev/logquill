@@ -32,7 +32,7 @@ mkdir -p "$scratch/jvm/native/$platform"
 cp "$built" "$scratch/jvm/native/$platform/"
 gradle --no-daemon --console=plain -q -p "$scratch/jvm" publish >/dev/null
 
-group_dir="$scratch/jvm/build/repo/io/logquill/logquill/3.0.0-rc.2"
+group_dir="$scratch/jvm/build/repo/io/github/nikhilvdev/logquill/3.0.0-rc.2"
 jar="$group_dir/logquill-3.0.0-rc.2.jar"
 [ -f "$jar" ] || { echo "pack-smoke: $jar was not published" >&2; exit 1; }
 contents=$(unzip -Z1 "$jar")

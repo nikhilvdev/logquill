@@ -41,7 +41,7 @@ done
 [ -n "$found" ] || { echo "central-bundle: $libs holds no platform directories" >&2; exit 1; }
 
 gradle --no-daemon --console=plain -q -p "$scratch/jvm" publish >/dev/null
-version_dir=$(find "$scratch/jvm/build/repo" -mindepth 4 -maxdepth 4 -type d -path '*/io/logquill/logquill/*' | head -n 1)
+version_dir=$(find "$scratch/jvm/build/repo" -mindepth 5 -maxdepth 5 -type d -path '*/io/github/nikhilvdev/logquill/*' | head -n 1)
 [ -d "$version_dir" ] || { echo "central-bundle: Gradle published nothing under build/repo" >&2; exit 1; }
 version=$(basename "$version_dir")
 # Gradle writes its own checksums and a maven-metadata file; Central wants exactly MD5, SHA-1 and SHA-256 of each artifact, made below
