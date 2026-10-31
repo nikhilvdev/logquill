@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.nikhilvdev" // the Maven group ID; the Java package stays io.logquill (docs/release-setup.md, section 3)
-version = "3.0.0-rc.1"
+version = "3.0.0-rc.2"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17

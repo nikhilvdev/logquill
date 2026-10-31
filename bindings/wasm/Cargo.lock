@@ -158,7 +158,7 @@ checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
 
 [[package]]
 name = "logquill-core"
-version = "3.0.0-rc.1"
+version = "3.0.0-rc.2"
 dependencies = [
  "hmac",
  "regex",
@@ -168,7 +168,7 @@ dependencies = [
 
 [[package]]
 name = "logquill-wasm"
-version = "3.0.0-rc.1"
+version = "3.0.0-rc.2"
 dependencies = [
  "js-sys",
  "logquill-core",

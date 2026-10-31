@@ -217,7 +217,7 @@ func (s *scratch) release() {
 	s.bufs = nil
 }
 
-// CoreVersion is the version of the Rust core embedded in this module (core.wasm), for example "3.0.0-rc.1". A release checks it
+// CoreVersion is the version of the Rust core embedded in this module (core.wasm), for example "3.0.0-rc.2". A release checks it
 // against the module's own version, so a core.wasm built from older sources cannot be tagged by mistake.
 func CoreVersion() (string, error) {
 	in, err := newInstance(context.Background())
