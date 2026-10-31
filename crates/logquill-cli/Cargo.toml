@@ -20,7 +20,7 @@ serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision
 # Argument parsing for the subcommands (only `verify` so far).
 clap = { version = "4", features = ["derive"] }
 # Reads the SQLite transport's table for `serve --db`, read-only.
-rusqlite = { version = "0.40.2", features = ["bundled"] }
+rusqlite = { version = "0.41.1", features = ["bundled"] }
 
 [lints]
 workspace = true
