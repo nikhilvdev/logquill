@@ -87,7 +87,7 @@ jobs:
           target: ${{ matrix.target }}
           manylinux: ${{ matrix.manylinux }}
           working-directory: bindings/python
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wheels-${{ matrix.name }}
           path: bindings/python/dist/*.whl
@@ -107,7 +107,7 @@ jobs:
           command: sdist
           args: --out dist
           working-directory: bindings/python
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wheels-sdist
           path: bindings/python/dist/*.tar.gz
@@ -203,7 +203,7 @@ jobs:
         run: |
           mkdir -p "libs/${{ matrix.id }}"
           cp "target/${{ matrix.target }}/release/${{ matrix.file }}" "libs/${{ matrix.id }}/"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: native-${{ matrix.id }}
           path: libs/
@@ -237,7 +237,7 @@ jobs:
       - run: rustup target add ${{ matrix.target }}
       - run: npm ci --ignore-scripts
       - run: npx napi build --platform --release --target ${{ matrix.target }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: node-${{ matrix.target }}
           path: bindings/node/*.node
@@ -411,7 +411,7 @@ jobs:
           persist-credentials: false
       - run: rustup target add aarch64-apple-darwin x86_64-apple-darwin aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
       - run: bindings/swift/scripts/release-xcframework.sh xcframework
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: swift-xcframework
           path: xcframework/
