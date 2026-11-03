@@ -83,3 +83,6 @@ bindings/ruby/lib/logquill/native/
 bindings/jvm/bin/
 bindings/wasm/.wrangler/
 docs-out/
+
+# Local release credentials (never commit): GPG signing key, Central Portal token
+release-secrets.txt
