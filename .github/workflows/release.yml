@@ -1,6 +1,6 @@
 name: Release
 
-# Pushing a tag vX.Y.Z (or vX.Y.Z-rc.N) is the only way a release starts; nothing is published from a laptop
+# Pushing a tag vX.Y.Z (or vX.Y.Z-rc.N), or <language>-vX.Y.Z for one language, is the only way a release starts; nothing is published from a laptop
 # (docs/publishing.md). The tag must equal every manifest, the full CI must pass on the tagged commit, and each registry
 # publishes from its own GitHub environment, which holds the reviewers that must approve the first release.
 #
@@ -15,7 +15,9 @@ name: Release
 #     fine-grained token with contents write on that repository.
 on:
   push:
-    tags: ["v*"]
+    # vX.Y.Z releases every language; <language>-vX.Y.Z releases just that one (crates, python, npm, ruby, nuget, maven, go,
+    # swift), so a problem in one registry's setup or tests does not hold the others back
+    tags: ["v*", "crates-v*", "python-v*", "npm-v*", "ruby-v*", "nuget-v*", "maven-v*", "go-v*", "swift-v*"]
 
 # Least privilege: jobs that need more ask for it themselves.
 permissions:
@@ -26,21 +28,36 @@ jobs:
     name: tag equals every manifest
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      langs: ${{ steps.scope.outputs.langs }} # the languages this tag releases
+      tag: ${{ steps.scope.outputs.tag }} # the vX.Y.Z form of the tag, whichever language prefix it carried
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - run: python3 scripts/check-versions.py "$GITHUB_REF_NAME"
+      - id: scope
+        run: |
+          case "$GITHUB_REF_NAME" in
+            v*) langs="crates,python,npm,ruby,nuget,maven,go,swift"; tag="$GITHUB_REF_NAME" ;;
+            crates-v*|python-v*|npm-v*|ruby-v*|nuget-v*|maven-v*|go-v*|swift-v*) langs="${GITHUB_REF_NAME%%-v*}"; tag="v${GITHUB_REF_NAME#*-v}" ;;
+            *) echo "unrecognised tag $GITHUB_REF_NAME: use vX.Y.Z or <language>-vX.Y.Z" >&2; exit 1 ;;
+          esac
+          echo "langs=$langs" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          python3 scripts/check-versions.py "$tag"
 
   ci:
-    name: full CI on the tagged commit
+    name: CI on the tagged commit
     needs: verify
     uses: ./.github/workflows/ci.yml
+    with:
+      languages: ${{ needs.verify.outputs.langs }}
 
   # ---- crates.io: core first, then the crates that depend on it (cargo waits for the index between them) ----------------
   publish-crates:
     name: publish to crates.io
-    needs: ci
+    if: contains(needs.verify.outputs.langs, 'crates')
+    needs: [ci, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: crates-io
@@ -63,7 +80,8 @@ jobs:
   # ---- PyPI: wheels for each platform plus the source distribution -------------------------------------------------------
   python-wheels:
     name: python wheel (${{ matrix.name }})
-    needs: ci
+    if: contains(needs.verify.outputs.langs, 'python')
+    needs: [ci, verify]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:
@@ -95,7 +113,8 @@ jobs:
 
   python-sdist:
     name: python source distribution
-    needs: ci
+    if: contains(needs.verify.outputs.langs, 'python')
+    needs: [ci, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -115,7 +134,8 @@ jobs:
 
   publish-pypi:
     name: publish to PyPI
-    needs: [python-wheels, python-sdist]
+    if: contains(needs.verify.outputs.langs, 'python')
+    needs: [python-wheels, python-sdist, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
@@ -137,7 +157,10 @@ jobs:
   # ---- npm: the browser and edge package -----------------------------------------------------------------------------------
   publish-npm-wasm:
     name: publish @logquill/wasm to npm
-    needs: ci
+    if: contains(needs.verify.outputs.langs, 'npm')
+    env:
+      RELEASE_TAG: ${{ needs.verify.outputs.tag }}
+    needs: [ci, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -172,7 +195,7 @@ jobs:
       - run: npm run pack-smoke
       # a release candidate goes to the "next" tag, so `npm install @logquill/wasm` never picks it up
       - run: |
-          case "$GITHUB_REF_NAME" in
+          case "$RELEASE_TAG" in
             *-*) npm publish --tag next ;;
             *) npm publish ;;
           esac
@@ -180,7 +203,8 @@ jobs:
   # ---- native libraries for the bindings that load the C ABI (Ruby, .NET, JVM) ------------------------------------------
   native-libs:
     name: native library (${{ matrix.id }})
-    needs: ci
+    if: contains(needs.verify.outputs.langs, 'ruby') || contains(needs.verify.outputs.langs, 'nuget') || contains(needs.verify.outputs.langs, 'maven')
+    needs: [ci, verify]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -212,7 +236,8 @@ jobs:
   # ---- npm: the Node addon, one package per platform plus the main package that depends on them --------------------------
   node-addons:
     name: node addon (${{ matrix.target }})
-    needs: ci
+    if: contains(needs.verify.outputs.langs, 'npm')
+    needs: [ci, verify]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:
@@ -245,7 +270,10 @@ jobs:
 
   publish-npm-node:
     name: publish logquill and @logquill/native-* to npm
-    needs: node-addons
+    if: contains(needs.verify.outputs.langs, 'npm')
+    env:
+      RELEASE_TAG: ${{ needs.verify.outputs.tag }}
+    needs: [node-addons, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -277,7 +305,7 @@ jobs:
       - run: node scripts/link-platform-packages.mjs
       # a release candidate goes to the "next" tag, so `npm install logquill` never picks it up
       - run: |
-          case "$GITHUB_REF_NAME" in *-*) tag="--tag next" ;; *) tag="" ;; esac
+          case "$RELEASE_TAG" in *-*) tag="--tag next" ;; *) tag="" ;; esac
           for dir in npm/*/; do
             (cd "$dir" && npm publish --provenance --access public $tag)
           done
@@ -286,7 +314,8 @@ jobs:
   # ---- RubyGems: one platform gem per native library -----------------------------------------------------------------------
   publish-rubygems:
     name: publish to RubyGems
-    needs: native-libs
+    if: contains(needs.verify.outputs.langs, 'ruby')
+    needs: [native-libs, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -313,7 +342,8 @@ jobs:
   # ---- NuGet: one package carrying every runtime ----------------------------------------------------------------------------
   publish-nuget:
     name: publish to NuGet
-    needs: native-libs
+    if: contains(needs.verify.outputs.langs, 'nuget')
+    needs: [native-libs, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -343,7 +373,10 @@ jobs:
   # ---- Maven Central: a signed bundle, uploaded for a manual release in the portal ------------------------------------------
   publish-maven:
     name: upload the Maven Central bundle
-    needs: native-libs
+    if: contains(needs.verify.outputs.langs, 'maven')
+    env:
+      RELEASE_TAG: ${{ needs.verify.outputs.tag }}
+    needs: [native-libs, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -373,7 +406,7 @@ jobs:
       # be changed or deleted, so the last step stays a person's.
       - name: upload to the Central Portal
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_TAG#v}"
           curl --fail-with-body --silent --show-error --request POST \
             --header "Authorization: Bearer $CENTRAL_PORTAL_TOKEN" \
             --form "bundle=@bundle/logquill-$version-bundle.zip" \
@@ -384,7 +417,10 @@ jobs:
   # ---- Go: the tag is the release; the module lives in bindings/go, so the tag carries that prefix --------------------------
   tag-go:
     name: tag the Go module
-    needs: ci
+    if: contains(needs.verify.outputs.langs, 'go')
+    env:
+      RELEASE_TAG: ${{ needs.verify.outputs.tag }}
+    needs: [ci, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -396,13 +432,14 @@ jobs:
       - run: go test -run TestTheEmbeddedCoreIsTheWorkspaceVersion ./...
         working-directory: bindings/go
       - run: |
-          git tag "bindings/go/$GITHUB_REF_NAME" "$GITHUB_SHA"
-          git push origin "refs/tags/bindings/go/$GITHUB_REF_NAME"
+          git tag "bindings/go/$RELEASE_TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/bindings/go/$RELEASE_TAG"
 
   # ---- Swift: the XCFramework, then the mirror repository SwiftPM resolves -------------------------------------------------
   swift-xcframework:
     name: Swift XCFramework
-    needs: ci
+    if: contains(needs.verify.outputs.langs, 'swift')
+    needs: [ci, verify]
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
@@ -419,7 +456,10 @@ jobs:
 
   publish-swift:
     name: publish the Swift mirror
-    needs: swift-xcframework
+    if: contains(needs.verify.outputs.langs, 'swift')
+    env:
+      RELEASE_TAG: ${{ needs.verify.outputs.tag }}
+    needs: [swift-xcframework, verify]
     runs-on: macos-latest
     timeout-minutes: 20
     environment:
@@ -439,7 +479,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.SWIFT_MIRROR_TOKEN }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_TAG#v}"
           mirror=nikhilvdev/logquill-swift
           url="https://github.com/$mirror/releases/download/$version/CLogQuill.xcframework.zip"
           bindings/swift/scripts/prepare-mirror.sh tree "$url" "$(cat xcframework/CLogQuill.xcframework.zip.checksum)"
