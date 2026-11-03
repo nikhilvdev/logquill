@@ -100,6 +100,13 @@ release.yml:
   6 verify     install every package from its registry in a clean environment
 ```
 
+**One language at a time.** `vX.Y.Z` runs the whole flow. A tag `<language>-vX.Y.Z` (`crates`, `python`, `npm`, `ruby`, `nuget`,
+`maven`, `go`, `swift`), for example `python-v3.0.0-rc.4`, releases only that language: `verify` checks the version part of the tag
+against the manifests as before, and CI runs only that language's tests plus the shared core tests, so a problem in one registry's
+setup or tests does not hold the others back. All of them run from `release.yml`, so the trusted publishers do not change. The
+version is still lockstep: releasing Python from `python-v3.0.0-rc.4` and Ruby later from `ruby-v3.0.0-rc.4` is two tags on the
+same (or a later) commit, never two different versions.
+
 Rules (carried over from the Python and JS releases): the tag is the only trigger; nobody
 publishes from a laptop; CI must be green on the exact tagged commit; no skipped versions —
 if a job fails, fix forward on the same version for the registries that did not publish and
