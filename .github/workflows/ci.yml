@@ -82,7 +82,10 @@ jobs:
       - run: .venv/bin/maturin develop --release
         env:
           VIRTUAL_ENV: ${{ github.workspace }}/bindings/python/.venv
+      # a timing comparison on a shared runner is noisy: it gates pull requests but only warns on a release tag, so one slow
+      # runner cannot block every registry's publish (the ci job is a prerequisite of all of them)
       - run: .venv/bin/python bench/compare.py /tmp/logquill-old/bin/python ${{ github.workspace }}/bindings/python/.venv/bin/python
+        continue-on-error: ${{ github.ref_type == 'tag' }}
       # install-and-run from a built wheel in a clean environment, with no source tree on the path
       - run: |
           .venv/bin/maturin build --release -o dist
