@@ -6,6 +6,7 @@ earlier releases is kept in `docs/legacy/python/CHANGELOG.md` (Python 0.3.0–2.
 
 ## Unreleased
 
+- Changed: the release candidate is now 3.0.0-rc.8, released to crates.io, PyPI, npm, RubyGems, NuGet and Maven Central together (Go and Swift are not part of this candidate). rc.7 was not tagged.
 - Changed: the release candidate is now 3.0.0-rc.6, the first RubyGems release from CI. rc.5's gems were pushed by hand to create the gem, since a trusted publisher cannot create a new gem with the released RubyGems action.
 - Changed: the release candidate is now 3.0.0-rc.5. The npm publish step now skips a package whose version is already on npm, so a re-run after a partial failure resumes instead of stopping at the first package that already published (rc.4 reached npm for `@logquill/wasm` and the macOS native packages only).
 - Changed: the release candidate is now 3.0.0-rc.4, the first that can be released one language at a time. rc.3 was tagged but published nothing: the Python timing benchmark failed and blocked every registry's publish job.
