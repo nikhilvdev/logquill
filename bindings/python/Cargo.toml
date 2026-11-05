@@ -15,6 +15,7 @@ name = "_native"
 crate-type = ["cdylib"]
 
 [dependencies]
+logquill-cli = { path = "../../crates/logquill-cli" }
 logquill-core = { path = "../../crates/logquill-core" }
 logquill-runtime = { path = "../../crates/logquill-runtime" }
 # abi3: one wheel per platform serves Python 3.10 and later.

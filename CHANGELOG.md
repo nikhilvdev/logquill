@@ -6,6 +6,7 @@ earlier releases is kept in `docs/legacy/python/CHANGELOG.md` (Python 0.3.0–2.
 
 ## Unreleased
 
+- Fixed: `pip install logquill` now installs the `logquill` command (`tail`, `trace`, `dev`, `serve`, `verify`) and `python -m logquill.cli` works, as in 2.0.0. The 3.0.0rc8 wheel had neither: its `pyproject.toml` declared no script and the `logquill.cli` module was gone. The command is the `logquill-cli` Rust program compiled into the extension module (`logquill_cli::cli::run`), so the standalone binary and the Python script behave the same and no extra install or per-platform binary is needed.
 - Changed: the release candidate is now 3.0.0-rc.8, released to crates.io, PyPI, npm, RubyGems, NuGet and Maven Central together (Go and Swift are not part of this candidate). rc.7 was not tagged.
 - Changed: the release candidate is now 3.0.0-rc.6, the first RubyGems release from CI. rc.5's gems were pushed by hand to create the gem, since a trusted publisher cannot create a new gem with the released RubyGems action.
 - Changed: the release candidate is now 3.0.0-rc.5. The npm publish step now skips a package whose version is already on npm, so a re-run after a partial failure resumes instead of stopping at the first package that already published (rc.4 reached npm for `@logquill/wasm` and the macOS native packages only).

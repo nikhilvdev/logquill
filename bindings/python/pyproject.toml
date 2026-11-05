@@ -44,6 +44,9 @@ Homepage = "https://github.com/nikhilvdev/logquill"
 Repository = "https://github.com/nikhilvdev/logquill"
 Issues = "https://github.com/nikhilvdev/logquill/issues"
 
+[project.scripts]
+logquill = "logquill.cli:main"
+
 [project.optional-dependencies]
 # Transports and plugins that talk to a service need that service's client library.
 apprise = ["apprise>=1.8"]
