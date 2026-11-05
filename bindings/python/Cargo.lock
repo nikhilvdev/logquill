@@ -666,7 +666,7 @@ checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
 name = "logquill-cli"
-version = "3.0.0-rc.8"
+version = "3.0.0"
 dependencies = [
  "clap",
  "logquill-core",
@@ -676,7 +676,7 @@ dependencies = [
 
 [[package]]
 name = "logquill-core"
-version = "3.0.0-rc.8"
+version = "3.0.0"
 dependencies = [
  "hmac",
  "regex",
@@ -686,7 +686,7 @@ dependencies = [
 
 [[package]]
 name = "logquill-python"
-version = "3.0.0-rc.8"
+version = "3.0.0"
 dependencies = [
  "logquill-cli",
  "logquill-core",
@@ -698,7 +698,7 @@ dependencies = [
 
 [[package]]
 name = "logquill-runtime"
-version = "3.0.0-rc.8"
+version = "3.0.0"
 dependencies = [
  "aes",
  "base64",

@@ -6,6 +6,9 @@ earlier releases is kept in `docs/legacy/python/CHANGELOG.md` (Python 0.3.0–2.
 
 ## Unreleased
 
+## 3.0.0 - 2026-11-05
+
+- Released: 3.0.0, the first stable release of the Rust-core line, to crates.io, PyPI, npm, RubyGems, NuGet, Maven Central, the Go module proxy and Swift Package Manager. It replaces the release candidates 3.0.0-rc.1 to rc.8, whose entries follow.
 - Fixed: `pip install logquill` now installs the `logquill` command (`tail`, `trace`, `dev`, `serve`, `verify`) and `python -m logquill.cli` works, as in 2.0.0. The 3.0.0rc8 wheel had neither: its `pyproject.toml` declared no script and the `logquill.cli` module was gone. The command is the `logquill-cli` Rust program compiled into the extension module (`logquill_cli::cli::run`), so the standalone binary and the Python script behave the same and no extra install or per-platform binary is needed.
 - Changed: the release candidate is now 3.0.0-rc.8, released to crates.io, PyPI, npm, RubyGems, NuGet and Maven Central together (Go and Swift are not part of this candidate). rc.7 was not tagged.
 - Changed: the release candidate is now 3.0.0-rc.6, the first RubyGems release from CI. rc.5's gems were pushed by hand to create the gem, since a trusted publisher cannot create a new gem with the released RubyGems action.
