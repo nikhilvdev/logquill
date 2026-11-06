@@ -75,7 +75,9 @@ public class App {
     }
 }
 EOF
-out=$(cd "$app" && env -u LOGQUILL_LIB gradle --no-daemon --console=plain -q run 2>&1) || { echo "$out" >&2; echo "pack-smoke: the app failed" >&2; exit 1; }
+# stderr stays out of $out: newer JDKs make JNA print a native-access warning there.
+err=$(mktemp)
+out=$(cd "$app" && env -u LOGQUILL_LIB gradle --no-daemon --console=plain -q run 2>"$err") || { echo "$out" >&2; cat "$err" >&2; echo "pack-smoke: the app failed" >&2; exit 1; }
 [ "$out" = 'ok {"a": 2, "b": 1}' ] || { echo "pack-smoke: the app printed: $out" >&2; exit 1; }
 
 echo "pack-smoke ok: logquill-3.0.0.jar ($(du -k "$jar" | cut -f1) KiB, $platform) published to a local Maven repository and used by coordinates from a fresh Gradle app"

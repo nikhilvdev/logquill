@@ -11,7 +11,11 @@ use rusqlite::{params, Connection};
 use serde_json::{json, Value};
 
 fn scratch(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("logquill-viewer-{}-{name}", std::process::id()));
+    // The counter keeps parallel tests that share a label from deleting each other's files.
+    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let dir =
+        std::env::temp_dir().join(format!("logquill-viewer-{}-{n}-{name}", std::process::id()));
     let _ = fs::remove_dir_all(&dir);
     fs::create_dir_all(&dir).expect("a scratch directory");
     dir
