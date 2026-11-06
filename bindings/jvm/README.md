@@ -1,8 +1,5 @@
 # LogQuill for the JVM
 
-[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.nikhilvdev/logquill.svg)](https://central.sonatype.com/artifact/io.github.nikhilvdev/logquill)
-
 Structured logging for Java (and Kotlin, Scala, ...) on LogQuill's Rust core, through its C ABI (`crates/logquill-ffi`) loaded
 with JNA. The same record shape, the same redaction and the same tamper-evident hash chain as the Python, Node, browser and
 other bindings: redaction and the level filter run in Rust before anything is written.

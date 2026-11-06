@@ -1,13 +1,5 @@
 # logquill
 
-[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
-[![Publish](https://github.com/nikhilvdev/logquill/actions/workflows/release.yml/badge.svg)](https://github.com/nikhilvdev/logquill/actions/workflows/release.yml)
-[![PyPI](https://img.shields.io/pypi/v/logquill.svg)](https://pypi.org/project/logquill/)
-[![Python versions](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
-[![License](https://img.shields.io/github/license/nikhilvdev/logquill)](LICENSE)
-[![GitHub tag](https://img.shields.io/github/v/tag/nikhilvdev/logquill)](https://github.com/nikhilvdev/logquill/tags)
-[![Downloads](https://static.pepy.tech/badge/logquill)](https://pepy.tech/project/logquill)
-
 A structured, leveled logging framework for Python with pluggable transports.
 Sibling to [`logquill` on npm](https://www.npmjs.com/package/logquill)
 (`logquill-js`) — same log record shape, same level names, one mental model

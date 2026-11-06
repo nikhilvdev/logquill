@@ -1,8 +1,5 @@
 # LogQuill for Swift
 
-[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
-[![Release](https://img.shields.io/github/v/tag/nikhilvdev/logquill?label=release)](https://github.com/nikhilvdev/logquill/tags)
-
 Structured logging for Swift on LogQuill's Rust core, through its C ABI (`crates/logquill-ffi`), shipped as a Swift package with
 an XCFramework. The same record shape, the same redaction and the same tamper-evident hash chain as the Python, Node, browser
 and other bindings: redaction and the level filter run in Rust before anything is written.

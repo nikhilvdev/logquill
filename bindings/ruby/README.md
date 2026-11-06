@@ -1,8 +1,5 @@
 # logquill (Ruby)
 
-[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
-[![Gem](https://img.shields.io/gem/v/logquill.svg)](https://rubygems.org/gems/logquill)
-
 Structured logging for Ruby on LogQuill's Rust core, through its C ABI (`crates/logquill-ffi`). The same record shape,
 the same redaction and the same tamper-evident hash chain as the Python, Node, browser and other bindings: redaction and
 the level filter run in Rust before anything is written.

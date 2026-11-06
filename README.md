@@ -1,7 +1,20 @@
 # LogQuill
 
 [![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
+[![Release](https://github.com/nikhilvdev/logquill/actions/workflows/release.yml/badge.svg)](https://github.com/nikhilvdev/logquill/actions/workflows/release.yml)
+[![License](https://img.shields.io/github/license/nikhilvdev/logquill)](LICENSE)
+[![GitHub tag](https://img.shields.io/github/v/tag/nikhilvdev/logquill)](https://github.com/nikhilvdev/logquill/tags)
+
 [![crates.io](https://img.shields.io/crates/v/logquill-core.svg)](https://crates.io/crates/logquill-core)
+[![PyPI](https://img.shields.io/pypi/v/logquill.svg)](https://pypi.org/project/logquill/)
+[![Python versions](https://img.shields.io/badge/python-3.10%2B-blue.svg)](bindings/python/pyproject.toml)
+[![Downloads](https://static.pepy.tech/badge/logquill)](https://pepy.tech/project/logquill)
+[![npm](https://img.shields.io/npm/v/logquill.svg)](https://www.npmjs.com/package/logquill)
+[![npm wasm](https://img.shields.io/npm/v/@logquill/wasm.svg)](https://www.npmjs.com/package/@logquill/wasm)
+[![Gem](https://img.shields.io/gem/v/logquill.svg)](https://rubygems.org/gems/logquill)
+[![NuGet](https://img.shields.io/nuget/v/LogQuill.svg)](https://www.nuget.org/packages/LogQuill)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.nikhilvdev/logquill.svg)](https://central.sonatype.com/artifact/io.github.nikhilvdev/logquill)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nikhilvdev/logquill/bindings/go/v3.svg)](https://pkg.go.dev/github.com/nikhilvdev/logquill/bindings/go/v3)
 
 Structured logging for services and AI agents: one Rust core, one record shape, and an
 SDK for each language, so a team running several languages gets one mental model and one

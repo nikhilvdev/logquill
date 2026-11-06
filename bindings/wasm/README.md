@@ -1,8 +1,5 @@
 # @logquill/wasm
 
-[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
-[![npm](https://img.shields.io/npm/v/@logquill/wasm.svg)](https://www.npmjs.com/package/@logquill/wasm)
-
 LogQuill for the browser, Deno, Bun and Cloudflare Workers: the Rust core compiled to WebAssembly, and a small SDK on
 top of it. One record shape and one set of redaction, sampling and integrity rules, the same as the Python and Node
 packages, in places where a native addon cannot load.

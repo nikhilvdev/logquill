@@ -1,8 +1,5 @@
 # logquill for Node
 
-[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
-[![npm](https://img.shields.io/npm/v/logquill.svg)](https://www.npmjs.com/package/logquill)
-
 The Node binding of LogQuill's Rust core: a [napi-rs](https://napi.rs) addon (`src/`) and the TypeScript SDK on top
 of it (`sdk/`). It is the 3.0 line; the status of each part is in `docs/stages/stage-6.md`.
 
