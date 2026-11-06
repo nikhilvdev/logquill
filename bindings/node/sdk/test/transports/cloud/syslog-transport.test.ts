@@ -63,15 +63,27 @@ describe("SyslogTransport", () => {
 describe("SyslogTransport sockets", () => {
   it("does not keep the process alive after logging", async () => {
     const { spawnSync } = await import("node:child_process");
+    const { build } = await import("esbuild");
     const entry = new URL("../../../src/index.ts", import.meta.url).pathname;
     const script = `import { Logger, SyslogTransport } from ${JSON.stringify(entry)};
       const l = new Logger("a", { transports: [new SyslogTransport({ host: "127.0.0.1", port: 9 })] });
       l.info("x"); await l.flush();`;
-    const result = spawnSync("npx", ["tsx", "--input-type=module", "-e", script], {
-      timeout: 15_000,
+    // Bundled here, not run through `npx tsx`: tsx is not installed, so that fetched it from the network on every run.
+    const { outputFiles } = await build({
+      stdin: { contents: script, resolveDir: process.cwd(), loader: "ts" },
+      bundle: true,
+      packages: "external",
+      platform: "node",
+      format: "esm",
+      write: false,
     });
+    const result = spawnSync(
+      process.execPath,
+      ["--input-type=module", "-e", outputFiles[0]?.text ?? ""],
+      { timeout: 15_000, encoding: "utf8" },
+    );
     expect(result.signal).toBeNull();
-    expect(result.status).toBe(0);
+    expect({ status: result.status, stderr: result.stderr }).toEqual({ status: 0, stderr: "" });
   }, 20_000);
 
   it("drops messages instead of queueing without bound while a TCP server is not reading", async () => {

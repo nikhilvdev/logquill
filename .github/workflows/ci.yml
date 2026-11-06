@@ -4,7 +4,12 @@ on:
   pull_request:
   push:
     branches: [main, develop]
-  workflow_call: # the release workflow requires this whole workflow to pass on the tagged commit
+  workflow_call: # the release workflow requires this workflow to pass on the tagged commit, for the languages being released
+    inputs:
+      languages:
+        description: "comma-separated languages being released (crates,python,npm,ruby,nuget,maven,go,swift); empty runs everything"
+        type: string
+        default: ""
 
 # Least privilege: nothing here writes to the repository.
 permissions:
@@ -53,6 +58,7 @@ jobs:
   # The Python binding lives outside the Cargo workspace (its macros need `unsafe`, and building it
   # needs Python), so it has its own job: build the wheel in place, test it, lint the Rust.
   python:
+    if: ${{ !inputs.languages || contains(inputs.languages, 'python') }}
     name: python binding (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -82,7 +88,10 @@ jobs:
       - run: .venv/bin/maturin develop --release
         env:
           VIRTUAL_ENV: ${{ github.workspace }}/bindings/python/.venv
+      # a timing comparison on a shared runner is noisy: it gates pull requests but only warns on a release tag, so one slow
+      # runner cannot block every registry's publish (the ci job is a prerequisite of all of them)
       - run: .venv/bin/python bench/compare.py /tmp/logquill-old/bin/python ${{ github.workspace }}/bindings/python/.venv/bin/python
+        continue-on-error: ${{ github.ref_type == 'tag' }}
       # install-and-run from a built wheel in a clean environment, with no source tree on the path
       - run: |
           .venv/bin/maturin build --release -o dist
@@ -101,6 +110,7 @@ jobs:
 
   # PyO3 builds free-threaded CPython from 3.14 on, and not as abi3, so this is its own job.
   python-free-threaded:
+    if: ${{ !inputs.languages || contains(inputs.languages, 'python') }}
     name: python binding (3.14t, GIL off)
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -122,6 +132,7 @@ jobs:
   # The Node binding lives outside the Cargo workspace for the same reason the Python one does, so it
   # has its own job. Uses the Node that ships on the runner; the LTS matrix comes with slice 7.
   node:
+    if: ${{ !inputs.languages || contains(inputs.languages, 'npm') }}
     name: node binding (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
@@ -173,6 +184,7 @@ jobs:
       - run: cargo clippy -- -D warnings
 
   wasm:
+    if: ${{ !inputs.languages || contains(inputs.languages, 'npm') }}
     name: wasm binding (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
@@ -239,6 +251,7 @@ jobs:
       - run: cargo clippy -p logquill-ffi --target wasm32-wasip1 --no-default-features -- -D warnings
 
   ruby:
+    if: ${{ !inputs.languages || contains(inputs.languages, 'ruby') }}
     name: ruby binding (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
@@ -260,6 +273,7 @@ jobs:
       - run: ruby scripts/pack_smoke.rb
 
   dotnet:
+    if: ${{ !inputs.languages || contains(inputs.languages, 'nuget') }}
     name: dotnet binding (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
@@ -277,6 +291,7 @@ jobs:
       - run: bindings/dotnet/scripts/pack-smoke.sh
 
   go:
+    if: ${{ !inputs.languages || contains(inputs.languages, 'go') }}
     name: go binding (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
@@ -302,6 +317,7 @@ jobs:
       - run: scripts/consumer-smoke.sh
 
   swift:
+    if: ${{ !inputs.languages || contains(inputs.languages, 'swift') }}
     name: swift binding (macos-latest)
     runs-on: macos-latest
     timeout-minutes: 25
@@ -319,6 +335,7 @@ jobs:
       - run: scripts/smoke.sh
 
   jvm:
+    if: ${{ !inputs.languages || contains(inputs.languages, 'maven') }}
     name: jvm binding (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
@@ -353,6 +370,7 @@ jobs:
   # the packaging scripts the release workflow runs, exercised here with the one platform's library this runner builds, so a
   # break shows up on a pull request and not on release day (signing is skipped: the bundle's layout is what is checked)
   release-scripts:
+    if: ${{ !inputs.languages || contains(inputs.languages, 'ruby') || contains(inputs.languages, 'nuget') || contains(inputs.languages, 'maven') || contains(inputs.languages, 'swift') }}
     name: release packaging scripts (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30

@@ -6,6 +6,15 @@ earlier releases is kept in `docs/legacy/python/CHANGELOG.md` (Python 0.3.0–2.
 
 ## Unreleased
 
+## 3.0.0 - 2026-11-05
+
+- Released: 3.0.0, the first stable release of the Rust-core line, to crates.io, PyPI, npm, RubyGems, NuGet, Maven Central, the Go module proxy and Swift Package Manager. It replaces the release candidates 3.0.0-rc.1 to rc.8, whose entries follow.
+- Fixed: `pip install logquill` now installs the `logquill` command (`tail`, `trace`, `dev`, `serve`, `verify`) and `python -m logquill.cli` works, as in 2.0.0. The 3.0.0rc8 wheel had neither: its `pyproject.toml` declared no script and the `logquill.cli` module was gone. The command is the `logquill-cli` Rust program compiled into the extension module (`logquill_cli::cli::run`), so the standalone binary and the Python script behave the same and no extra install or per-platform binary is needed.
+- Changed: the release candidate is now 3.0.0-rc.8, released to crates.io, PyPI, npm, RubyGems, NuGet and Maven Central together (Go and Swift are not part of this candidate). rc.7 was not tagged.
+- Changed: the release candidate is now 3.0.0-rc.6, the first RubyGems release from CI. rc.5's gems were pushed by hand to create the gem, since a trusted publisher cannot create a new gem with the released RubyGems action.
+- Changed: the release candidate is now 3.0.0-rc.5. The npm publish step now skips a package whose version is already on npm, so a re-run after a partial failure resumes instead of stopping at the first package that already published (rc.4 reached npm for `@logquill/wasm` and the macOS native packages only).
+- Changed: the release candidate is now 3.0.0-rc.4, the first that can be released one language at a time. rc.3 was tagged but published nothing: the Python timing benchmark failed and blocked every registry's publish job.
+- Changed: a release can now go out one language at a time. Pushing `python-vX.Y.Z` (or `crates-`, `npm-`, `ruby-`, `nuget-`, `maven-`, `go-`, `swift-`) runs only that language's tests and publish jobs; `vX.Y.Z` still releases everything. A failing or unconfigured registry no longer blocks the others, and the Python timing benchmark only warns on a release tag.
 - Changed: the release candidate is now 3.0.0-rc.3. rc.2 reached only crates.io: the Go module's committed `core.wasm` was still rc.1, and the other registries still needed their trusted publishers, tokens and secrets. CI now checks that the committed `core.wasm` matches the workspace version, so a stale one fails on the pull request.
 - Changed: the release candidate is now 3.0.0-rc.2. rc.1 reached npm by hand (`@logquill/wasm` and the macOS native packages), so those versions could not be published again by the release workflow. The Maven group ID is now `io.github.nikhilvdev`, because the `logquill.io` domain behind `io.logquill` is not ours; the Java package stays `io.logquill`.
 - Changed: the `develop` branch is now the 3.0 line. The Python library source was removed

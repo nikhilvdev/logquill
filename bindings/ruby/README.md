@@ -4,8 +4,7 @@ Structured logging for Ruby on LogQuill's Rust core, through its C ABI (`crates/
 the same redaction and the same tamper-evident hash chain as the Python, Node, browser and other bindings: redaction and
 the level filter run in Rust before anything is written.
 
-> **Not published yet.** The gem is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.3) is prepared but not published
-> (`docs/stages/stage-9.md`). See [Build and test](#build-and-test) to use it from this repository.
+> **Release candidate.** 3.0.0-rc.8 is published to RubyGems (`gem install logquill --pre`); the 3.0 line is MIT licensed. It is a pre-release, so pin the version.
 
 ## Use it
 

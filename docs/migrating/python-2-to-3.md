@@ -5,8 +5,7 @@
 changes is a short list of deliberate behaviours, how the package is installed, and where a few things happen. Each behaviour
 is a settled decision in `docs/spec/00-decisions.md`; the number is given so you can read the reasoning.
 
-> **Not released yet.** 3.0 is built from the `develop` branch and nothing is on PyPI. Until a release, install from a
-> checkout (`maturin develop --release` in `bindings/python`). The 3.0 line is MIT licensed;
+> **Release candidate.** 3.0.0rc8 is on PyPI as a pre-release (`pip install --pre logquill`). The 3.0 line is MIT licensed;
 > 2.0.0 stays FSL-1.1-MIT as published, and 1.x and earlier stay MIT.
 
 ## 1. Install
@@ -44,7 +43,7 @@ line stays on PyPI and on the `main` branch.
 ## 3. What did not change
 
 The record shape, `schema_version`, the `llm` block, the level weights, the config format, the CLI commands (`tail`, `trace`,
-`serve`, `dev`, `verify`) and the canonical JSON the hash chain is computed over are the 2.0 contract. A log file written by
+`serve`, `dev`, `verify`, installed as the `logquill` script and also run by `python -m logquill.cli`) and the canonical JSON the hash chain is computed over are the 2.0 contract. A log file written by
 2.0.0 verifies under 3.0, and the reverse. The 3.0 test suite includes oracle tests that run the same scenarios against the
 published 2.0.0 and compare the output, with the differences above masked, so nothing else is allowed to change quietly.
 
