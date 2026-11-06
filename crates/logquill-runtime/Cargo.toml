@@ -18,7 +18,7 @@ lettre = { version = "0.11.19", default-features = false, features = ["smtp-tran
 logquill-core = { version = "3.0.0-rc.3", path = "../logquill-core" }
 rusqlite = { version = "0.40.2", features = ["bundled"] }
 serde_json = { version = "1", features = ["preserve_order", "arbitrary_precision"] }
-sha2 = "0.10.9"
+sha2 = "0.11.1"
 ureq = "3.2.1"
 zip = { version = "4.2.0", default-features = false, features = ["deflate"] }
 
