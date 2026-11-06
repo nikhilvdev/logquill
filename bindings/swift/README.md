@@ -1,11 +1,13 @@
 # LogQuill for Swift
 
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
+[![Release](https://img.shields.io/github/v/tag/nikhilvdev/logquill?label=release)](https://github.com/nikhilvdev/logquill/tags)
+
 Structured logging for Swift on LogQuill's Rust core, through its C ABI (`crates/logquill-ffi`), shipped as a Swift package with
 an XCFramework. The same record shape, the same redaction and the same tamper-evident hash chain as the Python, Node, browser
 and other bindings: redaction and the level filter run in Rust before anything is written.
 
-> **Not published yet.** The package is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.8) is prepared but not published
-> (`docs/stages/stage-9.md`). See [Build and test](#build-and-test) to use it from this repository.
+> **Not published yet.** The package has no release yet: the 3.0 line is MIT licensed and this binding was not part of the rc.8 release (`docs/stages/stage-9.md`). See [Build and test](#build-and-test) to use it from this repository.
 
 ## Use it
 

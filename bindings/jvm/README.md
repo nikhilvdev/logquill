@@ -1,12 +1,13 @@
 # LogQuill for the JVM
 
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.nikhilvdev/logquill.svg)](https://central.sonatype.com/artifact/io.github.nikhilvdev/logquill)
+
 Structured logging for Java (and Kotlin, Scala, ...) on LogQuill's Rust core, through its C ABI (`crates/logquill-ffi`) loaded
 with JNA. The same record shape, the same redaction and the same tamper-evident hash chain as the Python, Node, browser and
 other bindings: redaction and the level filter run in Rust before anything is written.
 
-> **Not published yet.** The library is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.8) is prepared but not published
-> (`docs/stages/stage-9.md`), and the Maven group ID is `io.github.nikhilvdev` (the Java package stays `io.logquill`), to be verified on Central before the first publish. See
-> [Build and test](#build-and-test) to use it from this repository.
+> **Release candidate.** 3.0.0-rc.8 is published to Maven Central (`io.github.nikhilvdev:logquill:3.0.0-rc.8`); the 3.0 line is MIT licensed. It is a pre-release, so pin the version.
 
 ## Use it
 

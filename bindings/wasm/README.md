@@ -1,12 +1,13 @@
 # @logquill/wasm
 
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
+[![npm](https://img.shields.io/npm/v/@logquill/wasm.svg)](https://www.npmjs.com/package/@logquill/wasm)
+
 LogQuill for the browser, Deno, Bun and Cloudflare Workers: the Rust core compiled to WebAssembly, and a small SDK on
 top of it. One record shape and one set of redaction, sampling and integrity rules, the same as the Python and Node
 packages, in places where a native addon cannot load.
 
-> **Not published yet.** The package is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.8) is prepared but not published
-> (`docs/stages/stage-9.md`). Build it from this repository as described under
-> [Build and test](#build-and-test).
+> **Release candidate.** 3.0.0-rc.8 is published to npm (`npm install @logquill/wasm@3.0.0-rc.8`); the 3.0 line is MIT licensed. It is a pre-release, so pin the version.
 
 Use it when your code runs somewhere a native addon cannot: a web page, an edge function, Deno, Bun. On Node, install
 `logquill` instead, which runs the same core natively and has the file, HTTP, SQL, cloud and queue transports.
