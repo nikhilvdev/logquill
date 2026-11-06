@@ -1,5 +1,8 @@
 # LogQuill
 
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
+[![crates.io](https://img.shields.io/crates/v/logquill-core.svg)](https://crates.io/crates/logquill-core)
+
 Structured logging for services and AI agents: one Rust core, one record shape, and an
 SDK for each language, so a team running several languages gets one mental model and one
 JSON log format.

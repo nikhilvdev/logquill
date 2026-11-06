@@ -1,11 +1,11 @@
 # logquill
 
-[![CI](https://github.com/nikhilvdev/logquill-python/actions/workflows/ci.yml/badge.svg)](https://github.com/nikhilvdev/logquill-python/actions/workflows/ci.yml)
-[![Publish](https://github.com/nikhilvdev/logquill-python/actions/workflows/release.yml/badge.svg)](https://github.com/nikhilvdev/logquill-python/actions/workflows/release.yml)
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
+[![Publish](https://github.com/nikhilvdev/logquill/actions/workflows/release.yml/badge.svg)](https://github.com/nikhilvdev/logquill/actions/workflows/release.yml)
 [![PyPI](https://img.shields.io/pypi/v/logquill.svg)](https://pypi.org/project/logquill/)
 [![Python versions](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
-[![License](https://img.shields.io/github/license/nikhilvdev/logquill-python)](LICENSE)
-[![GitHub tag](https://img.shields.io/github/v/tag/nikhilvdev/logquill-python)](https://github.com/nikhilvdev/logquill-python/tags)
+[![License](https://img.shields.io/github/license/nikhilvdev/logquill)](LICENSE)
+[![GitHub tag](https://img.shields.io/github/v/tag/nikhilvdev/logquill)](https://github.com/nikhilvdev/logquill/tags)
 [![Downloads](https://static.pepy.tech/badge/logquill)](https://pepy.tech/project/logquill)
 
 A structured, leveled logging framework for Python with pluggable transports.

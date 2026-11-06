@@ -1,5 +1,8 @@
 # LogQuill for Go
 
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nikhilvdev/logquill/bindings/go/v3.svg)](https://pkg.go.dev/github.com/nikhilvdev/logquill/bindings/go/v3)
+
 Structured logging for Go on LogQuill's Rust core: the same record shape, the same redaction and the same tamper-evident hash
 chain as the Python, Node, browser and other bindings. The core runs as **WebAssembly inside your process** (wazero), so there
 is no cgo, no shared library to ship and nothing to install besides the module. Redaction and the level filter run in the

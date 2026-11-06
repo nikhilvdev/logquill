@@ -1,5 +1,8 @@
 # LogQuill for .NET
 
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml?query=branch%3Amain)
+[![NuGet](https://img.shields.io/nuget/v/LogQuill.svg)](https://www.nuget.org/packages/LogQuill)
+
 Structured logging for .NET on LogQuill's Rust core, through its C ABI (`crates/logquill-ffi`). The same record shape, the
 same redaction and the same tamper-evident hash chain as the Python, Node, browser and other bindings: redaction and the
 level filter run in Rust before anything is written.
