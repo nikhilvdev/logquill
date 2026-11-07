@@ -1,12 +1,13 @@
 # LogQuill for Go
 
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/nikhilvdev/logquill/bindings/go/v3.svg)](https://pkg.go.dev/github.com/nikhilvdev/logquill/bindings/go/v3) [![License](https://img.shields.io/badge/licence-MIT-blue.svg)](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)
+
 Structured logging for Go on LogQuill's Rust core: the same record shape, the same redaction and the same tamper-evident hash
 chain as the Python, Node, browser and other bindings. The core runs as **WebAssembly inside your process** (wazero), so there
 is no cgo, no shared library to ship and nothing to install besides the module. Redaction and the level filter run in the
 core before anything is written.
 
-> **Not published yet.** The module is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.3) is prepared but not published
-> (`docs/stages/stage-9.md`). See [Build and test](#build-and-test) to use it from this repository.
+> Install: `go get github.com/nikhilvdev/logquill/bindings/go/v3`. The 3.0 line is MIT licensed.
 
 ## Use it
 
@@ -100,3 +101,15 @@ scripts/consumer-smoke.sh                  # a fresh module imports this one by 
 
 `core.wasm` is embedded with `//go:embed`. The Go module proxy builds from a tagged tree, so a release must **commit**
 `core.wasm` (it is untracked day to day); the release flow does that before tagging.
+
+## Documentation, support and security
+
+- [Project README](https://github.com/nikhilvdev/logquill) · [Architecture](https://github.com/nikhilvdev/logquill/blob/main/docs/architecture.md) · [Contract](https://github.com/nikhilvdev/logquill/blob/main/docs/contract.md) · [API names per language](https://github.com/nikhilvdev/logquill/blob/main/docs/api-names.md)
+- [Versioning and stability](https://github.com/nikhilvdev/logquill/blob/main/docs/versioning.md) · [Supply chain](https://github.com/nikhilvdev/logquill/blob/main/docs/supply-chain.md) · [Changelog](https://github.com/nikhilvdev/logquill/blob/main/CHANGELOG.md)
+- Bugs and feature requests: [GitHub issues](https://github.com/nikhilvdev/logquill/issues). Which versions get fixes: [SUPPORT](https://github.com/nikhilvdev/logquill/blob/main/.github/SUPPORT.md).
+- Report a vulnerability privately, not as a public issue: [SECURITY](https://github.com/nikhilvdev/logquill/blob/main/.github/SECURITY.md).
+- Contributing: [CONTRIBUTING](https://github.com/nikhilvdev/logquill/blob/main/CONTRIBUTING.md).
+
+## Licence
+
+MIT ([LICENSE](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)). Earlier releases keep the licence they were published under.

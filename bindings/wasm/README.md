@@ -1,12 +1,12 @@
 # @logquill/wasm
 
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/@logquill/wasm.svg)](https://www.npmjs.com/package/@logquill/wasm) [![License](https://img.shields.io/badge/licence-MIT-blue.svg)](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)
+
 LogQuill for the browser, Deno, Bun and Cloudflare Workers: the Rust core compiled to WebAssembly, and a small SDK on
 top of it. One record shape and one set of redaction, sampling and integrity rules, the same as the Python and Node
 packages, in places where a native addon cannot load.
 
-> **Not published yet.** The package is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.3) is prepared but not published
-> (`docs/stages/stage-9.md`). Build it from this repository as described under
-> [Build and test](#build-and-test).
+> Install: `npm install @logquill/wasm`. The 3.0 line is MIT licensed.
 
 Use it when your code runs somewhere a native addon cannot: a web page, an edge function, Deno, Bun. On Node, install
 `logquill` instead, which runs the same core natively and has the file, HTTP, SQL, cloud and queue transports.
@@ -153,3 +153,15 @@ with `npm run test:deno`, `test:bun`, `test:chrome` or `test:worker`. Chrome mus
 a binary. `npm run test:examples` runs the examples above.
 
 The same corpus checks the native addon and the Python binding, so a result that differs between bindings fails there.
+
+## Documentation, support and security
+
+- [Project README](https://github.com/nikhilvdev/logquill) · [Architecture](https://github.com/nikhilvdev/logquill/blob/main/docs/architecture.md) · [Contract](https://github.com/nikhilvdev/logquill/blob/main/docs/contract.md) · [API names per language](https://github.com/nikhilvdev/logquill/blob/main/docs/api-names.md)
+- [Versioning and stability](https://github.com/nikhilvdev/logquill/blob/main/docs/versioning.md) · [Supply chain](https://github.com/nikhilvdev/logquill/blob/main/docs/supply-chain.md) · [Changelog](https://github.com/nikhilvdev/logquill/blob/main/CHANGELOG.md)
+- Bugs and feature requests: [GitHub issues](https://github.com/nikhilvdev/logquill/issues). Which versions get fixes: [SUPPORT](https://github.com/nikhilvdev/logquill/blob/main/.github/SUPPORT.md).
+- Report a vulnerability privately, not as a public issue: [SECURITY](https://github.com/nikhilvdev/logquill/blob/main/.github/SECURITY.md).
+- Contributing: [CONTRIBUTING](https://github.com/nikhilvdev/logquill/blob/main/CONTRIBUTING.md).
+
+## Licence
+
+MIT ([LICENSE](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)). Earlier releases keep the licence they were published under.

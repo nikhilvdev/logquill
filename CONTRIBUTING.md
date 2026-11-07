@@ -15,14 +15,13 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 
-Bindings and extra crates arrive with their stage (`docs/rust-core-plan.md`); each brings its
-own build notes in its folder.
+The design is in `docs/architecture.md`. Each binding has its build notes in its folder.
 
 ## Before you change behaviour
 
-The behaviour of LogQuill is specified in `docs/spec/`. Change the spec and the code
-together, and if a change touches a decision in `docs/spec/00-decisions.md` or the parity
-rule in `docs/spec/09-parity-and-gap-closing.md`, say so in the pull request.
+Behaviour shared by every language is defined by `docs/contract.md` and the fixtures in
+`schema/`. Change them together with the code, and if a change touches the contract, say so
+in the pull request: it means a major version for every package (`docs/versioning.md`).
 
 ## Pull request strategy
 

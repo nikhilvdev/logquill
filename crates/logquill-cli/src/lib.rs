@@ -1,5 +1,6 @@
 //! The pieces of the `logquill` command, as a library so the checks crate can measure them.
 
+pub mod cli;
 pub mod dev;
 pub mod follow;
 pub mod lines;

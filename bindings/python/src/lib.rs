@@ -105,6 +105,13 @@ pub(crate) fn verification_dict(
     Ok(out.into_any())
 }
 
+/// Run the `logquill` command line with `args` (program name first) and return its exit code. The GIL is
+/// released while it runs, so `serve` and `tail -f` do not stall other Python threads.
+#[pyfunction]
+fn cli_main(py: Python<'_>, args: Vec<String>) -> i32 {
+    i32::from(py.detach(move || logquill_cli::cli::run(args)))
+}
+
 #[pymodule]
 fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add("__version__", env!("CARGO_PKG_VERSION"))?;
@@ -115,6 +122,7 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<metrics::PyPushgateway>()?;
     module.add_class::<alerting::PyAlerting>()?;
     module.add_class::<alerting::PyAlertSender>()?;
+    module.add_function(wrap_pyfunction!(cli_main, module)?)?;
     module.add_function(wrap_pyfunction!(alerting::slack_sender, module)?)?;
     module.add_function(wrap_pyfunction!(alerting::pagerduty_sender, module)?)?;
     module.add_function(wrap_pyfunction!(alerting::email_sender, module)?)?;

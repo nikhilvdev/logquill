@@ -1,9 +1,8 @@
 # Public API names, per language
 
 Every binding exposes the same operations under the casing that is idiomatic for its
-language. A binding is "at parity" (docs/spec/09-parity-and-gap-closing.md, section D) when
-every row below exists in it. The behaviour of each row is specified in `docs/spec/`; this
-file only fixes the names.
+language. A binding is "at parity" when every row below exists in it. Behaviour is defined by the
+shared fixtures in `schema/`; this file only fixes the names.
 
 ## Casing
 
@@ -90,5 +89,5 @@ The wire format (record fields and `meta` keys) is `snake_case` in every languag
 ## Adding a name
 
 1. Add the row here first, in every language.
-2. Implement it, with a test that is traceable to a behaviour in `docs/spec/`.
+2. Implement it, with a test, and a shared fixture under `schema/` if the behaviour is shared.
 3. If a language cannot support it, write `n/a` here and say why in that binding's README.

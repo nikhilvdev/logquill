@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: Report a security vulnerability
-    url: https://github.com/nikhilvdev/logquill-python/security/advisories/new
+    url: https://github.com/nikhilvdev/logquill/security/advisories/new
     about: Please don't file security vulnerabilities as public issues — use private reporting instead.

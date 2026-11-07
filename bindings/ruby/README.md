@@ -1,11 +1,12 @@
 # logquill (Ruby)
 
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml) [![Gem](https://img.shields.io/gem/v/logquill.svg)](https://rubygems.org/gems/logquill) [![License](https://img.shields.io/badge/licence-MIT-blue.svg)](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)
+
 Structured logging for Ruby on LogQuill's Rust core, through its C ABI (`crates/logquill-ffi`). The same record shape,
 the same redaction and the same tamper-evident hash chain as the Python, Node, browser and other bindings: redaction and
 the level filter run in Rust before anything is written.
 
-> **Not published yet.** The gem is unreleased: the 3.0 line is MIT licensed and a release candidate (3.0.0-rc.3) is prepared but not published
-> (`docs/stages/stage-9.md`). See [Build and test](#build-and-test) to use it from this repository.
+> Install: `gem install logquill`. The 3.0 line is MIT licensed.
 
 ## Use it
 
@@ -97,3 +98,15 @@ ruby scripts/pack_smoke.rb                 # build a platform gem, install it in
 The gem looks for the library in `LOGQUILL_LIB` (a path to the file), then inside the gem (`lib/logquill/native/`, how a
 platform gem ships it), then in `target/release` and `target/debug` of this repository. The C ABI version is checked at
 load: a library with a different one is refused.
+
+## Documentation, support and security
+
+- [Project README](https://github.com/nikhilvdev/logquill) · [Architecture](https://github.com/nikhilvdev/logquill/blob/main/docs/architecture.md) · [Contract](https://github.com/nikhilvdev/logquill/blob/main/docs/contract.md) · [API names per language](https://github.com/nikhilvdev/logquill/blob/main/docs/api-names.md)
+- [Versioning and stability](https://github.com/nikhilvdev/logquill/blob/main/docs/versioning.md) · [Supply chain](https://github.com/nikhilvdev/logquill/blob/main/docs/supply-chain.md) · [Changelog](https://github.com/nikhilvdev/logquill/blob/main/CHANGELOG.md)
+- Bugs and feature requests: [GitHub issues](https://github.com/nikhilvdev/logquill/issues). Which versions get fixes: [SUPPORT](https://github.com/nikhilvdev/logquill/blob/main/.github/SUPPORT.md).
+- Report a vulnerability privately, not as a public issue: [SECURITY](https://github.com/nikhilvdev/logquill/blob/main/.github/SECURITY.md).
+- Contributing: [CONTRIBUTING](https://github.com/nikhilvdev/logquill/blob/main/CONTRIBUTING.md).
+
+## Licence
+
+MIT ([LICENSE](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)). Earlier releases keep the licence they were published under.
