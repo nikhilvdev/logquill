@@ -17,7 +17,7 @@ disk and on the wire, the Node version, and how the package is installed.
 
 ## 2. Records and contract (1.x to the shared 2.0 contract)
 
-These are the changes of `docs/legacy/js/MIGRATING.md`, summarised; read it for the examples and SQL.
+These are the changes from the 1.x migration notes, summarised.
 
 1. **Every record carries `"schema_version": "2.0"`.** A parser that accepts "exactly these five top-level keys" breaks. Old
    1.x lines need no conversion: a record with no `schema_version` is read as `"1.0"` by `parseRecord`.

@@ -10,8 +10,7 @@ and checking the decoded record against it.
 
 `golden_chain.json` is a hash chain written by the tamper-evident plugin over awkward
 values (non-ASCII, control characters, small floats, an `llm` block). Every binding
-verifies it, which is what proves they hash the same canonical JSON (see
-`docs/spec/03-privacy-tracing-otel.md`).
+verifies it, which is what proves they hash the same canonical JSON.
 
 `golden_otel_ids.json` holds the OpenTelemetry span and trace ids derived from LogQuill ids
 (UUIDs, awkward hex, non-ASCII), so a trace that crosses languages lines up.

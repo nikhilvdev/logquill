@@ -3,9 +3,8 @@
 3.0 runs the queue, worker, formatters, redaction, hash chain and the native transports in Rust, and keeps the Python API of
 2.0.0. Code that calls `Logger`, `logger.info(...)` and the plugins through `from logquill import ...` needs no change. What
 changes is a short list of deliberate behaviours, how the package is installed, and where a few things happen. Each behaviour
-is a settled decision in `docs/spec/00-decisions.md`; the number is given so you can read the reasoning.
-
-> **Release candidate.** 3.0.0rc8 is on PyPI as a pre-release (`pip install --pre logquill`). The 3.0 line is MIT licensed;
+is a settled design decision; the number is given for reference in the changelog.
+> The 3.0 line is MIT licensed;
 > 2.0.0 stays FSL-1.1-MIT as published, and 1.x and earlier stay MIT.
 
 ## 1. Install

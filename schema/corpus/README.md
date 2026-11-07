@@ -15,9 +15,9 @@ Fixtures that every binding runs. Each `<group>.json` holds cases of the shape
 A binding reads only `input` and `expected`: feed the input to its implementation and
 compare the result with `expected`. `differs` and `rule` are an audit trail, not something
 to test: they record what the Python 2.0.0 or JavaScript reference printed when it did not
-match `expected`, and which decision in `docs/spec/00-decisions.md` settled it. The
+match `expected`, and which settled decision resolved it. The
 file-level `js_gaps` lists features the JavaScript package lacks; every binding still has to
-reach them (`docs/spec/09-parity-and-gap-closing.md`).
+reach them.
 
 Numbers are compared the way a JSON reader sees them: `1` and `1.0` are different, `true`
 is not `1`. A binding that cannot keep that difference (JavaScript) must take its inputs as

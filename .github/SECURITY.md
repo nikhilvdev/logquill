@@ -7,18 +7,18 @@ before reporting an issue to confirm it's still present.
 
 | Version | Supported |
 | ------- | --------- |
-| 3.x (in development, not yet released) | ✅ once released |
+| 3.x (latest release) | ✅ |
 | 2.x (latest Python release on PyPI) | ✅ |
 | 1.x and older | ❌ |
 
-When 3.0.0 is released this table will say how long 2.x keeps receiving fixes.
+See [SUPPORT.md](SUPPORT.md) for what support means.
 
 ## Reporting a Vulnerability
 
 **Please do not open a public GitHub issue for security vulnerabilities.**
 
 Use GitHub's private vulnerability reporting instead:
-[Report a vulnerability](https://github.com/nikhilvdev/logquill-python/security/advisories/new)
+[Report a vulnerability](https://github.com/nikhilvdev/logquill/security/advisories/new)
 (the "Security" tab of this repository → "Report a vulnerability"). This
 opens a private advisory visible only to maintainers until a fix is ready.
 

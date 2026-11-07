@@ -1,10 +1,12 @@
 # LogQuill for the JVM
 
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml) [![Maven Central](https://img.shields.io/maven-central/v/io.github.nikhilvdev/logquill.svg)](https://central.sonatype.com/artifact/io.github.nikhilvdev/logquill) [![License](https://img.shields.io/badge/licence-MIT-blue.svg)](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)
+
 Structured logging for Java (and Kotlin, Scala, ...) on LogQuill's Rust core, through its C ABI (`crates/logquill-ffi`) loaded
 with JNA. The same record shape, the same redaction and the same tamper-evident hash chain as the Python, Node, browser and
 other bindings: redaction and the level filter run in Rust before anything is written.
 
-> **Release candidate.** 3.0.0-rc.8 is published to Maven Central (`io.github.nikhilvdev:logquill:3.0.0-rc.8`); the 3.0 line is MIT licensed. It is a pre-release, so pin the version.
+> Install: `io.github.nikhilvdev:logquill:3.0.0` from Maven Central. The 3.0 line is MIT licensed.
 
 ## Use it
 
@@ -105,3 +107,15 @@ scripts/pack-smoke.sh                           # publish the jar to a local Mav
 The library finds the native library in `LOGQUILL_LIB` (a path to the file), then through JNA (a jar carrying it under
 `<os>-<arch>/`, such as `darwin-aarch64/liblogquill_ffi.dylib`, or `jna.library.path`), then in `target/release` and
 `target/debug` of this repository. The C ABI version is checked at load: a library with a different one is refused.
+
+## Documentation, support and security
+
+- [Project README](https://github.com/nikhilvdev/logquill) · [Architecture](https://github.com/nikhilvdev/logquill/blob/main/docs/architecture.md) · [Contract](https://github.com/nikhilvdev/logquill/blob/main/docs/contract.md) · [API names per language](https://github.com/nikhilvdev/logquill/blob/main/docs/api-names.md)
+- [Versioning and stability](https://github.com/nikhilvdev/logquill/blob/main/docs/versioning.md) · [Supply chain](https://github.com/nikhilvdev/logquill/blob/main/docs/supply-chain.md) · [Changelog](https://github.com/nikhilvdev/logquill/blob/main/CHANGELOG.md)
+- Bugs and feature requests: [GitHub issues](https://github.com/nikhilvdev/logquill/issues). Which versions get fixes: [SUPPORT](https://github.com/nikhilvdev/logquill/blob/main/.github/SUPPORT.md).
+- Report a vulnerability privately, not as a public issue: [SECURITY](https://github.com/nikhilvdev/logquill/blob/main/.github/SECURITY.md).
+- Contributing: [CONTRIBUTING](https://github.com/nikhilvdev/logquill/blob/main/CONTRIBUTING.md).
+
+## Licence
+
+MIT ([LICENSE](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)). Earlier releases keep the licence they were published under.

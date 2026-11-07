@@ -8,8 +8,7 @@
       and `cargo test --workspace` pass
 - [ ] New behaviour has a test; shared behaviour has a fixture under `schema/`
 - [ ] Every binding that exposes the behaviour passes the shared fixtures
-- [ ] The spec in `docs/spec/` is updated if behaviour changed (and a decision in
-      `docs/spec/00-decisions.md` if a choice was made)
+- [ ] `docs/contract.md` is updated if the cross-language contract changed (that is a major version)
 - [ ] Public API additions are documented with an example that was actually run
 - [ ] `CHANGELOG.md` has an entry under `Unreleased`
 

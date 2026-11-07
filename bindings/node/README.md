@@ -1,7 +1,17 @@
 # logquill for Node
 
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/logquill.svg)](https://www.npmjs.com/package/logquill) [![License](https://img.shields.io/badge/licence-MIT-blue.svg)](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)
+
 The Node binding of LogQuill's Rust core: a [napi-rs](https://napi.rs) addon (`src/`) and the TypeScript SDK on top
-of it (`sdk/`). It is the 3.0 line; the status of each part is in `docs/stages/stage-6.md`.
+of it (`sdk/`), for Node 22 or later. It is the 3.0 line.
+
+## Install
+
+```bash
+npm install logquill
+```
+
+## Build from source
 
 ```bash
 npm install            # in bindings/node
@@ -118,3 +128,15 @@ These need the native addon; without it use `SlackAlertPlugin` and friends.
 - **`AppriseAlertPlugin`.** Apprise is a Python library. Use `SlackAlertPlugin`, `PagerDutyAlertPlugin`,
   `EmailAlertPlugin`, or a custom `AlertingPlugin`.
 - **CrewAI, AutoGen and LiteLLM adapters.** Python-only frameworks.
+
+## Documentation, support and security
+
+- [Project README](https://github.com/nikhilvdev/logquill) · [Architecture](https://github.com/nikhilvdev/logquill/blob/main/docs/architecture.md) · [Contract](https://github.com/nikhilvdev/logquill/blob/main/docs/contract.md) · [API names per language](https://github.com/nikhilvdev/logquill/blob/main/docs/api-names.md)
+- [Versioning and stability](https://github.com/nikhilvdev/logquill/blob/main/docs/versioning.md) · [Supply chain](https://github.com/nikhilvdev/logquill/blob/main/docs/supply-chain.md) · [Changelog](https://github.com/nikhilvdev/logquill/blob/main/CHANGELOG.md)
+- Bugs and feature requests: [GitHub issues](https://github.com/nikhilvdev/logquill/issues). Which versions get fixes: [SUPPORT](https://github.com/nikhilvdev/logquill/blob/main/.github/SUPPORT.md).
+- Report a vulnerability privately, not as a public issue: [SECURITY](https://github.com/nikhilvdev/logquill/blob/main/.github/SECURITY.md).
+- Contributing: [CONTRIBUTING](https://github.com/nikhilvdev/logquill/blob/main/CONTRIBUTING.md).
+
+## Licence
+
+MIT ([LICENSE](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)). Earlier releases keep the licence they were published under.

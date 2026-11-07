@@ -1,20 +1,12 @@
-# logquill
+# logquill for Python
 
-A structured, leveled logging framework for Python with pluggable transports.
-Sibling to [`logquill` on npm](https://www.npmjs.com/package/logquill)
-(`logquill-js`) — same log record shape, same level names, one mental model
-across a Python + Node stack.
+[![CI](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nikhilvdev/logquill/actions/workflows/ci.yml) [![PyPI](https://img.shields.io/pypi/v/logquill.svg)](https://pypi.org/project/logquill/) [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/logquill/) [![License](https://img.shields.io/badge/licence-MIT-blue.svg)](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)
 
-**License note:** starting with 2.0.0, new releases are source-available
-under the [Functional Source License](#license) (FSL-1.1-MIT), not MIT.
-Free for nearly everyone — internal use, non-commercial work, building a
-product or service that isn't a logging framework — paid only if you're
-building a competing logging/observability offering. Versions 1.0.0 and
-earlier stay MIT forever; this doesn't change anything about those. See
-[License](#license) below for what that actually means.
+Structured logging for Python services and AI agents, on LogQuill's Rust core: one JSON record shape, redaction before
+anything is written, hash-chained tamper evidence, OpenTelemetry GenAI export and a local trace viewer. The record shape and
+level names are the same in the Node, browser, Ruby, .NET, JVM, Go and Swift SDKs ([project README](https://github.com/nikhilvdev/logquill)).
 
-Status: stable (2.0.0). See `CHANGELOG.md` for what changed in each release
-and [MIGRATING.md](MIGRATING.md) for upgrading from 1.x.
+> Install: `pip install logquill`. The 3.0 line is MIT licensed. Upgrading from 2.x: [migration guide](https://github.com/nikhilvdev/logquill/blob/main/docs/migrating/python-2-to-3.md).
 
 ## Features
 
@@ -42,7 +34,7 @@ and [MIGRATING.md](MIGRATING.md) for upgrading from 1.x.
 
 ## Install
 
-Requires Python 3.10 or newer (2.0 raised the floor from 3.8; see [MIGRATING.md](MIGRATING.md)).
+Requires Python 3.10 or newer.
 
 ```bash
 pip install logquill
@@ -462,7 +454,7 @@ assert document["log"] == {"level": "error"}    # added alongside it
 ```
 
 A starter Kibana dashboard (importable via Kibana's Saved Objects UI) built
-on these fields ships under [`docs/kibana/`](docs/kibana/).
+on these fields ships under [`docs/kibana/`](https://github.com/nikhilvdev/logquill/blob/main/docs/kibana/README.md).
 
 `SyslogTransport` sends each record as one RFC 5424 message over UDP
 (default) or TCP — stdlib `socket` only, no dependency, and not a batching
@@ -1977,11 +1969,7 @@ A fork flushes every live logger first (`os.register_at_fork`), so a child never
 
 ## API reference
 
-Every public class and function is documented with a docstring; the full
-reference, generated from those docstrings with [pdoc](https://pdoc.dev), is
-published at
-[nikhilvdev.github.io/logquill-python](https://nikhilvdev.github.io/logquill-python/)
-and rebuilt on every push to `main`. To build it locally:
+Every public class and function has a docstring. Browse them locally with [pdoc](https://pdoc.dev):
 
 ```bash
 pip install -e ".[docs]"
@@ -2009,43 +1997,17 @@ PyO3/orjson limitation, not a LogQuill one, so that job installs a smaller
 dependency set there; `tests/conftest.py` turns a missing `hypothesis` into
 a clean skip of the property-based suites rather than a collection error.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the PR workflow, the
-[Code of Conduct](CODE_OF_CONDUCT.md) for community standards, and
-[SECURITY.md](.github/SECURITY.md) for how to report a vulnerability.
+See [CONTRIBUTING](https://github.com/nikhilvdev/logquill/blob/main/CONTRIBUTING.md) for the PR workflow and the
+[Code of Conduct](https://github.com/nikhilvdev/logquill/blob/main/CODE_OF_CONDUCT.md) for community standards.
 
-## License
+## Documentation, support and security
 
-**Versions 1.0.0 and earlier are MIT**, full stop — already published, and
-relicensing later code doesn't and can't change the terms of what's already
-out there. If you depend on one of those versions, nothing here affects you.
+- [Project README](https://github.com/nikhilvdev/logquill) · [Architecture](https://github.com/nikhilvdev/logquill/blob/main/docs/architecture.md) · [Contract](https://github.com/nikhilvdev/logquill/blob/main/docs/contract.md) · [API names per language](https://github.com/nikhilvdev/logquill/blob/main/docs/api-names.md)
+- [Versioning and stability](https://github.com/nikhilvdev/logquill/blob/main/docs/versioning.md) · [Supply chain](https://github.com/nikhilvdev/logquill/blob/main/docs/supply-chain.md) · [Changelog](https://github.com/nikhilvdev/logquill/blob/main/CHANGELOG.md)
+- Bugs and feature requests: [GitHub issues](https://github.com/nikhilvdev/logquill/issues). Which versions get fixes: [SUPPORT](https://github.com/nikhilvdev/logquill/blob/main/.github/SUPPORT.md).
+- Report a vulnerability privately, not as a public issue: [SECURITY](https://github.com/nikhilvdev/logquill/blob/main/.github/SECURITY.md).
+- Contributing: [CONTRIBUTING](https://github.com/nikhilvdev/logquill/blob/main/CONTRIBUTING.md).
 
-**Version 2.0.0 and later are [FSL-1.1-MIT](LICENSE)** (the [Functional
-Source License](https://fsl.software), MIT Future variant). In plain terms:
+## Licence
 
-- You can use, modify, self-host, and redistribute logquill for **almost
-  anything** — your own app or service, internal tooling, a client project,
-  non-commercial education or research, or as part of professional services
-  you provide to someone else — with no payment or extra permission needed.
-- The one thing you can't do without a separate commercial license is use
-  logquill to build a **competing product or service**: one that substitutes
-  for logquill itself, substitutes for another product/service built on
-  logquill, or offers substantially the same functionality. That's aimed at
-  "take this, repackage it, sell it as your own logging/observability
-  product" — not at ordinary use of a logging library inside whatever you're
-  actually building.
-- **Each version converts to plain MIT two years after that version's own
-  release date.** So 2.0.0 becomes MIT two years after 2.0.0 ships,
-  independent of whatever the latest version is by then — the restriction
-  only ever applies to recent releases, never indefinitely.
-- Redistributing logquill (modified or not) requires keeping the copyright
-  notice and a copy of (or link to) these terms — that's the "credit"
-  obligation the license itself carries.
-
-Need a commercial license (or just have questions about whether your use
-case needs one)? Open an issue, or reach out to the author directly.
-
-This is a source-available license, not an OSI-approved open-source one —
-drafted from the official FSL template and not customized beyond filling in
-the licensor/year, but also not reviewed by a lawyer on either side of a
-specific deal. If a commercial license matters to your business, have your
-own counsel look at the exact terms before you rely on them.
+MIT ([LICENSE](https://github.com/nikhilvdev/logquill/blob/main/LICENSE)). Earlier releases keep the licence they were published under.

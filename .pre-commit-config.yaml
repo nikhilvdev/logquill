@@ -1,5 +1,5 @@
 # Verbatim reference copies and machine-written fixtures stay exactly as they were produced.
-exclude: ^(docs/legacy/|docs/spec/legacy-tests/|docs/kibana/|schema/.*\.json$)
+exclude: ^(docs/kibana/|schema/.*\.json$)
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks

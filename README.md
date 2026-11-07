@@ -20,9 +20,8 @@ Structured logging for services and AI agents: one Rust core, one record shape, 
 SDK for each language, so a team running several languages gets one mental model and one
 JSON log format.
 
-**Status: 3.0.0 is feature-complete on the `develop` branch. The release candidate 3.0.0-rc.8 is published to crates.io, PyPI, npm, RubyGems, NuGet and Maven Central; the Go module and the Swift package are not yet released, and there is no final 3.0.0.** The previous releases are `logquill` 2.x for Python (PyPI, `main` branch)
-and `logquill` 1.x for Node (the separate `logquill-js` repository). Pre-release versions are not picked up by default, so install rc.8 explicitly
-(for example `pip install --pre logquill`); every binding's README says how.
+**Status: 3.0.0 is the current release, published to crates.io, PyPI, npm, RubyGems, NuGet, Maven Central, the Go module proxy and Swift Package Manager.** The previous releases are `logquill` 2.x for Python (PyPI, `main` branch)
+and `logquill` 1.x for Node (the separate `logquill-js` repository). Every binding's README says how to install it.
 
 ## What you get
 
@@ -59,8 +58,7 @@ and `logquill` 1.x for Node (the separate `logquill-js` repository). Pre-release
 | `…/bindings/go/v3` | Go module proxy | `bindings/go` | core as WebAssembly in wazero, no cgo |
 | `LogQuill` | Swift Package Manager | `bindings/swift` | C ABI, XCFramework |
 
-All packages share one lockstep version (currently `3.0.0-rc.8`). Go and Swift are not part
-of the rc.8 candidate. `docs/publishing.md` has the release process.
+All packages share one lockstep version (currently `3.0.0`). [`docs/releasing.md`](docs/releasing.md) has the release process.
 
 ## Quickstart
 
@@ -176,7 +174,7 @@ log.close()
 ```
 
 Records are written on a background thread, so call `close()` (or `flush()`) before the
-process ends. Method names follow each language's casing; `docs/api-names.md` is the full table.
+process ends. Method names follow each language's casing; [`docs/api-names.md`](docs/api-names.md) is the full table.
 These snippets are trimmed from the READMEs under `bindings/`, whose examples are run by each
 binding's tests.
 
@@ -199,8 +197,8 @@ correlation ids; OpenTelemetry GenAI conventions behind one pinned mapping modul
 `AuditLogger` profile (content off, secrets and PII redacted, every record hash-chained). The
 Python and Node SDKs also carry the framework adapters and provider auto-instrumentation.
 
-Where a binding lacks something the Python or Node SDK has, its README says so; the parity rules are
-in `docs/spec/09-parity-and-gap-closing.md`.
+Where a binding lacks something the Python or Node SDK has, its README says so; the shared
+fixtures in `schema/` define what every binding must do.
 
 ## The `logquill` command
 
@@ -218,6 +216,21 @@ logquill verify app.log --sign-key HEX --signature HEX   # also check the signed
 The viewer binds to `127.0.0.1` by default; any other `--host` exposes your logs to the network.
 `tail`, `trace` and `dev` accept `--no-color` for plain output.
 
+## Built for production
+
+| Concern | What you get | Details |
+|---|---|---|
+| Stability | One lockstep version across every language, Semantic Versioning, a defined stability promise | [Versioning](https://github.com/nikhilvdev/logquill/blob/main/docs/versioning.md) |
+| Privacy | Prompt and tool content off by default; secrets and PII redacted in Rust before any transport; a failing redactor drops the record | [Contract](https://github.com/nikhilvdev/logquill/blob/main/docs/contract.md) |
+| Integrity | Hash-chained, optionally signed logs; `logquill verify` detects an edited or removed line | [Contract](https://github.com/nikhilvdev/logquill/blob/main/docs/contract.md) |
+| Reliability | A log call never raises; bounded queue and batches; worker survives `fork`; measured in CI | [Architecture](https://github.com/nikhilvdev/logquill/blob/main/docs/architecture.md) |
+| Supply chain | Tag-only releases, trusted publishing, provenance on npm and PyPI, pinned actions | [Supply chain](https://github.com/nikhilvdev/logquill/blob/main/docs/supply-chain.md) |
+| Observability | OpenTelemetry GenAI spans and logs, W3C trace context, Kibana dashboard for ECS | [Contract](https://github.com/nikhilvdev/logquill/blob/main/docs/contract.md) |
+| Support | Supported versions and how to get help | [SUPPORT](https://github.com/nikhilvdev/logquill/blob/main/.github/SUPPORT.md) |
+
+**Compatibility.** Python 3.10+, Node 22+, .NET `net8.0` and `net10.0`, and browsers, Deno, Bun and Workers through
+WebAssembly. Requirements for Ruby, JVM, Go and Swift are in each binding's README under `bindings/`.
+
 ## Layout
 
 | Path | What it is |
@@ -232,7 +245,7 @@ The viewer binds to `127.0.0.1` by default; any other `--host` exposes your logs
 | `bindings/wasm` | Browsers and edge runtimes: the core as WebAssembly. |
 | `bindings/{ruby,dotnet,go,swift,jvm}` | The medium tier, on the C ABI. Each folder has its own README. |
 | `schema/` | The record schema and the fixtures every language must pass. |
-| `docs/` | The plan, the stage notes, the behaviour specification, migration guides and the publishing guide. |
+| `docs/` | Architecture, the contract, versioning, releasing, supply chain, migration guides and the Kibana dashboard. Start at [`docs/README.md`](docs/README.md). |
 
 ## Build and test
 
@@ -242,25 +255,29 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
 
-The bindings are built and tested from their own folders; each README says how. `docs/stages/stage-N.md` records what each
-stage built, how it was checked, and what is left.
+The bindings are built and tested from their own folders; each README says how.
 
 ## Upgrading
 
-- From Python 2.x: `docs/migrating/python-2-to-3.md`. The 2.0 API is kept; dispatch is now queued by
+- From Python 2.x: [`docs/migrating/python-2-to-3.md`](docs/migrating/python-2-to-3.md). The 2.0 API is kept; dispatch is now queued by
   default, the tamper chain is made at write time, a failing redaction plugin drops the record,
   `RedactPlugin` matches keys at every depth, and JSON lines are UTF-8.
-- From JavaScript 1.x: `docs/migrating/js-1-to-3.md`.
+- From JavaScript 1.x: [`docs/migrating/js-1-to-3.md`](docs/migrating/js-1-to-3.md).
 
-## Where to start
+## Documentation
 
-- `docs/rust-core-plan.md` — architecture, stages and publishing plan.
-- `docs/spec/README.md` — what the 2.x Python and 1.x JS code does, exactly, and
-  `docs/spec/00-decisions.md` for the choices that were settled.
-- `docs/api-names.md` — every public name, per language.
-- `docs/publishing.md` — how a release reaches every registry, language by language.
-- `docs/kibana/` — a starter Kibana dashboard for ECS-mapped Elasticsearch logs.
+- [`docs/README.md`](docs/README.md) — the documentation index.
+- [`docs/architecture.md`](docs/architecture.md) — how the core, runtime and bindings fit together.
+- [`docs/contract.md`](docs/contract.md) and [`docs/api-names.md`](docs/api-names.md) — what every language guarantees.
+- [`docs/versioning.md`](docs/versioning.md), [`docs/supply-chain.md`](docs/supply-chain.md) and [`.github/SUPPORT.md`](.github/SUPPORT.md) — stability, security posture and support.
+- [`docs/kibana/`](docs/kibana/) — a starter Kibana dashboard for ECS-mapped Elasticsearch logs.
 - `CHANGELOG.md` — what changed; `CONTRIBUTING.md` — how to build and what a change must include.
+
+## Support and security
+
+Bugs and feature requests go to [GitHub issues](https://github.com/nikhilvdev/logquill/issues); see [SUPPORT](https://github.com/nikhilvdev/logquill/blob/main/.github/SUPPORT.md) for which versions
+get fixes. Report vulnerabilities privately through [SECURITY](https://github.com/nikhilvdev/logquill/blob/main/.github/SECURITY.md), never as a public issue.
+Contributions follow [CONTRIBUTING](https://github.com/nikhilvdev/logquill/blob/main/CONTRIBUTING.md) and the [Code of Conduct](https://github.com/nikhilvdev/logquill/blob/main/CODE_OF_CONDUCT.md).
 
 ## Licence
 

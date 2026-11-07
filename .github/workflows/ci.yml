@@ -353,7 +353,7 @@ jobs:
         working-directory: bindings/jvm
       - run: bindings/jvm/scripts/pack-smoke.sh
 
-  # one lockstep version in every manifest (docs/rust-core-plan.md, section 7); a release job runs it again with the tag
+  # one lockstep version in every manifest (docs/versioning.md); a release job runs it again with the tag
   versions:
     name: manifest versions agree
     runs-on: ubuntu-latest

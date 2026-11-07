@@ -1,13 +1,14 @@
 # Changelog
 
 All notable changes to this project are documented in this file. The history of the
-earlier releases is kept in `docs/legacy/python/CHANGELOG.md` (Python 0.3.0–2.0.0) and
-`docs/legacy/js/CHANGELOG.md` (JavaScript).
+earlier Python (0.3.0–2.0.0) and JavaScript releases is in the git history: the `v2.0.0` tag and `main` branch for
+Python, and the `logquill-js` repository for JavaScript.
 
 ## Unreleased
 
-## 3.0.0 - 2026-11-05
+## 3.0.0 - 2026-11-08
 
+- Added: a public documentation set under `docs/` (architecture, the cross-language contract, versioning and stability, releasing, supply chain, API names, migration guides), a support policy, and a refreshed README for the repository and every language binding. The maintainer-only planning notes are no longer part of the repository.
 - Released: 3.0.0, the first stable release of the Rust-core line, to crates.io, PyPI, npm, RubyGems, NuGet, Maven Central, the Go module proxy and Swift Package Manager. It replaces the release candidates 3.0.0-rc.1 to rc.8, whose entries follow.
 - Fixed: `pip install logquill` now installs the `logquill` command (`tail`, `trace`, `dev`, `serve`, `verify`) and `python -m logquill.cli` works, as in 2.0.0. The 3.0.0rc8 wheel had neither: its `pyproject.toml` declared no script and the `logquill.cli` module was gone. The command is the `logquill-cli` Rust program compiled into the extension module (`logquill_cli::cli::run`), so the standalone binary and the Python script behave the same and no extra install or per-platform binary is needed.
 - Changed: the release candidate is now 3.0.0-rc.8, released to crates.io, PyPI, npm, RubyGems, NuGet and Maven Central together (Go and Swift are not part of this candidate). rc.7 was not tagged.

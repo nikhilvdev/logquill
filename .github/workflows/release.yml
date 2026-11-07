@@ -1,10 +1,10 @@
 name: Release
 
 # Pushing a tag vX.Y.Z (or vX.Y.Z-rc.N), or <language>-vX.Y.Z for one language, is the only way a release starts; nothing is published from a laptop
-# (docs/publishing.md). The tag must equal every manifest, the full CI must pass on the tagged commit, and each registry
+# (docs/releasing.md). The tag must equal every manifest, the full CI must pass on the tagged commit, and each registry
 # publishes from its own GitHub environment, which holds the reviewers that must approve the first release.
 #
-# Registries and what each needs outside the repository (docs/stages/stage-9.md lists it in full):
+# Registries and what each needs outside the repository:
 #   crates.io, PyPI, npm (@logquill/wasm, logquill + @logquill/native-*), RubyGems, NuGet: a trusted publisher registered on
 #     the registry for this repository, this workflow and the environment named on the job; NuGet also needs the repository
 #     variable NUGET_USER (the nuget.org account that owns the package).

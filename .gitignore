@@ -86,3 +86,6 @@ docs-out/
 
 # Local release credentials (never commit): GPG signing key, Central Portal token
 release-secrets.txt
+
+# ── Maintainer-only notes (plan, stage logs, behaviour spec); kept local, not published ──
+docs-internal/
