@@ -6,6 +6,8 @@ Python, and the `logquill-js` repository for JavaScript.
 
 ## Unreleased
 
+- Added: a fuller `CONTRIBUTING.md` covering repository layout, per-language setup, the contract and versioning rules, testing and quality expectations, review and merge, CI, dependencies, security reporting, releases and licensing of contributions.
+
 ## 3.0.0 - 2026-11-08
 
 - Added: a public documentation set under `docs/` (architecture, the cross-language contract, versioning and stability, releasing, supply chain, API names, migration guides), a support policy, and a refreshed README for the repository and every language binding. The maintainer-only planning notes are no longer part of the repository.
