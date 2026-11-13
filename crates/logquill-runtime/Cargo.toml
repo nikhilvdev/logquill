@@ -9,7 +9,7 @@ license.workspace = true
 [dependencies]
 aes = "0.8.4"
 base64 = "0.23.1"
-cbc = { version = "0.1.2", features = ["alloc"] }
+cbc = { version = "0.2.1", features = ["alloc"] }
 flate2 = "1.1.10"
 gethostname = "1.1.0"
 getrandom = "0.3.4"
