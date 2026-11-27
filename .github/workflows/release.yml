@@ -342,7 +342,7 @@ jobs:
       - run: |
           test "$(ls libs | wc -l)" -eq 5 || { echo "expected 5 platform builds, found $(ls libs)"; exit 1; }
       - run: ruby bindings/ruby/scripts/build_platform_gems.rb libs gems
-      - uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
+      - uses: rubygems/configure-rubygems-credentials@c6ca7f4bac0e29c9bde8eeae0a0a986b27efa05f # v2.2.0
       - run: for gem in gems/*.gem; do gem push "$gem"; done
 
   # ---- NuGet: one package carrying every runtime ----------------------------------------------------------------------------
